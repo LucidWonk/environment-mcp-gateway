@@ -1,0 +1,137 @@
+<Project Sdk="Microsoft.Build.NoTargets/3.7.56">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ProjectType>Node.js</ProjectType>
+    <OutputType>Library</OutputType>
+    <ProjectGuid>{E8F5A7B2-4C3D-4F6E-9A8B-2D5C8E7F9A1B}</ProjectGuid>
+    
+    <!-- Disable .NET specific outputs -->
+    <UseAppHost>false</UseAppHost>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    
+    <!-- Project metadata -->
+    <AssemblyTitle>Lucidwonks Environment MCP Gateway</AssemblyTitle>
+    <Product>Lucidwonks Algorithmic Trading Platform</Product>
+    <Description>MCP server providing development environment access for Lucidwonks trading platform with Git workflow enhancement and domain-driven design awareness</Description>
+    <Copyright>Copyright © Lucidwonks 2025</Copyright>
+    <Version>1.0.0</Version>
+    
+    <!-- Node.js specific properties -->
+    <NodeJsVersion>18.0.0</NodeJsVersion>
+    <TypeScriptVersion>5.3.3</TypeScriptVersion>
+    <PackageManager>npm</PackageManager>
+    
+    <!-- Build output paths -->
+    <OutputPath>dist\</OutputPath>
+    <IntermediateOutputPath>obj\</IntermediateOutputPath>
+    
+    <!-- Enable solution-wide build integration -->
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Define source files for Visual Studio -->
+  <ItemGroup>
+    <Content Include="package.json" />
+    <Content Include="tsconfig.json" />
+    <Content Include="README.md" />
+    <Content Include=".env.development" Condition="Exists('.env.development')" />
+    <Content Include="mcp-server-config.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TypeScriptCompile Include="src\**\*.ts" />
+    <None Include="src\**\*.js" />
+    <None Include="src\**\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="src\adapters\" />
+    <Folder Include="src\config\" />
+    <Folder Include="src\domain\" />
+    <Folder Include="src\infrastructure\" />
+    <Folder Include="src\orchestrator\" />
+    <Folder Include="src\types\" />
+    <Folder Include="tests\unit\" />
+    <Folder Include="tests\integration\" />
+    <Folder Include="dist\" />
+    <Folder Include="docker\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.NoTargets" />
+  </ItemGroup>
+
+  <!-- npm package restore target -->
+  <Target Name="NpmInstall" BeforeTargets="Build">
+    <Message Text="Installing npm dependencies for EnvironmentMCPGateway..." Importance="high" />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="false" />
+  </Target>
+
+  <!-- TypeScript build target -->
+  <Target Name="TypeScriptBuild" AfterTargets="NpmInstall" BeforeTargets="Build">
+    <Message Text="Building TypeScript for EnvironmentMCPGateway..." Importance="high" />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="false" />
+  </Target>
+
+  <!-- Clean target for npm and TypeScript artifacts -->
+  <Target Name="NpmClean" BeforeTargets="Clean">
+    <Message Text="Cleaning EnvironmentMCPGateway build artifacts..." Importance="high" />
+    <Exec Command="npm run clean" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="true" />
+    <RemoveDir Directories="node_modules" Condition="Exists('node_modules')" ContinueOnError="true" />
+    <RemoveDir Directories="dist" Condition="Exists('dist')" ContinueOnError="true" />
+  </Target>
+
+  <!-- Test target -->
+  <Target Name="NpmTest" AfterTargets="Build" Condition="'$(RunTests)' == 'true'">
+    <Message Text="Running tests for EnvironmentMCPGateway..." Importance="high" />
+    <Exec Command="npm test" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="false" />
+  </Target>
+
+  <!-- Linting target -->
+  <Target Name="NpmLint" AfterTargets="TypeScriptBuild" Condition="'$(RunLinting)' == 'true'">
+    <Message Text="Running linting for EnvironmentMCPGateway..." Importance="high" />
+    <Exec Command="npm run lint" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="true" />
+  </Target>
+
+  <!-- Development server target -->
+  <Target Name="NpmDev">
+    <Message Text="Starting EnvironmentMCPGateway development server..." Importance="high" />
+    <Exec Command="npm run dev" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="false" />
+  </Target>
+
+  <!-- Production start target -->
+  <Target Name="NpmStart" DependsOnTargets="Build">
+    <Message Text="Starting EnvironmentMCPGateway production server..." Importance="high" />
+    <Exec Command="npm start" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="false" />
+  </Target>
+
+  <!-- Copy build outputs for deployment -->
+  <Target Name="CopyBuildOutputs" AfterTargets="Build">
+    <ItemGroup>
+      <BuildOutputs Include="dist\**\*" />
+      <BuildOutputs Include="package.json" />
+      <BuildOutputs Include="mcp-server-config.json" />
+    </ItemGroup>
+    
+    <Copy SourceFiles="@(BuildOutputs)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="'$(CopyBuildOutputs)' == 'true'" />
+  </Target>
+
+  <!-- Integration with solution-wide build properties -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>DEBUG</DefineConstants>
+    <RunLinting>true</RunLinting>
+    <RunTests>false</RunTests>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DefineConstants>RELEASE</DefineConstants>
+    <RunLinting>true</RunLinting>
+    <RunTests>true</RunTests>
+    <CopyBuildOutputs>true</CopyBuildOutputs>
+  </PropertyGroup>
+
+</Project>
