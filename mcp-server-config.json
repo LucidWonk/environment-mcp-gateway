@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "lucidwonks-environment-mcp-gateway": {
+      "command": "node",
+      "args": ["dist/server.js"],
+      "cwd": "/mnt/m/Projects/Lucidwonks/EnvironmentMCPGateway",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

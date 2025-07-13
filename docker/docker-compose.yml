@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  environment-mcp-gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: lucidwonks-environment-mcp-gateway
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - MCP_SERVER_PORT=3001
+      - MCP_LOG_LEVEL=info
+    env_file:
+      - ../.env.development
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${GIT_REPO_PATH:-/mnt/m/Projects/Lucidwonks}:/workspace:ro
+    depends_on:
+      - timescaledb
+    restart: unless-stopped
+    networks:
+      - lucidwonks-dev
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    container_name: lucidwonks-timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=pricehistorydb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - lucidwonks-dev
+
+volumes:
+  timescale_data:
+
+networks:
+  lucidwonks-dev:
+    driver: bridge
