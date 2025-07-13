@@ -10,27 +10,33 @@ config({ path: envPath });
 
 export class Environment {
     // Database - development database configuration
-    public static readonly dbHost = process.env.DB_HOST ?? "localhost";
-    public static readonly dbPassword = process.env.DB_PASSWORD;
-    public static readonly dbPort = parseInt(process.env.DB_PORT ?? "5432");
-    public static readonly database = process.env.TIMESCALE_DATABASE ?? "pricehistorydb";
-    public static readonly username = process.env.TIMESCALE_USERNAME ?? "postgres";
+    public static get dbHost(): string { return process.env.DB_HOST ?? "localhost"; }
+    public static get dbPassword(): string | undefined { return process.env.DB_PASSWORD; }
+    public static get dbPort(): number { return parseInt(process.env.DB_PORT ?? "5432"); }
+    public static get database(): string { return process.env.TIMESCALE_DATABASE ?? "pricehistorydb"; }
+    public static get username(): string { return process.env.TIMESCALE_USERNAME ?? "postgres"; }
     
     // Git configuration for development workflow
-    public static readonly gitRepoPath = process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks";
-    public static readonly gitUserName = process.env.GIT_USER_NAME;
-    public static readonly gitUserEmail = process.env.GIT_USER_EMAIL;
+    public static get gitRepoPath(): string { return process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks"; }
+    public static get gitUserName(): string | undefined { return process.env.GIT_USER_NAME; }
+    public static get gitUserEmail(): string | undefined { return process.env.GIT_USER_EMAIL; }
     
     // MCP server configuration
-    public static readonly mcpServerPort = parseInt(process.env.MCP_SERVER_PORT ?? "3001");
-    public static readonly mcpLogLevel = process.env.MCP_LOG_LEVEL ?? "info";
+    public static get mcpServerPort(): number { return parseInt(process.env.MCP_SERVER_PORT ?? "3001"); }
+    public static get mcpLogLevel(): string { return process.env.MCP_LOG_LEVEL ?? "info"; }
     
     // Solution and project paths
-    public static readonly solutionPath = join(process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks", "Lucidwonks.sln");
-    public static readonly projectRoot = process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks";
+    public static get solutionPath(): string { return join(process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks", "Lucidwonks.sln"); }
+    public static get projectRoot(): string { return process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks"; }
     
     // Docker configuration
-    public static readonly dockerComposeFile = join(process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks", "docker-compose.yml");
+    public static get dockerComposeFile(): string { return join(process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks", "docker-compose.yml"); }
+    
+    // Azure DevOps configuration
+    public static get azureDevOpsOrganization(): string | undefined { return process.env.AZURE_DEVOPS_ORGANIZATION; }
+    public static get azureDevOpsProject(): string { return process.env.AZURE_DEVOPS_PROJECT ?? "Lucidwonks"; }
+    public static get azureDevOpsPAT(): string | undefined { return process.env.AZURE_DEVOPS_PAT; }
+    public static get azureDevOpsApiUrl(): string { return process.env.AZURE_DEVOPS_API_URL ?? "https://dev.azure.com"; }
     
     public static getDevelopmentDatabaseConnectionString(): string {
         if (!this.dbPassword) {
@@ -45,6 +51,11 @@ export class Environment {
             'GIT_USER_NAME', 
             'GIT_USER_EMAIL'
         ];
+        
+        // Optional Azure DevOps validation
+        if (process.env.AZURE_DEVOPS_ORGANIZATION && !process.env.AZURE_DEVOPS_PAT) {
+            throw new Error('AZURE_DEVOPS_PAT is required when AZURE_DEVOPS_ORGANIZATION is set');
+        }
         
         const missing = requiredVars.filter(varName => !process.env[varName]);
         if (missing.length > 0) {
@@ -65,7 +76,11 @@ export class Environment {
             mcpLogLevel: this.mcpLogLevel,
             solutionPath: this.solutionPath,
             projectRoot: this.projectRoot,
-            dockerComposeFile: this.dockerComposeFile
+            dockerComposeFile: this.dockerComposeFile,
+            azureDevOpsOrganization: this.azureDevOpsOrganization,
+            azureDevOpsProject: this.azureDevOpsProject,
+            azureDevOpsApiUrl: this.azureDevOpsApiUrl,
+            azureDevOpsPATConfigured: !!this.azureDevOpsPAT
         };
     }
 }

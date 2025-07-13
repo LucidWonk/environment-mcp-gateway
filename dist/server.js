@@ -4,7 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError, } from '@modelcontextprotocol/sdk/types.js';
 import { Environment } from './config/environment.js';
 import { SolutionParser } from './infrastructure/solution-parser.js';
-import { DockerAdapter } from './adapters/docker-adapter.js';
+import { AdapterManager } from './adapters/adapter-manager.js';
 import { GitToolRegistry } from './orchestrator/tool-registry.js';
 import winston from 'winston';
 // Initialize environment and logging
@@ -26,7 +26,7 @@ const logger = winston.createLogger({
 });
 class EnvironmentMCPGateway {
     server;
-    dockerAdapter;
+    adapterManager;
     gitToolRegistry;
     constructor() {
         this.server = new Server({
@@ -37,7 +37,7 @@ class EnvironmentMCPGateway {
                 tools: {},
             },
         });
-        this.dockerAdapter = new DockerAdapter();
+        this.adapterManager = AdapterManager.getInstance();
         this.gitToolRegistry = new GitToolRegistry();
         this.setupHandlers();
     }
@@ -211,6 +211,30 @@ class EnvironmentMCPGateway {
                             type: 'object',
                             properties: {}
                         }
+                    },
+                    {
+                        name: 'reload-configuration',
+                        description: 'Force reload configuration from .env files and recreate adapters',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {}
+                        }
+                    },
+                    {
+                        name: 'get-configuration-status',
+                        description: 'Get current configuration status and reload information',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {}
+                        }
+                    },
+                    {
+                        name: 'test-adapter-configuration',
+                        description: 'Test current adapter configurations and connectivity',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {}
+                        }
                     }
                 ]
             };
@@ -250,6 +274,12 @@ class EnvironmentMCPGateway {
                         return await this.checkRedPandaHealth(args);
                     case 'validate-development-stack':
                         return await this.validateDevelopmentStack(args);
+                    case 'reload-configuration':
+                        return await this.reloadConfiguration(args);
+                    case 'get-configuration-status':
+                        return await this.getConfigurationStatus(args);
+                    case 'test-adapter-configuration':
+                        return await this.testAdapterConfiguration(args);
                     default:
                         throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
                 }
@@ -408,10 +438,11 @@ class EnvironmentMCPGateway {
     }
     async checkDockerStatus() {
         try {
+            const dockerAdapter = this.adapterManager.getDockerAdapter();
             const [containers, composeServices, environmentHealth] = await Promise.all([
-                this.dockerAdapter.listDevelopmentContainers(),
-                this.dockerAdapter.getComposeServices(),
-                this.dockerAdapter.getDevelopmentEnvironmentHealth()
+                dockerAdapter.listDevelopmentContainers(),
+                dockerAdapter.getComposeServices(),
+                dockerAdapter.getDevelopmentEnvironmentHealth()
             ]);
             return {
                 dockerComposeFile: Environment.dockerComposeFile,
@@ -468,7 +499,7 @@ class EnvironmentMCPGateway {
     }
     async listDevelopmentContainers(args) {
         logger.info('Listing development containers');
-        const containers = await this.dockerAdapter.listDevelopmentContainers();
+        const containers = await this.adapterManager.getDockerAdapter().listDevelopmentContainers();
         const result = {
             timestamp: new Date().toISOString(),
             containers: containers.map(c => ({
@@ -502,7 +533,7 @@ class EnvironmentMCPGateway {
             throw new McpError(ErrorCode.InvalidParams, 'Container ID is required');
         }
         logger.info('Getting container health', { containerId });
-        const health = await this.dockerAdapter.getContainerHealth(containerId);
+        const health = await this.adapterManager.getDockerAdapter().getContainerHealth(containerId);
         const result = {
             timestamp: new Date().toISOString(),
             containerId,
@@ -525,7 +556,7 @@ class EnvironmentMCPGateway {
             throw new McpError(ErrorCode.InvalidParams, 'Container ID is required');
         }
         logger.info('Getting container logs', { containerId, lines });
-        const logs = await this.dockerAdapter.getContainerLogs(containerId, lines);
+        const logs = await this.adapterManager.getDockerAdapter().getContainerLogs(containerId, lines);
         const result = {
             timestamp: new Date().toISOString(),
             containerId,
@@ -547,7 +578,7 @@ class EnvironmentMCPGateway {
             throw new McpError(ErrorCode.InvalidParams, 'Service name is required');
         }
         logger.info('Restarting development service', { serviceName });
-        const success = await this.dockerAdapter.restartComposeService(serviceName);
+        const success = await this.adapterManager.getDockerAdapter().restartComposeService(serviceName);
         const result = {
             timestamp: new Date().toISOString(),
             serviceName,
@@ -565,7 +596,7 @@ class EnvironmentMCPGateway {
     }
     async analyzeDevelopmentInfrastructure(args) {
         logger.info('Analyzing development infrastructure');
-        const environmentHealth = await this.dockerAdapter.getDevelopmentEnvironmentHealth();
+        const environmentHealth = await this.adapterManager.getDockerAdapter().getDevelopmentEnvironmentHealth();
         const result = {
             timestamp: new Date().toISOString(),
             infrastructure: environmentHealth,
@@ -586,7 +617,7 @@ class EnvironmentMCPGateway {
     }
     async checkTimescaleDBHealth(args) {
         logger.info('Checking TimescaleDB health');
-        const databaseStatus = await this.dockerAdapter.getTimescaleDBStatus();
+        const databaseStatus = await this.adapterManager.getDockerAdapter().getTimescaleDBStatus();
         const result = {
             timestamp: new Date().toISOString(),
             database: databaseStatus
@@ -602,7 +633,7 @@ class EnvironmentMCPGateway {
     }
     async checkRedPandaHealth(args) {
         logger.info('Checking RedPanda health');
-        const messagingStatus = await this.dockerAdapter.getRedPandaStatus();
+        const messagingStatus = await this.adapterManager.getDockerAdapter().getRedPandaStatus();
         const result = {
             timestamp: new Date().toISOString(),
             messaging: messagingStatus
@@ -618,12 +649,13 @@ class EnvironmentMCPGateway {
     }
     async validateDevelopmentStack(args) {
         logger.info('Validating development stack');
+        const dockerAdapter = this.adapterManager.getDockerAdapter();
         const [databaseStatus, messagingStatus, containers] = await Promise.all([
-            this.dockerAdapter.getTimescaleDBStatus(),
-            this.dockerAdapter.getRedPandaStatus(),
-            this.dockerAdapter.listDevelopmentContainers()
+            dockerAdapter.getTimescaleDBStatus(),
+            dockerAdapter.getRedPandaStatus(),
+            dockerAdapter.listDevelopmentContainers()
         ]);
-        const environmentHealth = await this.dockerAdapter.getDevelopmentEnvironmentHealth();
+        const environmentHealth = await this.adapterManager.getDockerAdapter().getDevelopmentEnvironmentHealth();
         const result = {
             timestamp: new Date().toISOString(),
             validation: {
@@ -663,6 +695,108 @@ class EnvironmentMCPGateway {
             name: 'lucidwonks-environment-mcp-gateway',
             version: '1.0.0'
         });
+    }
+    async reloadConfiguration(args) {
+        logger.info('Force reloading configuration');
+        try {
+            this.adapterManager.forceReload();
+            const status = this.adapterManager.getStatus();
+            const result = {
+                timestamp: new Date().toISOString(),
+                action: 'configuration_reloaded',
+                reloadCount: status.reloadCount,
+                message: 'Configuration reloaded successfully',
+                adapterStatus: status.adapterStatus
+            };
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2)
+                    }
+                ]
+            };
+        }
+        catch (error) {
+            logger.error('Failed to reload configuration', { error });
+            const result = {
+                timestamp: new Date().toISOString(),
+                action: 'configuration_reload_failed',
+                error: error instanceof Error ? error.message : 'Unknown error'
+            };
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2)
+                    }
+                ]
+            };
+        }
+    }
+    async getConfigurationStatus(args) {
+        logger.info('Getting configuration status');
+        const status = this.adapterManager.getStatus();
+        const result = {
+            timestamp: new Date().toISOString(),
+            configurationManager: {
+                reloadCount: status.reloadCount,
+                isWatching: status.isWatching,
+                lastReload: status.lastReload
+            },
+            adapters: status.adapterStatus,
+            environment: Environment.getEnvironmentInfo()
+        };
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: JSON.stringify(result, null, 2)
+                }
+            ]
+        };
+    }
+    async testAdapterConfiguration(args) {
+        logger.info('Testing adapter configurations');
+        try {
+            const testResults = await this.adapterManager.testConfiguration();
+            const result = {
+                timestamp: new Date().toISOString(),
+                testResults,
+                summary: {
+                    azureDevOpsHealthy: testResults.azureDevOps.healthy,
+                    dockerHealthy: testResults.docker.healthy,
+                    allHealthy: testResults.azureDevOps.healthy && testResults.docker.healthy
+                }
+            };
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2)
+                    }
+                ]
+            };
+        }
+        catch (error) {
+            logger.error('Failed to test adapter configurations', { error });
+            const result = {
+                timestamp: new Date().toISOString(),
+                error: error instanceof Error ? error.message : 'Unknown error',
+                testResults: {
+                    azureDevOps: { healthy: false, message: 'Test failed' },
+                    docker: { healthy: false, message: 'Test failed' }
+                }
+            };
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2)
+                    }
+                ]
+            };
+        }
     }
 }
 // Start the server
