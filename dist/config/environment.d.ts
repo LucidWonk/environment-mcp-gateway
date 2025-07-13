@@ -16,6 +16,14 @@ export declare class Environment {
     static get azureDevOpsProject(): string;
     static get azureDevOpsPAT(): string | undefined;
     static get azureDevOpsApiUrl(): string;
+    static get hyperVPath(): string;
+    static get vmStoragePath(): string;
+    static get sshKeyPath(): string;
+    static get vmDefaultPassword(): string | undefined;
+    static get vmDefaultUsername(): string;
+    static get vmNetworkSwitch(): string;
+    static get vmBootTimeout(): number;
+    static get sshTimeout(): number;
     static getDevelopmentDatabaseConnectionString(): string;
     static validateEnvironment(): void;
     static getEnvironmentInfo(): Record<string, any>;

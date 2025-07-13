@@ -30,6 +30,15 @@ export class Environment {
     static get azureDevOpsProject() { return process.env.AZURE_DEVOPS_PROJECT ?? "Lucidwonks"; }
     static get azureDevOpsPAT() { return process.env.AZURE_DEVOPS_PAT; }
     static get azureDevOpsApiUrl() { return process.env.AZURE_DEVOPS_API_URL ?? "https://dev.azure.com"; }
+    // VM Management configuration
+    static get hyperVPath() { return process.env.HYPERV_PATH ?? "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"; }
+    static get vmStoragePath() { return process.env.VM_STORAGE_PATH ?? "C:\\VMs"; }
+    static get sshKeyPath() { return process.env.SSH_KEY_PATH ?? "C:\\SSH\\vm-dev-key"; }
+    static get vmDefaultPassword() { return process.env.VM_DEFAULT_PASSWORD; }
+    static get vmDefaultUsername() { return process.env.VM_DEFAULT_USERNAME ?? "developer"; }
+    static get vmNetworkSwitch() { return process.env.VM_NETWORK_SWITCH ?? "Default Switch"; }
+    static get vmBootTimeout() { return parseInt(process.env.VM_BOOT_TIMEOUT ?? "300"); }
+    static get sshTimeout() { return parseInt(process.env.SSH_TIMEOUT ?? "30"); }
     static getDevelopmentDatabaseConnectionString() {
         if (!this.dbPassword) {
             throw new Error("Database password is required (DB_PASSWORD environment variable)");
@@ -68,7 +77,15 @@ export class Environment {
             azureDevOpsOrganization: this.azureDevOpsOrganization,
             azureDevOpsProject: this.azureDevOpsProject,
             azureDevOpsApiUrl: this.azureDevOpsApiUrl,
-            azureDevOpsPATConfigured: !!this.azureDevOpsPAT
+            azureDevOpsPATConfigured: !!this.azureDevOpsPAT,
+            hyperVPath: this.hyperVPath,
+            vmStoragePath: this.vmStoragePath,
+            sshKeyPath: this.sshKeyPath,
+            vmDefaultUsername: this.vmDefaultUsername,
+            vmNetworkSwitch: this.vmNetworkSwitch,
+            vmBootTimeout: this.vmBootTimeout,
+            sshTimeout: this.sshTimeout,
+            vmDefaultPasswordConfigured: !!this.vmDefaultPassword
         };
     }
 }
