@@ -38,6 +38,16 @@ export class Environment {
     public static get azureDevOpsPAT(): string | undefined { return process.env.AZURE_DEVOPS_PAT; }
     public static get azureDevOpsApiUrl(): string { return process.env.AZURE_DEVOPS_API_URL ?? "https://dev.azure.com"; }
     
+    // VM Management configuration
+    public static get hyperVPath(): string { return process.env.HYPERV_PATH ?? "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"; }
+    public static get vmStoragePath(): string { return process.env.VM_STORAGE_PATH ?? "C:\\VMs"; }
+    public static get sshKeyPath(): string { return process.env.SSH_KEY_PATH ?? "C:\\SSH\\vm-dev-key"; }
+    public static get vmDefaultPassword(): string | undefined { return process.env.VM_DEFAULT_PASSWORD; }
+    public static get vmDefaultUsername(): string { return process.env.VM_DEFAULT_USERNAME ?? "developer"; }
+    public static get vmNetworkSwitch(): string { return process.env.VM_NETWORK_SWITCH ?? "Default Switch"; }
+    public static get vmBootTimeout(): number { return parseInt(process.env.VM_BOOT_TIMEOUT ?? "300"); }
+    public static get sshTimeout(): number { return parseInt(process.env.SSH_TIMEOUT ?? "30"); }
+    
     public static getDevelopmentDatabaseConnectionString(): string {
         if (!this.dbPassword) {
             throw new Error("Database password is required (DB_PASSWORD environment variable)");
@@ -80,7 +90,15 @@ export class Environment {
             azureDevOpsOrganization: this.azureDevOpsOrganization,
             azureDevOpsProject: this.azureDevOpsProject,
             azureDevOpsApiUrl: this.azureDevOpsApiUrl,
-            azureDevOpsPATConfigured: !!this.azureDevOpsPAT
+            azureDevOpsPATConfigured: !!this.azureDevOpsPAT,
+            hyperVPath: this.hyperVPath,
+            vmStoragePath: this.vmStoragePath,
+            sshKeyPath: this.sshKeyPath,
+            vmDefaultUsername: this.vmDefaultUsername,
+            vmNetworkSwitch: this.vmNetworkSwitch,
+            vmBootTimeout: this.vmBootTimeout,
+            sshTimeout: this.sshTimeout,
+            vmDefaultPasswordConfigured: !!this.vmDefaultPassword
         };
     }
 }
