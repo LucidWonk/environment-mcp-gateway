@@ -1,5 +1,6 @@
 import { GitAdapter } from '../adapters/git-adapter.js';
 import { GitDomainAnalyzer } from '../domain/git-domain-analyzer.js';
+import { AzureDevOpsToolRegistry } from './azure-devops-tool-registry.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../config/environment.js';
@@ -11,10 +12,18 @@ const logger = winston.createLogger({
         new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
-export class GitToolRegistry {
+export class ToolRegistry {
     gitAdapter;
+    azureDevOpsToolRegistry;
     constructor() {
         this.gitAdapter = new GitAdapter();
+        this.azureDevOpsToolRegistry = new AzureDevOpsToolRegistry();
+    }
+    getAllTools() {
+        return [
+            ...this.getGitTools(),
+            ...this.getAzureDevOpsTools()
+        ];
     }
     getGitTools() {
         return [
@@ -569,5 +578,10 @@ export class GitToolRegistry {
         const parts = filePath.split('/');
         return parts[0] || 'unknown';
     }
+    getAzureDevOpsTools() {
+        return this.azureDevOpsToolRegistry.getAzureDevOpsTools();
+    }
 }
+// Export GitToolRegistry as an alias for backward compatibility
+export const GitToolRegistry = ToolRegistry;
 //# sourceMappingURL=tool-registry.js.map

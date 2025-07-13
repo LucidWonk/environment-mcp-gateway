@@ -1,5 +1,6 @@
 import { GitAdapter } from '../adapters/git-adapter.js';
 import { GitDomainAnalyzer } from '../domain/git-domain-analyzer.js';
+import { AzureDevOpsToolRegistry } from './azure-devops-tool-registry.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../config/environment.js';
@@ -24,11 +25,20 @@ export interface ToolDefinition {
     handler: (args: any) => Promise<{ content: Array<{ type: string; text: string }> }>;
 }
 
-export class GitToolRegistry {
+export class ToolRegistry {
     private gitAdapter: GitAdapter;
+    private azureDevOpsToolRegistry: AzureDevOpsToolRegistry;
 
     constructor() {
         this.gitAdapter = new GitAdapter();
+        this.azureDevOpsToolRegistry = new AzureDevOpsToolRegistry();
+    }
+
+    public getAllTools(): ToolDefinition[] {
+        return [
+            ...this.getGitTools(),
+            ...this.getAzureDevOpsTools()
+        ];
     }
 
     public getGitTools(): ToolDefinition[] {
@@ -640,4 +650,11 @@ export class GitToolRegistry {
         const parts = filePath.split('/');
         return parts[0] || 'unknown';
     }
+
+    public getAzureDevOpsTools(): ToolDefinition[] {
+        return this.azureDevOpsToolRegistry.getAzureDevOpsTools();
+    }
 }
+
+// Export GitToolRegistry as an alias for backward compatibility
+export const GitToolRegistry = ToolRegistry;

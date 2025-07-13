@@ -9,9 +9,11 @@ export interface ToolDefinition {
         }>;
     }>;
 }
-export declare class GitToolRegistry {
+export declare class ToolRegistry {
     private gitAdapter;
+    private azureDevOpsToolRegistry;
     constructor();
+    getAllTools(): ToolDefinition[];
     getGitTools(): ToolDefinition[];
     private listBranches;
     private createFeatureBranch;
@@ -25,5 +27,7 @@ export declare class GitToolRegistry {
     private generateCommitRecommendations;
     private generateWorkflowRecommendations;
     private extractProjectFromPath;
+    getAzureDevOpsTools(): ToolDefinition[];
 }
+export declare const GitToolRegistry: typeof ToolRegistry;
 //# sourceMappingURL=tool-registry.d.ts.map

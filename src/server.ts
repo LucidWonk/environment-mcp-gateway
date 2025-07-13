@@ -11,7 +11,7 @@ import {
 import { Environment } from './config/environment.js';
 import { SolutionParser } from './infrastructure/solution-parser.js';
 import { AdapterManager } from './adapters/adapter-manager.js';
-import { GitToolRegistry } from './orchestrator/tool-registry.js';
+import { ToolRegistry } from './orchestrator/tool-registry.js';
 import winston from 'winston';
 
 // Initialize environment and logging
@@ -39,7 +39,7 @@ const logger = winston.createLogger({
 class EnvironmentMCPGateway {
     private server: Server;
     private adapterManager: AdapterManager;
-    private gitToolRegistry: GitToolRegistry;
+    private toolRegistry: ToolRegistry;
     
     constructor() {
         this.server = new Server(
@@ -55,17 +55,17 @@ class EnvironmentMCPGateway {
         );
         
         this.adapterManager = AdapterManager.getInstance();
-        this.gitToolRegistry = new GitToolRegistry();
+        this.toolRegistry = new ToolRegistry();
         this.setupHandlers();
     }
     
     private setupHandlers(): void {
         this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-            const gitTools = this.gitToolRegistry.getGitTools();
+            const allTools = this.toolRegistry.getAllTools();
             return {
                 tools: [
-                    // Git workflow tools
-                    ...gitTools.map(tool => ({
+                    // Git workflow and Azure DevOps tools
+                    ...allTools.map(tool => ({
                         name: tool.name,
                         description: tool.description,
                         inputSchema: tool.inputSchema
@@ -262,11 +262,11 @@ class EnvironmentMCPGateway {
             const { name, arguments: args } = request.params;
             
             try {
-                // Check if it's a Git tool first
-                const gitTools = this.gitToolRegistry.getGitTools();
-                const gitTool = gitTools.find(tool => tool.name === name);
-                if (gitTool) {
-                    return await gitTool.handler(args);
+                // Check if it's a tool from the tool registry (Git or Azure DevOps)
+                const allTools = this.toolRegistry.getAllTools();
+                const registryTool = allTools.find(tool => tool.name === name);
+                if (registryTool) {
+                    return await registryTool.handler(args);
                 }
                 
                 // Handle existing infrastructure tools
