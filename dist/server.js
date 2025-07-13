@@ -5,6 +5,7 @@ import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError, } f
 import { Environment } from './config/environment.js';
 import { SolutionParser } from './infrastructure/solution-parser.js';
 import { DockerAdapter } from './adapters/docker-adapter.js';
+import { GitToolRegistry } from './orchestrator/tool-registry.js';
 import winston from 'winston';
 // Initialize environment and logging
 try {
@@ -26,6 +27,7 @@ const logger = winston.createLogger({
 class EnvironmentMCPGateway {
     server;
     dockerAdapter;
+    gitToolRegistry;
     constructor() {
         this.server = new Server({
             name: 'lucidwonks-environment-mcp-gateway',
@@ -36,12 +38,21 @@ class EnvironmentMCPGateway {
             },
         });
         this.dockerAdapter = new DockerAdapter();
+        this.gitToolRegistry = new GitToolRegistry();
         this.setupHandlers();
     }
     setupHandlers() {
         this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+            const gitTools = this.gitToolRegistry.getGitTools();
             return {
                 tools: [
+                    // Git workflow tools
+                    ...gitTools.map(tool => ({
+                        name: tool.name,
+                        description: tool.description,
+                        inputSchema: tool.inputSchema
+                    })),
+                    // Existing infrastructure tools
                     {
                         name: 'analyze-solution-structure',
                         description: 'Parse and analyze the Lucidwonks solution structure, dependencies, and projects',
@@ -207,6 +218,13 @@ class EnvironmentMCPGateway {
         this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
             const { name, arguments: args } = request.params;
             try {
+                // Check if it's a Git tool first
+                const gitTools = this.gitToolRegistry.getGitTools();
+                const gitTool = gitTools.find(tool => tool.name === name);
+                if (gitTool) {
+                    return await gitTool.handler(args);
+                }
+                // Handle existing infrastructure tools
                 switch (name) {
                     case 'analyze-solution-structure':
                         return await this.analyzeSolutionStructure(args);
