@@ -1,10 +1,15 @@
 import { config } from 'dotenv';
-import { join, dirname } from 'path';
+import { join, resolve } from 'path';
 import { fileURLToPath } from 'url';
-// Load environment variables from .env.development in parent directory
+import { dirname } from 'path';
+// Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const envPath = join(__dirname, '../../../.env.development');
+// Load environment variables from .env.development in parent directory
+// Use resolve to get absolute path - handle both src and dist directories
+const projectRoot = resolve(__dirname, '..', '..', '..');
+const envPath = join(projectRoot, '.env.development');
+console.log(`Loading environment from: ${envPath}`);
 config({ path: envPath });
 export class Environment {
     // Database - development database configuration
@@ -39,6 +44,11 @@ export class Environment {
     static get vmNetworkSwitch() { return process.env.VM_NETWORK_SWITCH ?? "Default Switch"; }
     static get vmBootTimeout() { return parseInt(process.env.VM_BOOT_TIMEOUT ?? "300"); }
     static get sshTimeout() { return parseInt(process.env.SSH_TIMEOUT ?? "30"); }
+    // Hyper-V Host configuration
+    static get hyperVHostIP() { return process.env.HYPER_V_HOST_IP ?? "localhost"; }
+    static get hyperVHostUser() { return process.env.HYPER_V_HOST_USER ?? "Administrator"; }
+    static get hyperVHostAuthMethod() { return process.env.HYPER_V_HOST_AUTH_METHOD ?? "powershell-remoting"; }
+    static get hyperVHostCredentialPath() { return process.env.HYPER_V_HOST_CREDENTIAL_PATH; }
     static getDevelopmentDatabaseConnectionString() {
         if (!this.dbPassword) {
             throw new Error("Database password is required (DB_PASSWORD environment variable)");
@@ -59,6 +69,41 @@ export class Environment {
         if (missing.length > 0) {
             throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
         }
+        // Validate Hyper-V host configuration
+        this.validateHyperVConfiguration();
+    }
+    static validateHyperVConfiguration() {
+        const requiredHyperVVars = [
+            'HYPER_V_HOST_IP',
+            'HYPER_V_HOST_USER'
+        ];
+        const allHyperVVars = [
+            'HYPER_V_HOST_IP',
+            'HYPER_V_HOST_USER',
+            'HYPER_V_HOST_AUTH_METHOD',
+            'HYPER_V_HOST_CREDENTIAL_PATH'
+        ];
+        // Check if any Hyper-V variables are set (indicating Hyper-V usage)
+        const hyperVVarsSet = allHyperVVars.some(varName => process.env[varName]);
+        if (hyperVVarsSet) {
+            const missingHyperV = requiredHyperVVars.filter(varName => !process.env[varName]);
+            if (missingHyperV.length > 0) {
+                throw new Error(`Missing required Hyper-V environment variables: ${missingHyperV.join(', ')}`);
+            }
+            // Validate credential path if using credential-based auth
+            if (this.hyperVHostAuthMethod === 'powershell-remoting' && !this.hyperVHostCredentialPath) {
+                throw new Error('HYPER_V_HOST_CREDENTIAL_PATH is required when using powershell-remoting authentication');
+            }
+        }
+    }
+    static getHyperVHostConnectionString() {
+        return `${this.hyperVHostUser}@${this.hyperVHostIP}`;
+    }
+    static getHyperVCredentialPath() {
+        if (!this.hyperVHostCredentialPath) {
+            throw new Error("Hyper-V credential path is not configured (HYPER_V_HOST_CREDENTIAL_PATH environment variable)");
+        }
+        return this.hyperVHostCredentialPath;
     }
     static getEnvironmentInfo() {
         return {
@@ -85,7 +130,11 @@ export class Environment {
             vmNetworkSwitch: this.vmNetworkSwitch,
             vmBootTimeout: this.vmBootTimeout,
             sshTimeout: this.sshTimeout,
-            vmDefaultPasswordConfigured: !!this.vmDefaultPassword
+            vmDefaultPasswordConfigured: !!this.vmDefaultPassword,
+            hyperVHostIP: this.hyperVHostIP,
+            hyperVHostUser: this.hyperVHostUser,
+            hyperVHostAuthMethod: this.hyperVHostAuthMethod,
+            hyperVHostCredentialPathConfigured: !!this.hyperVHostCredentialPath
         };
     }
 }

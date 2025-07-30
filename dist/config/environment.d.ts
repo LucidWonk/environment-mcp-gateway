@@ -24,8 +24,15 @@ export declare class Environment {
     static get vmNetworkSwitch(): string;
     static get vmBootTimeout(): number;
     static get sshTimeout(): number;
+    static get hyperVHostIP(): string;
+    static get hyperVHostUser(): string;
+    static get hyperVHostAuthMethod(): string;
+    static get hyperVHostCredentialPath(): string | undefined;
     static getDevelopmentDatabaseConnectionString(): string;
     static validateEnvironment(): void;
+    static validateHyperVConfiguration(): void;
+    static getHyperVHostConnectionString(): string;
+    static getHyperVCredentialPath(): string;
     static getEnvironmentInfo(): Record<string, any>;
 }
 //# sourceMappingURL=environment.d.ts.map

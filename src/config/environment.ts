@@ -1,8 +1,17 @@
 import { config } from 'dotenv';
-import { join } from 'path';
+import { join, resolve } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load environment variables from .env.development in parent directory
-const envPath = join(__dirname, '../../../.env.development');
+// Use resolve to get absolute path - handle both src and dist directories
+const projectRoot = resolve(__dirname, '..', '..', '..');
+const envPath = join(projectRoot, '.env.development');
+console.log(`Loading environment from: ${envPath}`);
 config({ path: envPath });
 
 export class Environment {
