@@ -1,8 +1,7 @@
 import { spawn } from 'child_process';
-import { promises as fs } from 'fs';
 import { join } from 'path';
 import winston from 'winston';
-import { Environment } from '../config/environment.js';
+import { Environment } from '../domain/config/environment';
 
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,

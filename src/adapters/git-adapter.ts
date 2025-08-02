@@ -1,7 +1,6 @@
 import { spawn } from 'child_process';
-import { promisify } from 'util';
 import winston from 'winston';
-import { Environment } from '../config/environment.js';
+import { Environment } from '../domain/config/environment';
 
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
@@ -234,11 +233,11 @@ export class GitAdapter {
                     
                     let status: CommitFileInfo['status'] = 'modified';
                     switch (statusChar) {
-                        case 'A': status = 'added'; break;
-                        case 'M': status = 'modified'; break;
-                        case 'D': status = 'deleted'; break;
-                        case 'R': status = 'renamed'; break;
-                        case 'C': status = 'copied'; break;
+                    case 'A': status = 'added'; break;
+                    case 'M': status = 'modified'; break;
+                    case 'D': status = 'deleted'; break;
+                    case 'R': status = 'renamed'; break;
+                    case 'C': status = 'copied'; break;
                     }
 
                     files.push({
@@ -287,11 +286,11 @@ export class GitAdapter {
                 
                 let status: CommitFileInfo['status'] = 'modified';
                 switch (statusChar) {
-                    case 'A': status = 'added'; break;
-                    case 'M': status = 'modified'; break;
-                    case 'D': status = 'deleted'; break;
-                    case 'R': status = 'renamed'; break;
-                    case 'C': status = 'copied'; break;
+                case 'A': status = 'added'; break;
+                case 'M': status = 'modified'; break;
+                case 'D': status = 'deleted'; break;
+                case 'R': status = 'renamed'; break;
+                case 'C': status = 'copied'; break;
                 }
 
                 files.push({
@@ -392,11 +391,11 @@ export class GitAdapter {
                 
                 let status: CommitFileInfo['status'] = 'modified';
                 switch (statusChar) {
-                    case 'A': status = 'added'; break;
-                    case 'M': status = 'modified'; break;
-                    case 'D': status = 'deleted'; break;
-                    case 'R': status = 'renamed'; break;
-                    case 'C': status = 'copied'; break;
+                case 'A': status = 'added'; break;
+                case 'M': status = 'modified'; break;
+                case 'D': status = 'deleted'; break;
+                case 'R': status = 'renamed'; break;
+                case 'C': status = 'copied'; break;
                 }
 
                 previewChanges.push({

@@ -3,66 +3,73 @@ import { join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-// Get the directory of the current module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Get the directory of the current module - handle Jest test environment
+let __dirname: string;
+try {
+    // Try to use import.meta.url if available (Node.js ES modules)
+    const __filename = fileURLToPath(import.meta.url);
+    __dirname = dirname(__filename);
+} catch {
+    // Fallback for Jest/CommonJS environment
+    __dirname = process.cwd();
+}
 
 // Load environment variables from .env.development in parent directory
 // Use resolve to get absolute path - handle both src and dist directories
 const projectRoot = resolve(__dirname, '..', '..', '..');
 const envPath = join(projectRoot, '.env.development');
-console.log(`Loading environment from: ${envPath}`);
+console.info(`Loading environment from: ${envPath}`);
 config({ path: envPath });
 
 export class Environment {
     // Database - development database configuration
-    public static get dbHost(): string { return process.env.DB_HOST ?? "localhost"; }
+    public static get dbHost(): string { return process.env.DB_HOST ?? 'localhost'; }
     public static get dbPassword(): string | undefined { return process.env.DB_PASSWORD; }
-    public static get dbPort(): number { return parseInt(process.env.DB_PORT ?? "5432"); }
-    public static get database(): string { return process.env.TIMESCALE_DATABASE ?? "pricehistorydb"; }
-    public static get username(): string { return process.env.TIMESCALE_USERNAME ?? "postgres"; }
+    public static get dbPort(): number { return parseInt(process.env.DB_PORT ?? '5432'); }
+    public static get database(): string { return process.env.TIMESCALE_DATABASE ?? 'pricehistorydb'; }
+    public static get username(): string { return process.env.TIMESCALE_USERNAME ?? 'postgres'; }
     
     // Git configuration for development workflow
-    public static get gitRepoPath(): string { return process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks"; }
+    public static get gitRepoPath(): string { return process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks'; }
     public static get gitUserName(): string | undefined { return process.env.GIT_USER_NAME; }
     public static get gitUserEmail(): string | undefined { return process.env.GIT_USER_EMAIL; }
     
     // MCP server configuration
-    public static get mcpServerPort(): number { return parseInt(process.env.MCP_SERVER_PORT ?? "3001"); }
-    public static get mcpLogLevel(): string { return process.env.MCP_LOG_LEVEL ?? "info"; }
+    public static get mcpServerPort(): number { return parseInt(process.env.MCP_SERVER_PORT ?? '3001'); }
+    public static get mcpLogLevel(): string { return process.env.MCP_LOG_LEVEL ?? 'info'; }
     
     // Solution and project paths
-    public static get solutionPath(): string { return join(process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks", "Lucidwonks.sln"); }
-    public static get projectRoot(): string { return process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks"; }
+    public static get solutionPath(): string { return join(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'Lucidwonks.sln'); }
+    public static get projectRoot(): string { return process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks'; }
     
     // Docker configuration
-    public static get dockerComposeFile(): string { return join(process.env.GIT_REPO_PATH ?? "/mnt/m/Projects/Lucidwonks", "docker-compose.yml"); }
+    public static get dockerComposeFile(): string { return join(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'docker-compose.yml'); }
     
     // Azure DevOps configuration
     public static get azureDevOpsOrganization(): string | undefined { return process.env.AZURE_DEVOPS_ORGANIZATION; }
-    public static get azureDevOpsProject(): string { return process.env.AZURE_DEVOPS_PROJECT ?? "Lucidwonks"; }
+    public static get azureDevOpsProject(): string { return process.env.AZURE_DEVOPS_PROJECT ?? 'Lucidwonks'; }
     public static get azureDevOpsPAT(): string | undefined { return process.env.AZURE_DEVOPS_PAT; }
-    public static get azureDevOpsApiUrl(): string { return process.env.AZURE_DEVOPS_API_URL ?? "https://dev.azure.com"; }
+    public static get azureDevOpsApiUrl(): string { return process.env.AZURE_DEVOPS_API_URL ?? 'https://dev.azure.com'; }
     
     // VM Management configuration
-    public static get hyperVPath(): string { return process.env.HYPERV_PATH ?? "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"; }
-    public static get vmStoragePath(): string { return process.env.VM_STORAGE_PATH ?? "C:\\VMs"; }
-    public static get sshKeyPath(): string { return process.env.SSH_KEY_PATH ?? "C:\\SSH\\vm-dev-key"; }
+    public static get hyperVPath(): string { return process.env.HYPERV_PATH ?? 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'; }
+    public static get vmStoragePath(): string { return process.env.VM_STORAGE_PATH ?? 'C:\\VMs'; }
+    public static get sshKeyPath(): string { return process.env.SSH_KEY_PATH ?? 'C:\\SSH\\vm-dev-key'; }
     public static get vmDefaultPassword(): string | undefined { return process.env.VM_DEFAULT_PASSWORD; }
-    public static get vmDefaultUsername(): string { return process.env.VM_DEFAULT_USERNAME ?? "developer"; }
-    public static get vmNetworkSwitch(): string { return process.env.VM_NETWORK_SWITCH ?? "Default Switch"; }
-    public static get vmBootTimeout(): number { return parseInt(process.env.VM_BOOT_TIMEOUT ?? "300"); }
-    public static get sshTimeout(): number { return parseInt(process.env.SSH_TIMEOUT ?? "30"); }
+    public static get vmDefaultUsername(): string { return process.env.VM_DEFAULT_USERNAME ?? 'developer'; }
+    public static get vmNetworkSwitch(): string { return process.env.VM_NETWORK_SWITCH ?? 'Default Switch'; }
+    public static get vmBootTimeout(): number { return parseInt(process.env.VM_BOOT_TIMEOUT ?? '300'); }
+    public static get sshTimeout(): number { return parseInt(process.env.SSH_TIMEOUT ?? '30'); }
     
     // Hyper-V Host configuration
-    public static get hyperVHostIP(): string { return process.env.HYPER_V_HOST_IP ?? "localhost"; }
-    public static get hyperVHostUser(): string { return process.env.HYPER_V_HOST_USER ?? "Administrator"; }
-    public static get hyperVHostAuthMethod(): string { return process.env.HYPER_V_HOST_AUTH_METHOD ?? "powershell-remoting"; }
+    public static get hyperVHostIP(): string { return process.env.HYPER_V_HOST_IP ?? 'localhost'; }
+    public static get hyperVHostUser(): string { return process.env.HYPER_V_HOST_USER ?? 'Administrator'; }
+    public static get hyperVHostAuthMethod(): string { return process.env.HYPER_V_HOST_AUTH_METHOD ?? 'powershell-remoting'; }
     public static get hyperVHostCredentialPath(): string | undefined { return process.env.HYPER_V_HOST_CREDENTIAL_PATH; }
     
     public static getDevelopmentDatabaseConnectionString(): string {
         if (!this.dbPassword) {
-            throw new Error("Database password is required (DB_PASSWORD environment variable)");
+            throw new Error('Database password is required (DB_PASSWORD environment variable)');
         }
         return `postgresql://${this.username}:${this.dbPassword}@${this.dbHost}:${this.dbPort}/${this.database}`;
     }
@@ -123,7 +130,7 @@ export class Environment {
     
     public static getHyperVCredentialPath(): string {
         if (!this.hyperVHostCredentialPath) {
-            throw new Error("Hyper-V credential path is not configured (HYPER_V_HOST_CREDENTIAL_PATH environment variable)");
+            throw new Error('Hyper-V credential path is not configured (HYPER_V_HOST_CREDENTIAL_PATH environment variable)');
         }
         return this.hyperVHostCredentialPath;
     }

@@ -2,7 +2,7 @@ import { AzureDevOpsAdapter } from '../adapters/azure-devops-adapter.js';
 import { VMManagementAdapter } from '../adapters/vm-management-adapter.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
-import { Environment } from '../config/environment.js';
+import { Environment } from '../domain/config/environment';
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
     format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
@@ -1097,7 +1097,7 @@ export class AzureDevOpsToolRegistry {
                         `Use get-pipeline-status with pipelineId: ${pipelineId}`,
                     logMonitoring: targetEnvironment === 'vm' ?
                         `Use vm-logs with vmName: ${vmName}` :
-                        `Use get-build-logs with runId from pipeline status`,
+                        'Use get-build-logs with runId from pipeline status',
                     estimatedCompletionTime: targetEnvironment === 'azure' ? '10-20 minutes' : '3-5 minutes'
                 },
                 nextSteps: [
@@ -1285,7 +1285,7 @@ export class AzureDevOpsToolRegistry {
                             differences: composeDiff.differences
                         });
                         if (!dryRun) {
-                            syncResult.changes.push(`Updated Docker Compose configuration`);
+                            syncResult.changes.push('Updated Docker Compose configuration');
                         }
                     }
                 }

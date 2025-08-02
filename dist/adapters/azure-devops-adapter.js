@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { Environment } from '../config/environment.js';
+import { Environment } from '../domain/config/environment';
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
     format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
@@ -366,7 +366,7 @@ export class AzureDevOpsAdapter {
             logger.info('Checking Azure DevOps health');
             // Test connection by getting project info
             const projectEndpoint = `/project?api-version=${this.apiVersion}`;
-            const projectInfo = await this.makeRequest(projectEndpoint);
+            const _projectInfo = await this.makeRequest(projectEndpoint);
             // Get pipelines count
             const pipelinesResponse = await this.makeRequest(`/pipelines?api-version=${this.apiVersion}&$top=1`);
             // Get active runs count

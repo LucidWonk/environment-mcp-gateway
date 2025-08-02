@@ -25,7 +25,7 @@ jest.mock('winston', () => ({
 }));
 
 // Mock environment module
-jest.mock('../../src/config/environment', () => ({
+jest.mock('../../src/domain/config/environment', () => ({
     Environment: {
         azureDevOpsOrganization: 'test-org',
         azureDevOpsProject: 'test-project',

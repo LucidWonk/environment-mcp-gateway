@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
 import winston from 'winston';
-import { Environment } from '../config/environment.js';
+import { Environment } from '../domain/config/environment';
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
     format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),

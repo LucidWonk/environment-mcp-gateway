@@ -1,13 +1,3 @@
-import winston from 'winston';
-import { Environment } from '../config/environment.js';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
-    ]
-});
 export var TradingDomain;
 (function (TradingDomain) {
     TradingDomain["ANALYSIS"] = "Analysis";
@@ -295,7 +285,7 @@ export class GitDomainAnalyzer {
         // Return first directory as project name
         return pathParts[0] || null;
     }
-    static assessBusinessImpact(domains, projects, commit) {
+    static assessBusinessImpact(domains, _projects, _commit) {
         if (domains.includes(TradingDomain.ANALYSIS)) {
             return 'High - Core trading algorithm changes may affect strategy performance';
         }
@@ -316,7 +306,7 @@ export class GitDomainAnalyzer {
         }
         return 'Unknown - Unable to assess business impact';
     }
-    static assessRiskLevel(domains, projects, commit) {
+    static assessRiskLevel(domains, _projects, _commit) {
         // Cross-domain changes are higher risk
         if (domains.length > 2) {
             return 'high';
@@ -327,11 +317,11 @@ export class GitDomainAnalyzer {
         }
         // Data or messaging changes with multiple files
         if ((domains.includes(TradingDomain.DATA) || domains.includes(TradingDomain.MESSAGING)) &&
-            commit.files.length > 5) {
+            _commit.files.length > 5) {
             return 'medium';
         }
         // Multiple project changes
-        if (projects.length > 2) {
+        if (_projects.length > 2) {
             return 'medium';
         }
         return 'low';

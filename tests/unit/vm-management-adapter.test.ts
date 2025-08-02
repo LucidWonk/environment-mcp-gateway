@@ -36,7 +36,7 @@ jest.mock('winston', () => ({
 }));
 
 // Mock environment module
-jest.mock('../../src/config/environment', () => ({
+jest.mock('../../src/domain/config/environment', () => ({
     Environment: {
         mcpLogLevel: 'info',
         hyperVPath: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
@@ -289,7 +289,7 @@ describe('VM Management Adapter Tests', () => {
 
         test('should have consistent log level configuration pattern', () => {
             // Verify Environment configuration is used for log level
-            const Environment = require('../../src/config/environment').Environment;
+            const Environment = require('../../src/domain/config/environment').Environment;
             expect(Environment.mcpLogLevel).toBe('info');
         });
 
@@ -494,7 +494,7 @@ describe('VM Management Adapter Tests', () => {
 
         test('should use similar configuration patterns as other adapters', () => {
             // Environment configuration should follow established patterns
-            const Environment = require('../../src/config/environment').Environment;
+            const Environment = require('../../src/domain/config/environment').Environment;
             expect(Environment.mcpLogLevel).toBeDefined();
             expect(Environment.vmStoragePath).toBeDefined();
             expect(Environment.sshKeyPath).toBeDefined();

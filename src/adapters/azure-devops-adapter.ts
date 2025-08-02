@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { Environment } from '../config/environment.js';
+import { Environment } from '../domain/config/environment';
 
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
@@ -530,7 +530,7 @@ export class AzureDevOpsAdapter {
 
             // Test connection by getting project info
             const projectEndpoint = `/project?api-version=${this.apiVersion}`;
-            const projectInfo = await this.makeRequest<any>(projectEndpoint);
+            const _projectInfo = await this.makeRequest<any>(projectEndpoint);
 
             // Get pipelines count
             const pipelinesResponse = await this.makeRequest<{ count: number }>(

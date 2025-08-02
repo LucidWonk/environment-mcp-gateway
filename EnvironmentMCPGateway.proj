@@ -6,6 +6,10 @@
     <OutputType>Library</OutputType>
     <ProjectGuid>{E8F5A7B2-4C3D-4F6E-9A8B-2D5C8E7F9A1B}</ProjectGuid>
     
+    <!-- Jest Test Discovery Configuration -->
+    <JavaScriptTestFramework>Jest</JavaScriptTestFramework>
+    <JavaScriptTestRoot>tests\</JavaScriptTestRoot>
+    
     <!-- Disable .NET specific outputs -->
     <UseAppHost>false</UseAppHost>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -36,16 +40,37 @@
   <!-- Define source files for Visual Studio -->
   <ItemGroup>
     <Content Include="package.json" />
+    <Content Include="package-lock.json" />
     <Content Include="tsconfig.json" />
+    <Content Include="jest.config.js" />
+    <Content Include="eslint.config.js" />
     <Content Include="README.md" />
+    <Content Include="INTEGRATION-SUMMARY.md" />
+    <Content Include="FINAL-VALIDATION-SUMMARY.md" />
+    <Content Include="SERVER-REGISTRATION-STATUS.md" />
+    <Content Include="SERVER-TEST-STRATEGY-VALIDATION.md" />
+    <Content Include="TEST-STRATEGY-VALIDATION.md" />
     <Content Include=".env.development" Condition="Exists('.env.development')" />
     <Content Include="mcp-server-config.json" />
+    <Content Include="demo-integration.js" />
+    <Content Include="server-tool-summary.js" />
+    <Content Include="test-mcp.js" />
+    <Content Include="test-simple.js" />
+    <Content Include="scripts\clean.cjs" />
   </ItemGroup>
 
   <ItemGroup>
     <TypeScriptCompile Include="src\**\*.ts" />
+    <TypeScriptCompile Include="tests\**\*.ts" />
     <None Include="src\**\*.js" />
     <None Include="src\**\*.json" />
+    <None Include="tests\setup.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="docker\Dockerfile" />
+    <Content Include="docker\docker-compose.yml" />
+    <Content Include="environment-mcp-gateway.log" Condition="Exists('environment-mcp-gateway.log')" />
   </ItemGroup>
 
   <ItemGroup>
@@ -59,6 +84,7 @@
     <Folder Include="tests\integration\" />
     <Folder Include="dist\" />
     <Folder Include="docker\" />
+    <Folder Include="scripts\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -68,7 +94,7 @@
   <!-- npm package restore target -->
   <Target Name="NpmInstall" BeforeTargets="Build">
     <Message Text="Installing npm dependencies for EnvironmentMCPGateway..." Importance="high" />
-    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="false" />
+    <Exec Command="npm install --legacy-peer-deps" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="false" />
   </Target>
 
   <!-- TypeScript build target -->
@@ -80,15 +106,22 @@
   <!-- Clean target for npm and TypeScript artifacts -->
   <Target Name="NpmClean" BeforeTargets="Clean">
     <Message Text="Cleaning EnvironmentMCPGateway build artifacts..." Importance="high" />
+    <!-- Use MSBuild's RemoveDir directly instead of npm script -->
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\dist" Condition="Exists('$(MSBuildProjectDirectory)\dist')" ContinueOnError="true" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\node_modules" Condition="Exists('$(MSBuildProjectDirectory)\node_modules')" ContinueOnError="true" />
+    <!-- Also try npm clean as backup -->
     <Exec Command="npm run clean" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="true" />
-    <RemoveDir Directories="node_modules" Condition="Exists('node_modules')" ContinueOnError="true" />
-    <RemoveDir Directories="dist" Condition="Exists('dist')" ContinueOnError="true" />
   </Target>
 
   <!-- Test target -->
   <Target Name="NpmTest" AfterTargets="Build" Condition="'$(RunTests)' == 'true'">
     <Message Text="Running tests for EnvironmentMCPGateway..." Importance="high" />
     <Exec Command="npm test" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="false" />
+  </Target>
+
+  <!-- Visual Studio Test Integration -->
+  <Target Name="VSTestLogger" AfterTargets="NpmTest">
+    <Message Text="TypeScript/Jest tests completed. See npm output for results." Importance="high" />
   </Target>
 
   <!-- Linting target -->

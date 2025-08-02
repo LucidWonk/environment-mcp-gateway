@@ -69,7 +69,7 @@ jest.mock('winston', () => ({
 }));
 
 // Mock environment
-jest.mock('../../src/config/environment', () => ({
+jest.mock('../../src/domain/config/environment', () => ({
     Environment: {
         mcpLogLevel: 'info'
     }

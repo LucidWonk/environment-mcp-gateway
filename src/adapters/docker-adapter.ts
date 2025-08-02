@@ -1,7 +1,6 @@
 import { spawn } from 'child_process';
-import { promisify } from 'util';
 import winston from 'winston';
-import { Environment } from '../config/environment.js';
+import { Environment } from '../domain/config/environment';
 
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,

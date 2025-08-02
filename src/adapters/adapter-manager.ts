@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { ConfigurationManager, ConfigurationChangeEvent } from '../config/configuration-manager.js';
+import { ConfigurationManager, ConfigurationChangeEvent } from '../domain/config/configuration-manager';
 import { AzureDevOpsAdapter } from './azure-devops-adapter.js';
 import { DockerAdapter } from './docker-adapter.js';
 
@@ -133,7 +133,7 @@ export class AdapterManager {
                 configured: boolean;
             };
         };
-    } {
+        } {
         const azureDevOps = this.adapters.azureDevOps;
         
         return {

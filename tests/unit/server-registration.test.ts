@@ -27,7 +27,7 @@ jest.mock('@modelcontextprotocol/sdk/types.js', () => ({
 }));
 
 // Mock Environment module
-jest.mock('../../src/config/environment', () => ({
+jest.mock('../../src/domain/config/environment', () => ({
     Environment: {
         validateEnvironment: jest.fn(),
         mcpLogLevel: 'info',

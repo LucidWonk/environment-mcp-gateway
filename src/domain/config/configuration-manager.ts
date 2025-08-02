@@ -275,7 +275,7 @@ export class ConfigurationManager {
         listenerCount: number;
         lastReload: Date;
         configuredVariables: string[];
-    } {
+        } {
         return {
             envFilePath: this.envFilePath,
             isWatching: this.isWatching,

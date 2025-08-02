@@ -1,19 +1,4 @@
-import { CommitInfo, CommitFileInfo, DomainImpact, BranchInfo } from '../adapters/git-adapter.js';
-import winston from 'winston';
-import { Environment } from '../config/environment.js';
-
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
-    ]
-});
+import { CommitInfo, BranchInfo } from '../adapters/git-adapter.js';
 
 export enum TradingDomain {
     ANALYSIS = 'Analysis',
@@ -348,7 +333,7 @@ export class GitDomainAnalyzer {
         return pathParts[0] || null;
     }
 
-    private static assessBusinessImpact(domains: TradingDomain[], projects: string[], commit: CommitInfo): string {
+    private static assessBusinessImpact(domains: TradingDomain[], _projects: string[], _commit: CommitInfo): string {
         if (domains.includes(TradingDomain.ANALYSIS)) {
             return 'High - Core trading algorithm changes may affect strategy performance';
         }
@@ -376,7 +361,7 @@ export class GitDomainAnalyzer {
         return 'Unknown - Unable to assess business impact';
     }
 
-    private static assessRiskLevel(domains: TradingDomain[], projects: string[], commit: CommitInfo): 'low' | 'medium' | 'high' {
+    private static assessRiskLevel(domains: TradingDomain[], _projects: string[], _commit: CommitInfo): 'low' | 'medium' | 'high' {
         // Cross-domain changes are higher risk
         if (domains.length > 2) {
             return 'high';
@@ -389,12 +374,12 @@ export class GitDomainAnalyzer {
         
         // Data or messaging changes with multiple files
         if ((domains.includes(TradingDomain.DATA) || domains.includes(TradingDomain.MESSAGING)) && 
-            commit.files.length > 5) {
+            _commit.files.length > 5) {
             return 'medium';
         }
         
         // Multiple project changes
-        if (projects.length > 2) {
+        if (_projects.length > 2) {
             return 'medium';
         }
         

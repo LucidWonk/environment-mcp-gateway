@@ -6,9 +6,9 @@ import {
     CallToolRequestSchema,
     ErrorCode,
     ListToolsRequestSchema,
-    McpError,
+    McpError
 } from '@modelcontextprotocol/sdk/types.js';
-import { Environment } from './config/environment.js';
+import { Environment } from './domain/config/environment';
 import { SolutionParser } from './infrastructure/solution-parser.js';
 import { AdapterManager } from './adapters/adapter-manager.js';
 import { ToolRegistry } from './orchestrator/tool-registry.js';
@@ -45,12 +45,12 @@ class EnvironmentMCPGateway {
         this.server = new Server(
             {
                 name: 'lucidwonks-environment-mcp-gateway',
-                version: '1.0.0',
+                version: '1.0.0'
             },
             {
                 capabilities: {
-                    tools: {},
-                },
+                    tools: {}
+                }
             }
         );
         
@@ -271,41 +271,41 @@ class EnvironmentMCPGateway {
                 
                 // Handle existing infrastructure tools
                 switch (name) {
-                    case 'analyze-solution-structure':
-                        return await this.analyzeSolutionStructure(args);
-                    case 'get-development-environment-status':
-                        return await this.getDevelopmentEnvironmentStatus(args);
-                    case 'validate-build-configuration':
-                        return await this.validateBuildConfiguration(args);
-                    case 'get-project-dependencies':
-                        return await this.getProjectDependencies(args);
-                    case 'list-development-containers':
-                        return await this.listDevelopmentContainers(args);
-                    case 'get-container-health':
-                        return await this.getContainerHealth(args);
-                    case 'get-container-logs':
-                        return await this.getContainerLogs(args);
-                    case 'restart-development-service':
-                        return await this.restartDevelopmentService(args);
-                    case 'analyze-development-infrastructure':
-                        return await this.analyzeDevelopmentInfrastructure(args);
-                    case 'check-timescaledb-health':
-                        return await this.checkTimescaleDBHealth(args);
-                    case 'check-redpanda-health':
-                        return await this.checkRedPandaHealth(args);
-                    case 'validate-development-stack':
-                        return await this.validateDevelopmentStack(args);
-                    case 'reload-configuration':
-                        return await this.reloadConfiguration(args);
-                    case 'get-configuration-status':
-                        return await this.getConfigurationStatus(args);
-                    case 'test-adapter-configuration':
-                        return await this.testAdapterConfiguration(args);
-                    default:
-                        throw new McpError(
-                            ErrorCode.MethodNotFound,
-                            `Unknown tool: ${name}`
-                        );
+                case 'analyze-solution-structure':
+                    return await this.analyzeSolutionStructure(args);
+                case 'get-development-environment-status':
+                    return await this.getDevelopmentEnvironmentStatus(args);
+                case 'validate-build-configuration':
+                    return await this.validateBuildConfiguration(args);
+                case 'get-project-dependencies':
+                    return await this.getProjectDependencies(args);
+                case 'list-development-containers':
+                    return await this.listDevelopmentContainers(args);
+                case 'get-container-health':
+                    return await this.getContainerHealth(args);
+                case 'get-container-logs':
+                    return await this.getContainerLogs(args);
+                case 'restart-development-service':
+                    return await this.restartDevelopmentService(args);
+                case 'analyze-development-infrastructure':
+                    return await this.analyzeDevelopmentInfrastructure(args);
+                case 'check-timescaledb-health':
+                    return await this.checkTimescaleDBHealth(args);
+                case 'check-redpanda-health':
+                    return await this.checkRedPandaHealth(args);
+                case 'validate-development-stack':
+                    return await this.validateDevelopmentStack(args);
+                case 'reload-configuration':
+                    return await this.reloadConfiguration(args);
+                case 'get-configuration-status':
+                    return await this.getConfigurationStatus(args);
+                case 'test-adapter-configuration':
+                    return await this.testAdapterConfiguration(args);
+                default:
+                    throw new McpError(
+                        ErrorCode.MethodNotFound,
+                        `Unknown tool: ${name}`
+                    );
                 }
             } catch (error) {
                 logger.error('Tool execution failed', { tool: name, error });
@@ -550,7 +550,7 @@ class EnvironmentMCPGateway {
         }
     }
     
-    private async listDevelopmentContainers(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+    private async listDevelopmentContainers(_args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
         logger.info('Listing development containers');
         
         const containers = await this.adapterManager.getDockerAdapter().listDevelopmentContainers();
@@ -669,7 +669,7 @@ class EnvironmentMCPGateway {
         };
     }
     
-    private async analyzeDevelopmentInfrastructure(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+    private async analyzeDevelopmentInfrastructure(_args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
         logger.info('Analyzing development infrastructure');
         
         const environmentHealth = await this.adapterManager.getDockerAdapter().getDevelopmentEnvironmentHealth();
@@ -694,7 +694,7 @@ class EnvironmentMCPGateway {
         };
     }
     
-    private async checkTimescaleDBHealth(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+    private async checkTimescaleDBHealth(_args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
         logger.info('Checking TimescaleDB health');
         
         const databaseStatus = await this.adapterManager.getDockerAdapter().getTimescaleDBStatus();
@@ -714,7 +714,7 @@ class EnvironmentMCPGateway {
         };
     }
     
-    private async checkRedPandaHealth(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+    private async checkRedPandaHealth(_args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
         logger.info('Checking RedPanda health');
         
         const messagingStatus = await this.adapterManager.getDockerAdapter().getRedPandaStatus();
@@ -734,7 +734,7 @@ class EnvironmentMCPGateway {
         };
     }
     
-    private async validateDevelopmentStack(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+    private async validateDevelopmentStack(_args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
         logger.info('Validating development stack');
         
         const dockerAdapter = this.adapterManager.getDockerAdapter();
@@ -790,7 +790,7 @@ class EnvironmentMCPGateway {
         });
     }
 
-    private async reloadConfiguration(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+    private async reloadConfiguration(_args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
         logger.info('Force reloading configuration');
         
         try {
@@ -834,7 +834,7 @@ class EnvironmentMCPGateway {
         }
     }
 
-    private async getConfigurationStatus(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+    private async getConfigurationStatus(_args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
         logger.info('Getting configuration status');
         
         const status = this.adapterManager.getStatus();
@@ -860,7 +860,7 @@ class EnvironmentMCPGateway {
         };
     }
 
-    private async testAdapterConfiguration(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+    private async testAdapterConfiguration(_args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
         logger.info('Testing adapter configurations');
         
         try {

@@ -3,7 +3,7 @@ import { GitDomainAnalyzer } from '../domain/git-domain-analyzer.js';
 import { AzureDevOpsToolRegistry } from './azure-devops-tool-registry.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
-import { Environment } from '../config/environment.js';
+import { Environment } from '../domain/config/environment';
 
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
@@ -465,7 +465,7 @@ export class ToolRegistry {
                     },
                     message: mergeResult.canMerge ? 
                         `Successfully merged ${sourceBranch} into ${targetBranch}` : 
-                        `Merge failed due to conflicts`,
+                        'Merge failed due to conflicts',
                     nextSteps: mergeResult.canMerge ? [
                         'Verify merge was successful',
                         'Run tests to ensure functionality',
@@ -564,7 +564,7 @@ export class ToolRegistry {
                 },
                 validation: {
                     overallStatus: validation.issues.length === 0 ? 'PASS' : 
-                                  validation.issues.every(i => i.type !== 'error') ? 'PASS_WITH_WARNINGS' : 'FAIL',
+                        validation.issues.every(i => i.type !== 'error') ? 'PASS_WITH_WARNINGS' : 'FAIL',
                     issues: validation.issues,
                     strictMode: strict
                 },

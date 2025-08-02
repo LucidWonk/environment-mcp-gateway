@@ -1,4 +1,4 @@
-import { Environment } from '../../src/config/environment';
+import { Environment } from '../../src/domain/config/environment';
 
 describe('Environment Hyper-V Configuration Tests', () => {
     let originalEnv: NodeJS.ProcessEnv;
