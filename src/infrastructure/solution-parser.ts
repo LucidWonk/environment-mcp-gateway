@@ -112,7 +112,7 @@ export class SolutionParser {
         const visited = new Set<string>();
         const chain: string[] = [];
         
-        const buildChain = (name: string) => {
+        const buildChain = (name: string): void => {
             if (visited.has(name)) return;
             visited.add(name);
             

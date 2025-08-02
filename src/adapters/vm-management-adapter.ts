@@ -611,7 +611,7 @@ export class VMManagementAdapter {
             await this.executePowerShellCommand(`Test-Connection -ComputerName "${ipAddress}" -Count 1 -Quiet`);
             responseTimeMs = Date.now() - startTime;
             ping = true;
-        } catch (error) {
+        } catch {
             ping = false;
         }
 
@@ -620,7 +620,7 @@ export class VMManagementAdapter {
             try {
                 await this.executeSSHCommand(sshInfo, 'echo "test"');
                 ssh = true;
-            } catch (error) {
+            } catch {
                 ssh = false;
             }
         }
@@ -666,7 +666,7 @@ export class VMManagementAdapter {
                 version: dockerVersion,
                 composeVersion
             };
-        } catch (error) {
+        } catch {
             return { installed: false, running: false };
         }
     }
@@ -693,7 +693,7 @@ export class VMManagementAdapter {
 
                 return { name, status, description };
             });
-        } catch (error) {
+        } catch {
             return [];
         }
     }
@@ -833,7 +833,7 @@ export class VMManagementAdapter {
                     logger.info('VM boot completed', { vmName, bootTime: Date.now() - startTime });
                     return true;
                 }
-            } catch (error) {
+            } catch {
                 // Continue waiting
             }
 

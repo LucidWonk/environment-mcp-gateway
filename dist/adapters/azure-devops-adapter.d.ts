@@ -1,3 +1,11 @@
+export type TemplateParameterValue = string | number | boolean | null | undefined;
+export type PipelineResourceValue = string | number | boolean | {
+    [key: string]: any;
+};
+export type PipelineParameterValue = string | number | boolean | string[] | {
+    [key: string]: any;
+};
+export type AzureDevOpsApiResponse = Record<string, any>;
 export interface PipelineInfo {
     id: number;
     name: string;
@@ -51,7 +59,7 @@ export interface PipelineRun {
         [key: string]: PipelineVariable;
     };
     templateParameters?: {
-        [key: string]: any;
+        [key: string]: TemplateParameterValue;
     };
     requestedBy: {
         displayName: string;
@@ -106,7 +114,7 @@ export interface TriggerPipelineOptions {
         [key: string]: string;
     };
     templateParameters?: {
-        [key: string]: any;
+        [key: string]: TemplateParameterValue;
     };
     resources?: {
         repositories?: {

@@ -1934,17 +1934,17 @@ export class AzureDevOpsToolRegistry {
         this.deploymentHistory.set(key, history);
     }
 
-    private async compareEnvironmentVariables(source: string, target: string): Promise<{ differences: any[] }> {
+    private async compareEnvironmentVariables(_source: string, _target: string): Promise<{ differences: any[] }> {
         // In a real implementation, this would compare actual environment variables
         return { differences: [] };
     }
 
-    private async compareDockerComposeConfigs(source: string, target: string): Promise<{ differences: any[] }> {
+    private async compareDockerComposeConfigs(_source: string, _target: string): Promise<{ differences: any[] }> {
         // In a real implementation, this would compare Docker Compose configurations
         return { differences: [] };
     }
 
-    private async comparePipelineVariables(source: string): Promise<{ differences: any[] }> {
+    private async comparePipelineVariables(_source: string): Promise<{ differences: any[] }> {
         // In a real implementation, this would compare pipeline variables
         return { differences: [] };
     }

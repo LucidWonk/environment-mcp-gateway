@@ -2,6 +2,18 @@ import { spawn } from 'child_process';
 import winston from 'winston';
 import { Environment } from '../domain/config/environment';
 
+// Define types for Docker Compose output
+interface DockerComposeService {
+    Service: string;
+    State: string;
+    ID?: string;
+    Name?: string;
+    Image?: string;
+    Ports?: string;
+    Publishers?: string;
+    Command?: string;
+}
+
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
     format: winston.format.combine(
@@ -301,7 +313,7 @@ export class DockerAdapter {
             // This would be implemented to actually test the connection
             // For now, assume it's accessible if container is running
             connectionInfo.accessible = isRunning;
-        } catch (error) {
+        } catch {
             connectionInfo.accessible = false;
         }
 
@@ -493,7 +505,7 @@ export class DockerAdapter {
             const output = await this.executeComposeCommand(['ps', '--format', 'json']);
             const services = JSON.parse(output);
             
-            return services.map((service: any) => ({
+            return services.map((service: DockerComposeService) => ({
                 name: service.Service,
                 status: service.State === 'running' ? 'running' : 'stopped',
                 container: service.ID ? {

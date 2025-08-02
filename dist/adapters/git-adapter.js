@@ -106,7 +106,7 @@ export class GitAdapter {
                 await this.executeGitCommand(['rev-parse', '--verify', branchName]);
                 throw new Error(`Branch ${branchName} already exists`);
             }
-            catch (error) {
+            catch {
                 // Branch doesn't exist, which is what we want
             }
             // Create and checkout the branch
@@ -275,7 +275,7 @@ export class GitAdapter {
                 // Try a dry run merge
                 await this.executeGitCommand(['merge-tree', targetBranch, sourceBranch]);
             }
-            catch (error) {
+            catch {
                 conflicts = true;
                 // Get conflict files (simplified)
                 try {
@@ -287,7 +287,7 @@ export class GitAdapter {
                     ]);
                     conflictFiles = conflictOutput.split('\n').filter(f => f.trim());
                 }
-                catch (conflictError) {
+                catch {
                     // Ignore error getting conflict files
                 }
             }
@@ -365,7 +365,7 @@ export class GitAdapter {
                     branchUpToDate = parseInt(behindStr) === 0;
                 }
             }
-            catch (error) {
+            catch {
                 // No upstream, assume up to date
             }
             // Check naming convention

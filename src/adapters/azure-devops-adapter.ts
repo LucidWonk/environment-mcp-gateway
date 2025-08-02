@@ -1,6 +1,12 @@
 import winston from 'winston';
 import { Environment } from '../domain/config/environment';
 
+// Define types for Azure DevOps API responses  
+export type TemplateParameterValue = string | number | boolean | null | undefined;
+export type PipelineResourceValue = string | number | boolean | { [key: string]: any };
+export type PipelineParameterValue = string | number | boolean | string[] | { [key: string]: any };
+export type AzureDevOpsApiResponse = Record<string, any>;
+
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
     format: winston.format.combine(
@@ -65,7 +71,7 @@ export interface PipelineRun {
         };
     };
     variables: { [key: string]: PipelineVariable };
-    templateParameters?: { [key: string]: any };
+    templateParameters?: { [key: string]: TemplateParameterValue };
     requestedBy: {
         displayName: string;
         uniqueName: string;
@@ -122,7 +128,7 @@ export interface AzureDevOpsHealth {
 export interface TriggerPipelineOptions {
     sourceBranch?: string;
     variables?: { [key: string]: string };
-    templateParameters?: { [key: string]: any };
+    templateParameters?: { [key: string]: TemplateParameterValue };
     resources?: {
         repositories?: {
             [key: string]: {
@@ -172,7 +178,7 @@ export class AzureDevOpsAdapter {
         return `${this.baseUrl}${endpoint}`;
     }
 
-    private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    private async makeRequest<T>(endpoint: string, options: { method?: string; headers?: Record<string, string>; body?: string } = {}): Promise<T> {
         if (!this.organization || !this.pat) {
             throw new Error('Azure DevOps configuration incomplete - missing organization or PAT');
         }
@@ -180,7 +186,7 @@ export class AzureDevOpsAdapter {
         const url = `${this.baseUrl}${endpoint}`;
         const authHeaders = this.getAuthHeaders();
         
-        const defaultOptions: RequestInit = {
+        const defaultOptions: { method?: string; headers?: Record<string, string>; body?: string } = {
             headers: {
                 ...authHeaders,
                 ...options.headers
@@ -218,7 +224,7 @@ export class AzureDevOpsAdapter {
                 endpoint += `&path=${encodeURIComponent(folder)}`;
             }
 
-            const response = await this.makeRequest<{ value: any[] }>(endpoint);
+            const response = await this.makeRequest<{ value: AzureDevOpsApiResponse[] }>(endpoint);
             
             const pipelines: PipelineInfo[] = response.value.map(pipeline => ({
                 id: pipeline.id,
@@ -283,7 +289,7 @@ export class AzureDevOpsAdapter {
             }
 
             const endpoint = `/pipelines/${pipelineId}/runs?api-version=${this.apiVersion}`;
-            const response = await this.makeRequest<any>(endpoint, {
+            const response = await this.makeRequest<AzureDevOpsApiResponse>(endpoint, {
                 method: 'POST',
                 body: JSON.stringify(requestBody)
             });
@@ -332,7 +338,7 @@ export class AzureDevOpsAdapter {
 
             // Get pipeline details
             const pipelineEndpoint = `/pipelines/${pipelineId}?api-version=${this.apiVersion}`;
-            const pipelineResponse = await this.makeRequest<any>(pipelineEndpoint);
+            const pipelineResponse = await this.makeRequest<AzureDevOpsApiResponse>(pipelineEndpoint);
 
             const pipeline: PipelineInfo = {
                 id: pipelineResponse.id,
@@ -359,7 +365,7 @@ export class AzureDevOpsAdapter {
 
             // Get recent runs
             const runsEndpoint = `/pipelines/${pipelineId}/runs?api-version=${this.apiVersion}&$top=10`;
-            const runsResponse = await this.makeRequest<{ value: any[] }>(runsEndpoint);
+            const runsResponse = await this.makeRequest<{ value: AzureDevOpsApiResponse[] }>(runsEndpoint);
 
             const recentRuns: PipelineRun[] = runsResponse.value.map(run => ({
                 id: run.id,
@@ -479,7 +485,7 @@ export class AzureDevOpsAdapter {
 
             // Get current pipeline definition
             const endpoint = `/pipelines/${pipelineId}?api-version=${this.apiVersion}`;
-            const pipeline = await this.makeRequest<any>(endpoint);
+            const pipeline = await this.makeRequest<AzureDevOpsApiResponse>(endpoint);
 
             // Update variables in the pipeline configuration
             if (!pipeline.configuration) {
@@ -494,7 +500,7 @@ export class AzureDevOpsAdapter {
 
             // Update the pipeline
             const updateEndpoint = `/pipelines/${pipelineId}?api-version=${this.apiVersion}`;
-            await this.makeRequest<any>(updateEndpoint, {
+            await this.makeRequest<AzureDevOpsApiResponse>(updateEndpoint, {
                 method: 'PUT',
                 body: JSON.stringify(pipeline)
             });
@@ -530,7 +536,7 @@ export class AzureDevOpsAdapter {
 
             // Test connection by getting project info
             const projectEndpoint = `/project?api-version=${this.apiVersion}`;
-            const _projectInfo = await this.makeRequest<any>(projectEndpoint);
+            const _projectInfo = await this.makeRequest<AzureDevOpsApiResponse>(projectEndpoint);
 
             // Get pipelines count
             const pipelinesResponse = await this.makeRequest<{ count: number }>(
@@ -580,7 +586,7 @@ export class AzureDevOpsAdapter {
             logger.info('Getting pipeline run details', { runId });
 
             const endpoint = `/pipelines/runs/${runId}?api-version=${this.apiVersion}`;
-            const response = await this.makeRequest<any>(endpoint);
+            const response = await this.makeRequest<AzureDevOpsApiResponse>(endpoint);
 
             const run: PipelineRun = {
                 id: response.id,
@@ -625,7 +631,7 @@ export class AzureDevOpsAdapter {
             logger.info('Cancelling pipeline run', { runId });
 
             const endpoint = `/pipelines/runs/${runId}?api-version=${this.apiVersion}`;
-            await this.makeRequest<any>(endpoint, {
+            await this.makeRequest<AzureDevOpsApiResponse>(endpoint, {
                 method: 'PATCH',
                 body: JSON.stringify({
                     state: 'cancelling'

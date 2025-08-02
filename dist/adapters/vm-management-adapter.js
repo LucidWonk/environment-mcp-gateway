@@ -447,7 +447,7 @@ export class VMManagementAdapter {
             responseTimeMs = Date.now() - startTime;
             ping = true;
         }
-        catch (error) {
+        catch {
             ping = false;
         }
         // Test SSH connectivity if credentials provided
@@ -456,7 +456,7 @@ export class VMManagementAdapter {
                 await this.executeSSHCommand(sshInfo, 'echo "test"');
                 ssh = true;
             }
-            catch (error) {
+            catch {
                 ssh = false;
             }
         }
@@ -494,7 +494,7 @@ export class VMManagementAdapter {
                 composeVersion
             };
         }
-        catch (error) {
+        catch {
             return { installed: false, running: false };
         }
     }
@@ -517,7 +517,7 @@ export class VMManagementAdapter {
                 return { name, status, description };
             });
         }
-        catch (error) {
+        catch {
             return [];
         }
     }
@@ -641,7 +641,7 @@ export class VMManagementAdapter {
                     return true;
                 }
             }
-            catch (error) {
+            catch {
                 // Continue waiting
             }
             await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds

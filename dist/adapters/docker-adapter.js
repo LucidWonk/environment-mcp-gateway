@@ -212,7 +212,7 @@ export class DockerAdapter {
             // For now, assume it's accessible if container is running
             connectionInfo.accessible = isRunning;
         }
-        catch (error) {
+        catch {
             connectionInfo.accessible = false;
         }
         let health = 'failed';

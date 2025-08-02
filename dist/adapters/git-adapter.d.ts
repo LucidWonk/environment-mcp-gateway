@@ -1,3 +1,16 @@
+export interface GitStatus {
+    currentBranch: string;
+    remoteUrl: string;
+    isClean: boolean;
+    lastCommit: {
+        hash: string;
+        shortHash: string;
+        date: Date;
+        message: string;
+        author: string;
+    };
+    uncommittedFiles: number;
+}
 export interface BranchInfo {
     name: string;
     current: boolean;
@@ -70,6 +83,6 @@ export declare class GitAdapter {
     mergeBranch(sourceBranch: string, targetBranch?: string): Promise<MergeAnalysis>;
     analyzeMerge(sourceBranch: string, targetBranch: string): Promise<MergeAnalysis>;
     validateGitWorkflow(): Promise<GitWorkflowValidation>;
-    getGitStatus(): Promise<any>;
+    getGitStatus(): Promise<GitStatus>;
 }
 //# sourceMappingURL=git-adapter.d.ts.map

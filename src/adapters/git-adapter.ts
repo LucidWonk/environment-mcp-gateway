@@ -15,6 +15,20 @@ const logger = winston.createLogger({
     ]
 });
 
+export interface GitStatus {
+    currentBranch: string;
+    remoteUrl: string;
+    isClean: boolean;
+    lastCommit: {
+        hash: string;
+        shortHash: string;
+        date: Date;
+        message: string;
+        author: string;
+    };
+    uncommittedFiles: number;
+}
+
 export interface BranchInfo {
     name: string;
     current: boolean;
@@ -192,7 +206,7 @@ export class GitAdapter {
             try {
                 await this.executeGitCommand(['rev-parse', '--verify', branchName]);
                 throw new Error(`Branch ${branchName} already exists`);
-            } catch (error) {
+            } catch {
                 // Branch doesn't exist, which is what we want
             }
 
@@ -361,7 +375,7 @@ export class GitAdapter {
             try {
                 // Try a dry run merge
                 await this.executeGitCommand(['merge-tree', targetBranch, sourceBranch]);
-            } catch (error) {
+            } catch {
                 conflicts = true;
                 // Get conflict files (simplified)
                 try {
@@ -372,7 +386,7 @@ export class GitAdapter {
                         `${targetBranch}...${sourceBranch}`
                     ]);
                     conflictFiles = conflictOutput.split('\n').filter(f => f.trim());
-                } catch (conflictError) {
+                } catch {
                     // Ignore error getting conflict files
                 }
             }
@@ -448,7 +462,7 @@ export class GitAdapter {
                     const [behindStr] = aheadBehindOutput.split('\t');
                     branchUpToDate = parseInt(behindStr) === 0;
                 }
-            } catch (error) {
+            } catch {
                 // No upstream, assume up to date
             }
 
@@ -498,7 +512,7 @@ export class GitAdapter {
         }
     }
 
-    async getGitStatus(): Promise<any> {
+    async getGitStatus(): Promise<GitStatus> {
         try {
             const [currentBranch, status, remoteUrl] = await Promise.all([
                 this.executeGitCommand(['branch', '--show-current']),
