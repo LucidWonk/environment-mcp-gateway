@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { ConfigurationManager } from '../domain/config/configuration-manager';
+import { ConfigurationManager } from '../domain/config/configuration-manager.js';
 import { AzureDevOpsAdapter } from './azure-devops-adapter.js';
 import { DockerAdapter } from './docker-adapter.js';
 const logger = winston.createLogger({

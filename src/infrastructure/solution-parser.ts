@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
-import { SolutionStructure, SolutionProject } from '../types/infrastructure-types';
+import { SolutionStructure, SolutionProject } from '../types/infrastructure-types.js';
 
 export class SolutionParser {
     public static parseSolution(solutionPath: string): SolutionStructure {

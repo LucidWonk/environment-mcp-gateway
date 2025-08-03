@@ -1,4 +1,4 @@
-import { SolutionStructure, SolutionProject } from '../types/infrastructure-types';
+import { SolutionStructure, SolutionProject } from '../types/infrastructure-types.js';
 export declare class SolutionParser {
     static parseSolution(solutionPath: string): SolutionStructure;
     private static getProjectType;

@@ -2,7 +2,7 @@ import { AzureDevOpsAdapter, PipelineInfo, PipelineRun, TriggerPipelineOptions }
 import { VMManagementAdapter, VMHealthStatus, SSHConnectionInfo, DockerComposeDeployment } from '../adapters/vm-management-adapter.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
-import { Environment } from '../domain/config/environment';
+import { Environment } from '../domain/config/environment.js';
 
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,

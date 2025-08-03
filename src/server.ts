@@ -8,7 +8,7 @@ import {
     ListToolsRequestSchema,
     McpError
 } from '@modelcontextprotocol/sdk/types.js';
-import { Environment } from './domain/config/environment';
+import { Environment } from './domain/config/environment.js';
 import { SolutionParser } from './infrastructure/solution-parser.js';
 import { AdapterManager } from './adapters/adapter-manager.js';
 import { ToolRegistry } from './orchestrator/tool-registry.js';

@@ -3,7 +3,7 @@ import { GitDomainAnalyzer } from '../domain/git-domain-analyzer.js';
 import { AzureDevOpsToolRegistry } from './azure-devops-tool-registry.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
-import { Environment } from '../domain/config/environment';
+import { Environment } from '../domain/config/environment.js';
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
     format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),

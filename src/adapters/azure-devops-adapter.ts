@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { Environment } from '../domain/config/environment';
+import { Environment } from '../domain/config/environment.js';
 
 // Define types for Azure DevOps API responses  
 export type TemplateParameterValue = string | number | boolean | null | undefined;
