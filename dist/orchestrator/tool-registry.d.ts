@@ -12,6 +12,9 @@ export interface ToolDefinition {
 export declare class ToolRegistry {
     private gitAdapter;
     private azureDevOpsToolRegistry;
+    private semanticAnalysisService;
+    private businessConceptExtractor;
+    private csharpParser;
     constructor();
     getAllTools(): ToolDefinition[];
     getGitTools(): ToolDefinition[];
@@ -28,6 +31,11 @@ export declare class ToolRegistry {
     private generateWorkflowRecommendations;
     private extractProjectFromPath;
     getAzureDevOpsTools(): ToolDefinition[];
+    getSemanticAnalysisTools(): ToolDefinition[];
+    private analyzeCodeChangesForContext;
+    private extractBusinessConcepts;
+    private identifyBusinessRules;
+    private generateAnalysisSummary;
 }
 export declare const GitToolRegistry: typeof ToolRegistry;
 //# sourceMappingURL=tool-registry.d.ts.map

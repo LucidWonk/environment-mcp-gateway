@@ -1,6 +1,9 @@
 import { GitAdapter } from '../adapters/git-adapter.js';
 import { GitDomainAnalyzer } from '../domain/git-domain-analyzer.js';
 import { AzureDevOpsToolRegistry } from './azure-devops-tool-registry.js';
+import { SemanticAnalysisService } from '../services/semantic-analysis.js';
+import { BusinessConceptExtractor } from '../services/business-concept-extractor.js';
+import { CSharpParser } from '../services/csharp-parser.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
@@ -28,16 +31,23 @@ export interface ToolDefinition {
 export class ToolRegistry {
     private gitAdapter: GitAdapter;
     private azureDevOpsToolRegistry: AzureDevOpsToolRegistry;
+    private semanticAnalysisService: SemanticAnalysisService;
+    private businessConceptExtractor: BusinessConceptExtractor;
+    private csharpParser: CSharpParser;
 
     constructor() {
         this.gitAdapter = new GitAdapter();
         this.azureDevOpsToolRegistry = new AzureDevOpsToolRegistry();
+        this.semanticAnalysisService = new SemanticAnalysisService();
+        this.businessConceptExtractor = new BusinessConceptExtractor();
+        this.csharpParser = new CSharpParser();
     }
 
     public getAllTools(): ToolDefinition[] {
         return [
             ...this.getGitTools(),
-            ...this.getAzureDevOpsTools()
+            ...this.getAzureDevOpsTools(),
+            ...this.getSemanticAnalysisTools()
         ];
     }
 
@@ -653,6 +663,226 @@ export class ToolRegistry {
 
     public getAzureDevOpsTools(): ToolDefinition[] {
         return this.azureDevOpsToolRegistry.getAzureDevOpsTools();
+    }
+
+    public getSemanticAnalysisTools(): ToolDefinition[] {
+        return [
+            {
+                name: 'analyze-code-changes-for-context',
+                description: 'Analyze code changes for semantic meaning and business concepts',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        filePaths: {
+                            type: 'array',
+                            items: { type: 'string' },
+                            description: 'Array of file paths to analyze'
+                        },
+                        includeBusinessRules: {
+                            type: 'boolean',
+                            description: 'Include business rule extraction',
+                            default: true
+                        }
+                    },
+                    required: ['filePaths']
+                },
+                handler: this.analyzeCodeChangesForContext.bind(this)
+            },
+            {
+                name: 'extract-business-concepts',
+                description: 'Extract business concepts and domain relationships from code',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        filePaths: {
+                            type: 'array',
+                            items: { type: 'string' },
+                            description: 'Array of file paths to analyze'
+                        },
+                        clusterConcepts: {
+                            type: 'boolean',
+                            description: 'Group concepts into domain clusters',
+                            default: true
+                        }
+                    },
+                    required: ['filePaths']
+                },
+                handler: this.extractBusinessConcepts.bind(this)
+            },
+            {
+                name: 'identify-business-rules',
+                description: 'Identify business rules from code comments and validation methods',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        filePaths: {
+                            type: 'array',
+                            items: { type: 'string' },
+                            description: 'Array of file paths to analyze'
+                        },
+                        confidenceThreshold: {
+                            type: 'number',
+                            description: 'Minimum confidence level for rules (0.0-1.0)',
+                            default: 0.6
+                        }
+                    },
+                    required: ['filePaths']
+                },
+                handler: this.identifyBusinessRules.bind(this)
+            }
+        ];
+    }
+
+    private async analyzeCodeChangesForContext(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+        const { filePaths, includeBusinessRules = true } = args;
+        
+        logger.info('Analyzing code changes for context', { filePaths, includeBusinessRules });
+        
+        try {
+            const results = await this.semanticAnalysisService.analyzeCodeChanges(filePaths);
+            
+            const analysis = {
+                timestamp: new Date().toISOString(),
+                filesAnalyzed: results.length,
+                totalAnalysisTime: results.reduce((sum, r) => sum + r.analysisTime, 0),
+                results: results.map(result => ({
+                    filePath: result.filePath,
+                    language: result.language,
+                    domainContext: result.domainContext,
+                    businessConcepts: result.businessConcepts.map(concept => ({
+                        name: concept.name,
+                        type: concept.type,
+                        domain: concept.domain,
+                        confidence: concept.confidence
+                    })),
+                    businessRules: includeBusinessRules ? result.businessRules.map(rule => ({
+                        id: rule.id,
+                        description: rule.description,
+                        domain: rule.domain,
+                        confidence: rule.confidence
+                    })) : [],
+                    analysisTime: result.analysisTime
+                })),
+                summary: this.generateAnalysisSummary(results)
+            };
+
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(analysis, null, 2)
+                    }
+                ]
+            };
+        } catch (error) {
+            logger.error('Failed to analyze code changes for context', { error, filePaths });
+            throw new McpError(ErrorCode.InternalError, `Failed to analyze code changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    private async extractBusinessConcepts(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+        const { filePaths, clusterConcepts = true } = args;
+        
+        logger.info('Extracting business concepts', { filePaths, clusterConcepts });
+        
+        try {
+            const semanticResults = await this.semanticAnalysisService.analyzeCodeChanges(filePaths);
+            
+            // Collect all concepts and rules
+            const allConcepts = semanticResults.flatMap(r => r.businessConcepts);
+            const allRules = semanticResults.flatMap(r => r.businessRules);
+            
+            let extraction;
+            if (clusterConcepts) {
+                extraction = this.businessConceptExtractor.extractBusinessConcepts(allConcepts, allRules);
+            } else {
+                extraction = {
+                    clusters: [{
+                        domain: 'All',
+                        concepts: allConcepts,
+                        rules: allRules,
+                        relationships: [],
+                        confidence: allConcepts.length > 0 ? allConcepts.reduce((sum, c) => sum + c.confidence, 0) / allConcepts.length : 0
+                    }],
+                    summary: `Extracted ${allConcepts.length} concepts and ${allRules.length} rules`,
+                    domainBoundaries: [...new Set(allConcepts.map(c => c.domain))],
+                    crossDomainRelationships: []
+                };
+            }
+
+            const result = {
+                timestamp: new Date().toISOString(),
+                filesAnalyzed: filePaths.length,
+                extraction
+            };
+
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2)
+                    }
+                ]
+            };
+        } catch (error) {
+            logger.error('Failed to extract business concepts', { error, filePaths });
+            throw new McpError(ErrorCode.InternalError, `Failed to extract business concepts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    private async identifyBusinessRules(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+        const { filePaths, confidenceThreshold = 0.6 } = args;
+        
+        logger.info('Identifying business rules', { filePaths, confidenceThreshold });
+        
+        try {
+            const semanticResults = await this.semanticAnalysisService.analyzeCodeChanges(filePaths);
+            
+            // Collect and filter business rules
+            const allRules = semanticResults.flatMap(r => r.businessRules);
+            const filteredRules = allRules.filter(rule => rule.confidence >= confidenceThreshold);
+            
+            // Group rules by domain
+            const rulesByDomain = filteredRules.reduce((acc, rule) => {
+                const domain = rule.domain || 'Unknown';
+                if (!acc[domain]) acc[domain] = [];
+                acc[domain].push(rule);
+                return acc;
+            }, {} as Record<string, typeof filteredRules>);
+
+            const result = {
+                timestamp: new Date().toISOString(),
+                filesAnalyzed: filePaths.length,
+                totalRulesFound: allRules.length,
+                rulesAboveThreshold: filteredRules.length,
+                confidenceThreshold,
+                rulesByDomain,
+                summary: `Found ${filteredRules.length} business rules above confidence threshold ${confidenceThreshold} across ${Object.keys(rulesByDomain).length} domains`
+            };
+
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2)
+                    }
+                ]
+            };
+        } catch (error) {
+            logger.error('Failed to identify business rules', { error, filePaths });
+            throw new McpError(ErrorCode.InternalError, `Failed to identify business rules: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    private generateAnalysisSummary(results: any[]): string {
+        const totalConcepts = results.reduce((sum: number, r: any) => sum + r.businessConcepts.length, 0);
+        const totalRules = results.reduce((sum: number, r: any) => sum + r.businessRules.length, 0);
+        const domains = [...new Set(results.flatMap((r: any) => r.businessConcepts.map((c: any) => c.domain)))];
+        const avgConfidence = results.length > 0 
+            ? results.reduce((sum: number, r: any) => sum + (r.businessConcepts.reduce((cSum: number, c: any) => cSum + c.confidence, 0) / Math.max(r.businessConcepts.length, 1)), 0) / results.length 
+            : 0;
+
+        return `Analyzed ${results.length} files, extracted ${totalConcepts} business concepts and ${totalRules} business rules across ${domains.length} domains (${domains.join(', ')}). Average confidence: ${(avgConfidence * 100).toFixed(1)}%`;
     }
 }
 
