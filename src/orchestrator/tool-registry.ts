@@ -4,6 +4,8 @@ import { AzureDevOpsToolRegistry } from './azure-devops-tool-registry.js';
 import { SemanticAnalysisService } from '../services/semantic-analysis.js';
 import { BusinessConceptExtractor } from '../services/business-concept-extractor.js';
 import { CSharpParser } from '../services/csharp-parser.js';
+import { ContextGenerator } from '../services/context-generator.js';
+import { contextGenerationTools, contextGenerationHandlers } from '../tools/context-generation.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
@@ -34,6 +36,7 @@ export class ToolRegistry {
     private semanticAnalysisService: SemanticAnalysisService;
     private businessConceptExtractor: BusinessConceptExtractor;
     private csharpParser: CSharpParser;
+    private contextGenerator: ContextGenerator;
 
     constructor() {
         this.gitAdapter = new GitAdapter();
@@ -41,13 +44,15 @@ export class ToolRegistry {
         this.semanticAnalysisService = new SemanticAnalysisService();
         this.businessConceptExtractor = new BusinessConceptExtractor();
         this.csharpParser = new CSharpParser();
+        this.contextGenerator = new ContextGenerator();
     }
 
     public getAllTools(): ToolDefinition[] {
         return [
             ...this.getGitTools(),
             ...this.getAzureDevOpsTools(),
-            ...this.getSemanticAnalysisTools()
+            ...this.getSemanticAnalysisTools(),
+            ...this.getContextGenerationTools()
         ];
     }
 
@@ -731,6 +736,30 @@ export class ToolRegistry {
                 handler: this.identifyBusinessRules.bind(this)
             }
         ];
+    }
+
+    public getContextGenerationTools(): ToolDefinition[] {
+        return contextGenerationTools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'Context generation tool',
+            inputSchema: tool.inputSchema as any,
+            handler: async (args: any) => {
+                const handlerFn = contextGenerationHandlers[tool.name as keyof typeof contextGenerationHandlers];
+                if (!handlerFn) {
+                    throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
+                }
+                
+                const result = await handlerFn(args);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
+            }
+        }));
     }
 
     private async analyzeCodeChangesForContext(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {

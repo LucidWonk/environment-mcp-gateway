@@ -6,9 +6,10 @@
     <OutputType>Library</OutputType>
     <ProjectGuid>{E8F5A7B2-4C3D-4F6E-9A8B-2D5C8E7F9A1B}</ProjectGuid>
     
-    <!-- Jest Test Discovery Configuration -->
-    <JavaScriptTestFramework>Jest</JavaScriptTestFramework>
-    <JavaScriptTestRoot>tests\</JavaScriptTestRoot>
+    <!-- XUnit Test Configuration - Jest removed per testing standards -->
+    <!-- TypeScript infrastructure testing uses XUnit via C# test project -->
+    <!-- <JavaScriptTestFramework>Jest</JavaScriptTestFramework> -->
+    <!-- <JavaScriptTestRoot>tests\</JavaScriptTestRoot> -->
     
     <!-- Disable .NET specific outputs -->
     <UseAppHost>false</UseAppHost>
@@ -42,7 +43,7 @@
     <Content Include="package.json" />
     <Content Include="package-lock.json" />
     <Content Include="tsconfig.json" />
-    <Content Include="jest.config.js" />
+    <!-- <Content Include="jest.config.js" /> Jest configuration removed per testing standards -->
     <Content Include="eslint.config.js" />
     <Content Include="README.md" />
     <Content Include="INTEGRATION-SUMMARY.md" />
@@ -121,7 +122,7 @@
 
   <!-- Visual Studio Test Integration -->
   <Target Name="VSTestLogger" AfterTargets="NpmTest">
-    <Message Text="TypeScript/Jest tests completed. See npm output for results." Importance="high" />
+    <Message Text="TypeScript tests completed. XUnit tests run separately via EnvironmentMCPGateway.Tests project." Importance="high" />
   </Target>
 
   <!-- Linting target -->

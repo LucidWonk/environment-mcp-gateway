@@ -15,6 +15,7 @@ export declare class ToolRegistry {
     private semanticAnalysisService;
     private businessConceptExtractor;
     private csharpParser;
+    private contextGenerator;
     constructor();
     getAllTools(): ToolDefinition[];
     getGitTools(): ToolDefinition[];
@@ -32,6 +33,7 @@ export declare class ToolRegistry {
     private extractProjectFromPath;
     getAzureDevOpsTools(): ToolDefinition[];
     getSemanticAnalysisTools(): ToolDefinition[];
+    getContextGenerationTools(): ToolDefinition[];
     private analyzeCodeChangesForContext;
     private extractBusinessConcepts;
     private identifyBusinessRules;
