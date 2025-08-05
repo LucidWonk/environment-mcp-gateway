@@ -1,23 +1,29 @@
-import { AzureDevOpsAdapter } from '../adapters/azure-devops-adapter.js';
-import { VMManagementAdapter } from '../adapters/vm-management-adapter.js';
-import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AzureDevOpsToolRegistry = void 0;
+const azure_devops_adapter_js_1 = require("../adapters/azure-devops-adapter.js");
+const vm_management_adapter_js_1 = require("../adapters/vm-management-adapter.js");
+const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
+const winston_1 = __importDefault(require("winston"));
+const environment_js_1 = require("../domain/config/environment.js");
+const logger = winston_1.default.createLogger({
+    level: environment_js_1.Environment.mcpLogLevel,
+    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
     transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
+        new winston_1.default.transports.Console(),
+        new winston_1.default.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
-export class AzureDevOpsToolRegistry {
+class AzureDevOpsToolRegistry {
     azureDevOpsAdapter;
     vmAdapter;
     deploymentHistory = new Map();
     constructor() {
-        this.azureDevOpsAdapter = new AzureDevOpsAdapter();
-        this.vmAdapter = new VMManagementAdapter();
+        this.azureDevOpsAdapter = new azure_devops_adapter_js_1.AzureDevOpsAdapter();
+        this.vmAdapter = new vm_management_adapter_js_1.VMManagementAdapter();
     }
     getAzureDevOpsTools() {
         return [
@@ -444,13 +450,13 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to list pipelines', { error });
-            throw new McpError(ErrorCode.InternalError, `Failed to list pipelines: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to list pipelines: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async triggerPipeline(args) {
         const { pipelineId, sourceBranch = 'refs/heads/main', variables, templateParameters } = args;
         if (!pipelineId) {
-            throw new McpError(ErrorCode.InvalidParams, 'Pipeline ID is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Pipeline ID is required');
         }
         logger.info('Triggering Azure DevOps pipeline', { pipelineId, sourceBranch, variables });
         try {
@@ -509,13 +515,13 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to trigger pipeline', { pipelineId, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to trigger pipeline: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to trigger pipeline: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async getPipelineStatus(args) {
         const { pipelineId, includeRecentRuns = true } = args;
         if (!pipelineId) {
-            throw new McpError(ErrorCode.InvalidParams, 'Pipeline ID is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Pipeline ID is required');
         }
         logger.info('Getting pipeline status', { pipelineId, includeRecentRuns });
         try {
@@ -575,13 +581,13 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to get pipeline status', { pipelineId, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to get pipeline status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to get pipeline status: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async getBuildLogs(args) {
         const { runId, logId, analyzeTradingRelevance = true } = args;
         if (!runId) {
-            throw new McpError(ErrorCode.InvalidParams, 'Run ID is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Run ID is required');
         }
         logger.info('Getting build logs', { runId, logId, analyzeTradingRelevance });
         try {
@@ -626,16 +632,16 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to get build logs', { runId, logId, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to get build logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to get build logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async managePipelineVariables(args) {
         const { pipelineId, variables } = args;
         if (!pipelineId) {
-            throw new McpError(ErrorCode.InvalidParams, 'Pipeline ID is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Pipeline ID is required');
         }
         if (!variables || Object.keys(variables).length === 0) {
-            throw new McpError(ErrorCode.InvalidParams, 'Variables object is required and must not be empty');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Variables object is required and must not be empty');
         }
         logger.info('Managing pipeline variables', { pipelineId, variableCount: Object.keys(variables).length });
         try {
@@ -680,21 +686,21 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to manage pipeline variables', { pipelineId, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to manage pipeline variables: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to manage pipeline variables: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     // VM Management Tools Implementation
     async provisionVM(args) {
         const { vmName, templateName = 'ubuntu-docker-dev', memoryMB = 4096, cpuCores = 2, diskSizeGB = 40, startAfterCreation = true } = args;
         if (!vmName) {
-            throw new McpError(ErrorCode.InvalidParams, 'VM name is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'VM name is required');
         }
         logger.info('Provisioning VM', { vmName, templateName, memoryMB, cpuCores, diskSizeGB });
         try {
             const templates = await this.vmAdapter.getAvailableTemplates();
             const template = templates.find(t => t.name === templateName);
             if (!template) {
-                throw new McpError(ErrorCode.InvalidParams, `Template '${templateName}' not found`);
+                throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, `Template '${templateName}' not found`);
             }
             const vmInfo = await this.vmAdapter.provisionVM(template, vmName, {
                 memoryMB,
@@ -757,26 +763,26 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to provision VM', { vmName, templateName, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to provision VM: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to provision VM: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async deployToVM(args) {
         const { vmName, composeContent, targetPath = '/opt/lucidwonks', environmentVars, servicesToStart } = args;
         if (!vmName) {
-            throw new McpError(ErrorCode.InvalidParams, 'VM name is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'VM name is required');
         }
         if (!composeContent) {
-            throw new McpError(ErrorCode.InvalidParams, 'Docker Compose content is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Docker Compose content is required');
         }
         logger.info('Deploying to VM', { vmName, targetPath, serviceCount: servicesToStart?.length });
         try {
             // Get VM info and create SSH connection
             const vmInfo = await this.vmAdapter.getVMInfo(vmName);
             if (vmInfo.state !== 'Running') {
-                throw new McpError(ErrorCode.InvalidRequest, `VM '${vmName}' is not running. Current state: ${vmInfo.state}`);
+                throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidRequest, `VM '${vmName}' is not running. Current state: ${vmInfo.state}`);
             }
             if (vmInfo.ipAddresses.length === 0) {
-                throw new McpError(ErrorCode.InvalidRequest, `VM '${vmName}' has no IP address assigned`);
+                throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidRequest, `VM '${vmName}' has no IP address assigned`);
             }
             const sshInfo = await this.vmAdapter.createSSHConnection(vmInfo.ipAddresses[0]);
             const deployment = {
@@ -841,13 +847,13 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to deploy to VM', { vmName, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to deploy to VM: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to deploy to VM: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async vmHealthCheck(args) {
         const { vmName, includeContainerStatus = true, includeTradingServices = true } = args;
         if (!vmName) {
-            throw new McpError(ErrorCode.InvalidParams, 'VM name is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'VM name is required');
         }
         logger.info('Performing VM health check', { vmName, includeContainerStatus, includeTradingServices });
         try {
@@ -929,23 +935,23 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to perform VM health check', { vmName, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to perform VM health check: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to perform VM health check: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async vmLogs(args) {
         const { vmName, logType = 'all', lines = 100, since = '1 hour ago', serviceName } = args;
         if (!vmName) {
-            throw new McpError(ErrorCode.InvalidParams, 'VM name is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'VM name is required');
         }
         logger.info('Retrieving VM logs', { vmName, logType, lines, since, serviceName });
         try {
             // Get VM info and SSH connection
             const vmInfo = await this.vmAdapter.getVMInfo(vmName);
             if (vmInfo.state !== 'Running') {
-                throw new McpError(ErrorCode.InvalidRequest, `VM '${vmName}' is not running. Current state: ${vmInfo.state}`);
+                throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidRequest, `VM '${vmName}' is not running. Current state: ${vmInfo.state}`);
             }
             if (vmInfo.ipAddresses.length === 0) {
-                throw new McpError(ErrorCode.InvalidRequest, `VM '${vmName}' has no IP address assigned`);
+                throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidRequest, `VM '${vmName}' has no IP address assigned`);
             }
             const sshInfo = await this.vmAdapter.createSSHConnection(vmInfo.ipAddresses[0]);
             const logs = await this.vmAdapter.getVMLogs(vmName, sshInfo, {
@@ -995,14 +1001,14 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to retrieve VM logs', { vmName, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to retrieve VM logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to retrieve VM logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     // Environment Orchestration Tools Implementation
     async promoteEnvironment(args) {
         const { sourceEnvironment, targetEnvironment, version, skipTests = false, vmName, pipelineId } = args;
         if (!sourceEnvironment || !targetEnvironment || !version) {
-            throw new McpError(ErrorCode.InvalidParams, 'Source environment, target environment, and version are required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Source environment, target environment, and version are required');
         }
         logger.info('Promoting environment', { sourceEnvironment, targetEnvironment, version, skipTests });
         try {
@@ -1011,10 +1017,10 @@ export class AzureDevOpsToolRegistry {
             let details = {};
             // Validate promotion path
             if (targetEnvironment === 'vm' && !vmName) {
-                throw new McpError(ErrorCode.InvalidParams, 'VM name is required when promoting to VM environment');
+                throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'VM name is required when promoting to VM environment');
             }
             if (targetEnvironment === 'azure' && !pipelineId) {
-                throw new McpError(ErrorCode.InvalidParams, 'Pipeline ID is required when promoting to Azure environment');
+                throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Pipeline ID is required when promoting to Azure environment');
             }
             // Execute promotion based on target environment
             if (targetEnvironment === 'vm') {
@@ -1022,7 +1028,7 @@ export class AzureDevOpsToolRegistry {
                 promotionSteps.push('Validating VM availability');
                 const vmInfo = await this.vmAdapter.getVMInfo(vmName);
                 if (vmInfo.state !== 'Running') {
-                    throw new McpError(ErrorCode.InvalidRequest, `Target VM '${vmName}' is not running`);
+                    throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidRequest, `Target VM '${vmName}' is not running`);
                 }
                 promotionSteps.push('Preparing deployment package');
                 promotionSteps.push('Deploying to VM environment');
@@ -1118,13 +1124,13 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to promote environment', { sourceEnvironment, targetEnvironment, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to promote environment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to promote environment: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async rollbackDeployment(args) {
         const { environment, vmName, pipelineId, targetVersion } = args;
         if (!environment) {
-            throw new McpError(ErrorCode.InvalidParams, 'Environment is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Environment is required');
         }
         logger.info('Rolling back deployment', { environment, vmName, pipelineId, targetVersion });
         try {
@@ -1135,14 +1141,14 @@ export class AzureDevOpsToolRegistry {
             const deploymentKey = environment === 'vm' ? `vm-${vmName}` : `pipeline-${pipelineId}`;
             const history = this.deploymentHistory.get(deploymentKey) || [];
             if (history.length === 0) {
-                throw new McpError(ErrorCode.InvalidRequest, 'No deployment history found for rollback');
+                throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidRequest, 'No deployment history found for rollback');
             }
             // Find target version or use previous version
             let targetDeployment;
             if (targetVersion) {
                 const versionDeployment = history.find(d => d.version === targetVersion && d.status === 'active');
                 if (!versionDeployment) {
-                    throw new McpError(ErrorCode.InvalidRequest, `No active deployment found for version: ${targetVersion}`);
+                    throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidRequest, `No active deployment found for version: ${targetVersion}`);
                 }
                 targetDeployment = versionDeployment;
             }
@@ -1150,7 +1156,7 @@ export class AzureDevOpsToolRegistry {
                 // Find the previous active deployment
                 const activeDeployments = history.filter(d => d.status === 'active').sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
                 if (activeDeployments.length < 2) {
-                    throw new McpError(ErrorCode.InvalidRequest, 'No previous deployment available for rollback');
+                    throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidRequest, 'No previous deployment available for rollback');
                 }
                 targetDeployment = activeDeployments[1];
             }
@@ -1240,13 +1246,13 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to rollback deployment', { environment, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to rollback deployment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to rollback deployment: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async syncConfigurations(args) {
         const { sourceEnvironment, targetEnvironments, configTypes = ['all'], dryRun = false } = args;
         if (!sourceEnvironment || !targetEnvironments || targetEnvironments.length === 0) {
-            throw new McpError(ErrorCode.InvalidParams, 'Source environment and target environments are required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Source environment and target environments are required');
         }
         logger.info('Syncing configurations', { sourceEnvironment, targetEnvironments, configTypes, dryRun });
         try {
@@ -1360,7 +1366,7 @@ export class AzureDevOpsToolRegistry {
         }
         catch (error) {
             logger.error('Failed to sync configurations', { sourceEnvironment, targetEnvironments, error });
-            throw new McpError(ErrorCode.InternalError, `Failed to sync configurations: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to sync configurations: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     // Helper Methods for Trading Platform Analysis
@@ -1765,4 +1771,5 @@ export class AzureDevOpsToolRegistry {
         return 'Significant configuration overhaul';
     }
 }
+exports.AzureDevOpsToolRegistry = AzureDevOpsToolRegistry;
 //# sourceMappingURL=azure-devops-tool-registry.js.map

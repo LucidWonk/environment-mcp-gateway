@@ -1,15 +1,21 @@
-import { spawn } from 'child_process';
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DockerAdapter = void 0;
+const child_process_1 = require("child_process");
+const winston_1 = __importDefault(require("winston"));
+const environment_js_1 = require("../domain/config/environment.js");
+const logger = winston_1.default.createLogger({
+    level: environment_js_1.Environment.mcpLogLevel,
+    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
     transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
+        new winston_1.default.transports.Console(),
+        new winston_1.default.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
-export class DockerAdapter {
+class DockerAdapter {
     static TIMESCALE_IMAGE_PATTERNS = [
         'timescale/timescaledb',
         'timescale/timescaledb-ha',
@@ -25,7 +31,7 @@ export class DockerAdapter {
     ];
     async executeDockerCommand(args) {
         return new Promise((resolve, reject) => {
-            const process = spawn('docker', args);
+            const process = (0, child_process_1.spawn)('docker', args);
             let stdout = '';
             let stderr = '';
             process.stdout.on('data', (data) => {
@@ -49,8 +55,8 @@ export class DockerAdapter {
     }
     async executeComposeCommand(args) {
         return new Promise((resolve, reject) => {
-            const process = spawn('docker-compose', args, {
-                cwd: Environment.projectRoot
+            const process = (0, child_process_1.spawn)('docker-compose', args, {
+                cwd: environment_js_1.Environment.projectRoot
             });
             let stdout = '';
             let stderr = '';
@@ -190,9 +196,9 @@ export class DockerAdapter {
         const containers = await this.listDevelopmentContainers();
         const timescaleContainer = containers.find(c => DockerAdapter.TIMESCALE_IMAGE_PATTERNS.some(pattern => c.image.toLowerCase().includes(pattern)));
         const connectionInfo = {
-            host: Environment.dbHost,
-            port: Environment.dbPort,
-            database: Environment.database,
+            host: environment_js_1.Environment.dbHost,
+            port: environment_js_1.Environment.dbPort,
+            database: environment_js_1.Environment.database,
             accessible: false
         };
         if (!timescaleContainer) {
@@ -421,4 +427,5 @@ export class DockerAdapter {
         }
     }
 }
+exports.DockerAdapter = DockerAdapter;
 //# sourceMappingURL=docker-adapter.js.map

@@ -1,27 +1,32 @@
 #!/usr/bin/env node
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError } from '@modelcontextprotocol/sdk/types.js';
-import { Environment } from './domain/config/environment.js';
-import { SolutionParser } from './infrastructure/solution-parser.js';
-import { AdapterManager } from './adapters/adapter-manager.js';
-import { ToolRegistry } from './orchestrator/tool-registry.js';
-import winston from 'winston';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
+const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
+const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
+const environment_js_1 = require("./domain/config/environment.js");
+const solution_parser_js_1 = require("./infrastructure/solution-parser.js");
+const adapter_manager_js_1 = require("./adapters/adapter-manager.js");
+const tool_registry_js_1 = require("./orchestrator/tool-registry.js");
+const winston_1 = __importDefault(require("winston"));
 // Initialize environment and logging
 try {
-    Environment.validateEnvironment();
+    environment_js_1.Environment.validateEnvironment();
 }
 catch (error) {
     console.error('Environment validation failed:', error);
     process.exit(1);
 }
 // Configure logging
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
+const logger = winston_1.default.createLogger({
+    level: environment_js_1.Environment.mcpLogLevel,
+    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
     transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
+        new winston_1.default.transports.Console(),
+        new winston_1.default.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
 class EnvironmentMCPGateway {
@@ -29,7 +34,7 @@ class EnvironmentMCPGateway {
     adapterManager;
     toolRegistry;
     constructor() {
-        this.server = new Server({
+        this.server = new index_js_1.Server({
             name: 'lucidwonks-environment-mcp-gateway',
             version: '1.0.0'
         }, {
@@ -37,12 +42,12 @@ class EnvironmentMCPGateway {
                 tools: {}
             }
         });
-        this.adapterManager = AdapterManager.getInstance();
-        this.toolRegistry = new ToolRegistry();
+        this.adapterManager = adapter_manager_js_1.AdapterManager.getInstance();
+        this.toolRegistry = new tool_registry_js_1.ToolRegistry();
         this.setupHandlers();
     }
     setupHandlers() {
-        this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+        this.server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => {
             const allTools = this.toolRegistry.getAllTools();
             return {
                 tools: [
@@ -239,7 +244,7 @@ class EnvironmentMCPGateway {
                 ]
             };
         });
-        this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+        this.server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
             const { name, arguments: args } = request.params;
             try {
                 // Check if it's a tool from the tool registry (Git or Azure DevOps)
@@ -281,7 +286,7 @@ class EnvironmentMCPGateway {
                     case 'test-adapter-configuration':
                         return await this.testAdapterConfiguration(args);
                     default:
-                        throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+                        throw new types_js_1.McpError(types_js_1.ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
                 }
             }
             catch (error) {
@@ -293,11 +298,11 @@ class EnvironmentMCPGateway {
     async analyzeSolutionStructure(args) {
         const { includeDependencies = true, projectType = 'All' } = args;
         logger.info('Analyzing solution structure', { includeDependencies, projectType });
-        const solution = SolutionParser.parseSolution(Environment.solutionPath);
-        const validation = SolutionParser.validateSolution(solution);
+        const solution = solution_parser_js_1.SolutionParser.parseSolution(environment_js_1.Environment.solutionPath);
+        const validation = solution_parser_js_1.SolutionParser.validateSolution(solution);
         let projects = solution.projects;
         if (projectType !== 'All') {
-            projects = SolutionParser.getProjectsByType(solution, projectType);
+            projects = solution_parser_js_1.SolutionParser.getProjectsByType(solution, projectType);
         }
         const result = {
             solution: {
@@ -319,7 +324,7 @@ class EnvironmentMCPGateway {
         };
         if (includeDependencies) {
             result.projects.forEach(p => {
-                const chain = SolutionParser.getProjectDependencyChain(solution, p.name);
+                const chain = solution_parser_js_1.SolutionParser.getProjectDependencyChain(solution, p.name);
                 p.buildOrder = chain.indexOf(p.name) + 1;
             });
         }
@@ -337,7 +342,7 @@ class EnvironmentMCPGateway {
         logger.info('Getting development environment status', { checkDatabase, checkDocker, checkGit });
         const status = {
             timestamp: new Date().toISOString(),
-            environment: Environment.getEnvironmentInfo(),
+            environment: environment_js_1.Environment.getEnvironmentInfo(),
             database: checkDatabase ? await this.checkDatabaseStatus() : null,
             docker: checkDocker ? await this.checkDockerStatus() : null,
             git: checkGit ? await this.checkGitStatus() : null,
@@ -355,8 +360,8 @@ class EnvironmentMCPGateway {
     async validateBuildConfiguration(args) {
         const { projectName } = args;
         logger.info('Validating build configuration', { projectName });
-        const solution = SolutionParser.parseSolution(Environment.solutionPath);
-        const validation = SolutionParser.validateSolution(solution);
+        const solution = solution_parser_js_1.SolutionParser.parseSolution(environment_js_1.Environment.solutionPath);
+        const validation = solution_parser_js_1.SolutionParser.validateSolution(solution);
         const result = {
             solutionValid: validation.valid,
             errors: validation.errors,
@@ -365,13 +370,13 @@ class EnvironmentMCPGateway {
                 type: p.type,
                 path: p.path,
                 dependencies: p.dependencies,
-                buildOrder: SolutionParser.getProjectDependencyChain(solution, p.name).indexOf(p.name) + 1
+                buildOrder: solution_parser_js_1.SolutionParser.getProjectDependencyChain(solution, p.name).indexOf(p.name) + 1
             }))
         };
         if (projectName) {
             const project = solution.projects.find(p => p.name === projectName);
             if (!project) {
-                throw new McpError(ErrorCode.InvalidParams, `Project not found: ${projectName}`);
+                throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, `Project not found: ${projectName}`);
             }
             result.projects = [result.projects.find(p => p.name === projectName)];
         }
@@ -387,15 +392,15 @@ class EnvironmentMCPGateway {
     async getProjectDependencies(args) {
         const { projectName } = args;
         if (!projectName) {
-            throw new McpError(ErrorCode.InvalidParams, 'Project name is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Project name is required');
         }
         logger.info('Getting project dependencies', { projectName });
-        const solution = SolutionParser.parseSolution(Environment.solutionPath);
+        const solution = solution_parser_js_1.SolutionParser.parseSolution(environment_js_1.Environment.solutionPath);
         const project = solution.projects.find(p => p.name === projectName);
         if (!project) {
-            throw new McpError(ErrorCode.InvalidParams, `Project not found: ${projectName}`);
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, `Project not found: ${projectName}`);
         }
-        const dependencyChain = SolutionParser.getProjectDependencyChain(solution, projectName);
+        const dependencyChain = solution_parser_js_1.SolutionParser.getProjectDependencyChain(solution, projectName);
         const result = {
             project: {
                 name: project.name,
@@ -420,13 +425,13 @@ class EnvironmentMCPGateway {
     }
     async checkDatabaseStatus() {
         try {
-            const connectionString = Environment.getDevelopmentDatabaseConnectionString();
+            const connectionString = environment_js_1.Environment.getDevelopmentDatabaseConnectionString();
             return {
                 connected: true,
                 connectionString: connectionString.replace(/:([^:@]+)@/, ':***@'), // Hide password
-                database: Environment.database,
-                host: Environment.dbHost,
-                port: Environment.dbPort
+                database: environment_js_1.Environment.database,
+                host: environment_js_1.Environment.dbHost,
+                port: environment_js_1.Environment.dbPort
             };
         }
         catch (error) {
@@ -445,7 +450,7 @@ class EnvironmentMCPGateway {
                 dockerAdapter.getDevelopmentEnvironmentHealth()
             ]);
             return {
-                dockerComposeFile: Environment.dockerComposeFile,
+                dockerComposeFile: environment_js_1.Environment.dockerComposeFile,
                 containers: containers.map(c => ({
                     id: c.id.substring(0, 12),
                     name: c.name,
@@ -463,7 +468,7 @@ class EnvironmentMCPGateway {
         catch (error) {
             logger.error('Failed to check Docker status', { error });
             return {
-                dockerComposeFile: Environment.dockerComposeFile,
+                dockerComposeFile: environment_js_1.Environment.dockerComposeFile,
                 services: [],
                 status: 'error',
                 error: error instanceof Error ? error.message : 'Unknown error'
@@ -472,18 +477,18 @@ class EnvironmentMCPGateway {
     }
     async checkGitStatus() {
         return {
-            repository: Environment.gitRepoPath,
-            configured: !!Environment.gitUserName && !!Environment.gitUserEmail,
-            user: Environment.gitUserName,
-            email: Environment.gitUserEmail
+            repository: environment_js_1.Environment.gitRepoPath,
+            configured: !!environment_js_1.Environment.gitUserName && !!environment_js_1.Environment.gitUserEmail,
+            user: environment_js_1.Environment.gitUserName,
+            email: environment_js_1.Environment.gitUserEmail
         };
     }
     async checkSolutionStatus() {
         try {
-            const solution = SolutionParser.parseSolution(Environment.solutionPath);
-            const validation = SolutionParser.validateSolution(solution);
+            const solution = solution_parser_js_1.SolutionParser.parseSolution(environment_js_1.Environment.solutionPath);
+            const validation = solution_parser_js_1.SolutionParser.validateSolution(solution);
             return {
-                path: Environment.solutionPath,
+                path: environment_js_1.Environment.solutionPath,
                 name: solution.name,
                 projects: solution.projects.length,
                 valid: validation.valid,
@@ -492,7 +497,7 @@ class EnvironmentMCPGateway {
         }
         catch (error) {
             return {
-                path: Environment.solutionPath,
+                path: environment_js_1.Environment.solutionPath,
                 error: error instanceof Error ? error.message : 'Unknown error'
             };
         }
@@ -530,7 +535,7 @@ class EnvironmentMCPGateway {
     async getContainerHealth(args) {
         const { containerId } = args;
         if (!containerId) {
-            throw new McpError(ErrorCode.InvalidParams, 'Container ID is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Container ID is required');
         }
         logger.info('Getting container health', { containerId });
         const health = await this.adapterManager.getDockerAdapter().getContainerHealth(containerId);
@@ -553,7 +558,7 @@ class EnvironmentMCPGateway {
     async getContainerLogs(args) {
         const { containerId, lines = 50 } = args;
         if (!containerId) {
-            throw new McpError(ErrorCode.InvalidParams, 'Container ID is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Container ID is required');
         }
         logger.info('Getting container logs', { containerId, lines });
         const logs = await this.adapterManager.getDockerAdapter().getContainerLogs(containerId, lines);
@@ -575,7 +580,7 @@ class EnvironmentMCPGateway {
     async restartDevelopmentService(args) {
         const { serviceName } = args;
         if (!serviceName) {
-            throw new McpError(ErrorCode.InvalidParams, 'Service name is required');
+            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Service name is required');
         }
         logger.info('Restarting development service', { serviceName });
         const success = await this.adapterManager.getDockerAdapter().restartComposeService(serviceName);
@@ -689,7 +694,7 @@ class EnvironmentMCPGateway {
         };
     }
     async run() {
-        const transport = new StdioServerTransport();
+        const transport = new stdio_js_1.StdioServerTransport();
         await this.server.connect(transport);
         logger.info('EnvironmentMCPGateway server started', {
             name: 'lucidwonks-environment-mcp-gateway',
@@ -745,7 +750,7 @@ class EnvironmentMCPGateway {
                 lastReload: status.lastReload
             },
             adapters: status.adapterStatus,
-            environment: Environment.getEnvironmentInfo()
+            environment: environment_js_1.Environment.getEnvironmentInfo()
         };
         return {
             content: [

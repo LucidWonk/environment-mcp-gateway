@@ -1,17 +1,23 @@
-import { spawn } from 'child_process';
-import { join } from 'path';
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.VMManagementAdapter = void 0;
+const child_process_1 = require("child_process");
+const path_1 = require("path");
+const winston_1 = __importDefault(require("winston"));
+const environment_js_1 = require("../domain/config/environment.js");
+const logger = winston_1.default.createLogger({
+    level: environment_js_1.Environment.mcpLogLevel,
+    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
     transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
+        new winston_1.default.transports.Console(),
+        new winston_1.default.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
 // VM Management Adapter Class
-export class VMManagementAdapter {
+class VMManagementAdapter {
     static DEFAULT_VM_TEMPLATES = [
         {
             name: 'ubuntu-docker-dev',
@@ -43,7 +49,7 @@ export class VMManagementAdapter {
     async executePowerShellCommand(command, args = []) {
         return new Promise((resolve, reject) => {
             const fullCommand = `${command} ${args.join(' ')}`;
-            const process = spawn('powershell.exe', ['-Command', fullCommand], {
+            const process = (0, child_process_1.spawn)('powershell.exe', ['-Command', fullCommand], {
                 stdio: ['pipe', 'pipe', 'pipe']
             });
             let stdout = '';
@@ -81,7 +87,7 @@ export class VMManagementAdapter {
                 sshArgs.push('-i', connectionInfo.privateKeyPath);
             }
             sshArgs.push(`${connectionInfo.username}@${connectionInfo.host}`, command);
-            const process = spawn('ssh', sshArgs);
+            const process = (0, child_process_1.spawn)('ssh', sshArgs);
             let stdout = '';
             let stderr = '';
             process.stdout.on('data', (data) => {
@@ -316,7 +322,7 @@ export class VMManagementAdapter {
             await this.executePowerShellCommand(`Remove-VM -Name "${vmName}" -Force`);
             // Delete VM files if requested
             if (deleteFiles) {
-                const vmPath = join(this.vmStoragePath, vmName);
+                const vmPath = (0, path_1.join)(this.vmStoragePath, vmName);
                 await this.executePowerShellCommand(`Remove-Item -Path "${vmPath}" -Recurse -Force -ErrorAction SilentlyContinue`);
             }
             logger.info('VM deleted successfully', { vmName });
@@ -528,7 +534,7 @@ export class VMManagementAdapter {
             // Create target directory
             await this.executeSSHCommand(sshInfo, `mkdir -p "${deployment.targetPath}"`);
             // Create docker-compose.yml file
-            const composeFile = join(deployment.targetPath, 'docker-compose.yml');
+            const composeFile = (0, path_1.join)(deployment.targetPath, 'docker-compose.yml');
             const createFileCommand = `cat > "${composeFile}" << 'EOF'\n${deployment.composeContent}\nEOF`;
             await this.executeSSHCommand(sshInfo, createFileCommand);
             // Create .env file if environment variables provided
@@ -536,7 +542,7 @@ export class VMManagementAdapter {
                 const envContent = Object.entries(deployment.environmentVars)
                     .map(([key, value]) => `${key}=${value}`)
                     .join('\n');
-                const envFile = join(deployment.targetPath, '.env');
+                const envFile = (0, path_1.join)(deployment.targetPath, '.env');
                 const createEnvCommand = `cat > "${envFile}" << 'EOF'\n${envContent}\nEOF`;
                 await this.executeSSHCommand(sshInfo, createEnvCommand);
             }
@@ -717,4 +723,5 @@ export class VMManagementAdapter {
         }
     }
 }
+exports.VMManagementAdapter = VMManagementAdapter;
 //# sourceMappingURL=vm-management-adapter.js.map

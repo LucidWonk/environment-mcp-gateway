@@ -1,22 +1,28 @@
-import { spawn } from 'child_process';
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GitAdapter = void 0;
+const child_process_1 = require("child_process");
+const winston_1 = __importDefault(require("winston"));
+const environment_js_1 = require("../domain/config/environment.js");
+const logger = winston_1.default.createLogger({
+    level: environment_js_1.Environment.mcpLogLevel,
+    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
     transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
+        new winston_1.default.transports.Console(),
+        new winston_1.default.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
-export class GitAdapter {
+class GitAdapter {
     repoPath;
     constructor() {
-        this.repoPath = Environment.gitRepoPath;
+        this.repoPath = environment_js_1.Environment.gitRepoPath;
     }
     async executeGitCommand(args, cwd) {
         return new Promise((resolve, reject) => {
-            const process = spawn('git', args, {
+            const process = (0, child_process_1.spawn)('git', args, {
                 cwd: cwd || this.repoPath,
                 stdio: ['pipe', 'pipe', 'pipe']
             });
@@ -442,4 +448,5 @@ export class GitAdapter {
         }
     }
 }
+exports.GitAdapter = GitAdapter;
 //# sourceMappingURL=git-adapter.js.map

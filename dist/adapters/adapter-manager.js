@@ -1,22 +1,28 @@
-import winston from 'winston';
-import { ConfigurationManager } from '../domain/config/configuration-manager.js';
-import { AzureDevOpsAdapter } from './azure-devops-adapter.js';
-import { DockerAdapter } from './docker-adapter.js';
-const logger = winston.createLogger({
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AdapterManager = void 0;
+const winston_1 = __importDefault(require("winston"));
+const configuration_manager_js_1 = require("../domain/config/configuration-manager.js");
+const azure_devops_adapter_js_1 = require("./azure-devops-adapter.js");
+const docker_adapter_js_1 = require("./docker-adapter.js");
+const logger = winston_1.default.createLogger({
     level: process.env.MCP_LOG_LEVEL ?? 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
+    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
     transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
+        new winston_1.default.transports.Console(),
+        new winston_1.default.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
-export class AdapterManager {
+class AdapterManager {
     static instance;
     adapters;
     configManager;
     reloadCount = 0;
     constructor() {
-        this.configManager = ConfigurationManager.getInstance();
+        this.configManager = configuration_manager_js_1.ConfigurationManager.getInstance();
         this.adapters = this.createAdapters();
         this.setupConfigurationWatching();
     }
@@ -29,8 +35,8 @@ export class AdapterManager {
     createAdapters() {
         logger.info('Creating fresh adapter instances');
         return {
-            azureDevOps: new AzureDevOpsAdapter(),
-            docker: new DockerAdapter()
+            azureDevOps: new azure_devops_adapter_js_1.AzureDevOpsAdapter(),
+            docker: new docker_adapter_js_1.DockerAdapter()
         };
     }
     setupConfigurationWatching() {
@@ -55,11 +61,11 @@ export class AdapterManager {
             // Reload affected adapters
             if (azureDevOpsChanged || event.type === 'dotenv') {
                 logger.info('Reloading Azure DevOps adapter due to configuration changes');
-                this.adapters.azureDevOps = new AzureDevOpsAdapter();
+                this.adapters.azureDevOps = new azure_devops_adapter_js_1.AzureDevOpsAdapter();
             }
             if (dockerChanged || event.type === 'dotenv') {
                 logger.info('Reloading Docker adapter due to configuration changes');
-                this.adapters.docker = new DockerAdapter();
+                this.adapters.docker = new docker_adapter_js_1.DockerAdapter();
             }
             this.reloadCount++;
             logger.info('Adapter reload completed successfully', {
@@ -138,4 +144,5 @@ export class AdapterManager {
         await this.configManager.shutdown();
     }
 }
+exports.AdapterManager = AdapterManager;
 //# sourceMappingURL=adapter-manager.js.map

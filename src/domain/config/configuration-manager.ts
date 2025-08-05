@@ -1,9 +1,11 @@
 import { config } from 'dotenv';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { watch, FSWatcher } from 'fs';
 import { existsSync, readFileSync } from 'fs';
 import winston from 'winston';
+
+// Use CommonJS __dirname (available in CommonJS modules)
+declare const __dirname: string;
 
 const logger = winston.createLogger({
     level: process.env.MCP_LOG_LEVEL ?? 'info',
@@ -36,8 +38,7 @@ export class ConfigurationManager {
     private isWatching: boolean = false;
 
     private constructor() {
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = dirname(__filename);
+        // Use CommonJS __dirname
         this.envFilePath = join(__dirname, '../../../.env.development');
         this.captureCurrentEnvironment();
         this.captureEnvFileContent();

@@ -1,18 +1,8 @@
 import { config } from 'dotenv';
 import { join, resolve } from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
-// Get the directory of the current module - handle Jest test environment
-let __dirname: string;
-try {
-    // Try to use import.meta.url if available (Node.js ES modules)
-    const __filename = fileURLToPath(import.meta.url);
-    __dirname = dirname(__filename);
-} catch {
-    // Fallback for Jest/CommonJS environment
-    __dirname = process.cwd();
-}
+// Use CommonJS __dirname (available in CommonJS modules)
+declare const __dirname: string;
 
 // Load environment variables from .env.development in parent directory
 // Use resolve to get absolute path - handle both src and dist directories
