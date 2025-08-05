@@ -38,6 +38,7 @@ export declare class ToolRegistry {
     private extractBusinessConcepts;
     private identifyBusinessRules;
     private generateAnalysisSummary;
+    getHolisticContextUpdateTools(): ToolDefinition[];
 }
 export declare const GitToolRegistry: typeof ToolRegistry;
 //# sourceMappingURL=tool-registry.d.ts.map

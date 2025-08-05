@@ -6,6 +6,7 @@ import { BusinessConceptExtractor } from '../services/business-concept-extractor
 import { CSharpParser } from '../services/csharp-parser.js';
 import { ContextGenerator } from '../services/context-generator.js';
 import { contextGenerationTools, contextGenerationHandlers } from '../tools/context-generation.js';
+import { executeHolisticContextUpdateTool, getHolisticUpdateStatusTool, rollbackHolisticUpdateTool, validateHolisticUpdateConfigTool, performHolisticUpdateMaintenanceTool, handleExecuteHolisticContextUpdate, handleGetHolisticUpdateStatus, handleRollbackHolisticUpdate, handleValidateHolisticUpdateConfig, handlePerformHolisticUpdateMaintenance } from '../tools/holistic-context-updates.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
@@ -37,7 +38,8 @@ export class ToolRegistry {
             ...this.getGitTools(),
             ...this.getAzureDevOpsTools(),
             ...this.getSemanticAnalysisTools(),
-            ...this.getContextGenerationTools()
+            ...this.getContextGenerationTools(),
+            ...this.getHolisticContextUpdateTools()
         ];
     }
     getGitTools() {
@@ -820,6 +822,50 @@ export class ToolRegistry {
             ? results.reduce((sum, r) => sum + (r.businessConcepts.reduce((cSum, c) => cSum + c.confidence, 0) / Math.max(r.businessConcepts.length, 1)), 0) / results.length
             : 0;
         return `Analyzed ${results.length} files, extracted ${totalConcepts} business concepts and ${totalRules} business rules across ${domains.length} domains (${domains.join(', ')}). Average confidence: ${(avgConfidence * 100).toFixed(1)}%`;
+    }
+    getHolisticContextUpdateTools() {
+        const holisticTools = [
+            executeHolisticContextUpdateTool,
+            getHolisticUpdateStatusTool,
+            rollbackHolisticUpdateTool,
+            validateHolisticUpdateConfigTool,
+            performHolisticUpdateMaintenanceTool
+        ];
+        return holisticTools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'Holistic context update tool',
+            inputSchema: tool.inputSchema,
+            handler: async (args) => {
+                let result;
+                switch (tool.name) {
+                    case 'execute-holistic-context-update':
+                        result = await handleExecuteHolisticContextUpdate(args);
+                        break;
+                    case 'get-holistic-update-status':
+                        result = await handleGetHolisticUpdateStatus(args);
+                        break;
+                    case 'rollback-holistic-update':
+                        result = await handleRollbackHolisticUpdate(args);
+                        break;
+                    case 'validate-holistic-update-config':
+                        result = await handleValidateHolisticUpdateConfig(args);
+                        break;
+                    case 'perform-holistic-update-maintenance':
+                        result = await handlePerformHolisticUpdateMaintenance(args);
+                        break;
+                    default:
+                        throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
+                }
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
+            }
+        }));
     }
 }
 // Export GitToolRegistry as an alias for backward compatibility
