@@ -1,38 +1,32 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.GitToolRegistry = exports.ToolRegistry = void 0;
-const git_adapter_js_1 = require("../adapters/git-adapter.js");
-const git_domain_analyzer_js_1 = require("../domain/git-domain-analyzer.js");
-const azure_devops_tool_registry_js_1 = require("./azure-devops-tool-registry.js");
-const semantic_analysis_js_1 = require("../services/semantic-analysis.js");
-const business_concept_extractor_js_1 = require("../services/business-concept-extractor.js");
-const csharp_parser_js_1 = require("../services/csharp-parser.js");
-const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
-const winston_1 = __importDefault(require("winston"));
-const environment_js_1 = require("../domain/config/environment.js");
-const logger = winston_1.default.createLogger({
-    level: environment_js_1.Environment.mcpLogLevel,
-    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
+import { GitAdapter } from '../adapters/git-adapter.js';
+import { GitDomainAnalyzer } from '../domain/git-domain-analyzer.js';
+import { AzureDevOpsToolRegistry } from './azure-devops-tool-registry.js';
+import { SemanticAnalysisService } from '../services/semantic-analysis.js';
+import { BusinessConceptExtractor } from '../services/business-concept-extractor.js';
+import { CSharpParser } from '../services/csharp-parser.js';
+import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+import winston from 'winston';
+import { Environment } from '../domain/config/environment.js';
+const logger = winston.createLogger({
+    level: Environment.mcpLogLevel,
+    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
     transports: [
-        new winston_1.default.transports.Console(),
-        new winston_1.default.transports.File({ filename: 'environment-mcp-gateway.log' })
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
-class ToolRegistry {
+export class ToolRegistry {
     gitAdapter;
     azureDevOpsToolRegistry;
     semanticAnalysisService;
     businessConceptExtractor;
     csharpParser;
     constructor() {
-        this.gitAdapter = new git_adapter_js_1.GitAdapter();
-        this.azureDevOpsToolRegistry = new azure_devops_tool_registry_js_1.AzureDevOpsToolRegistry();
-        this.semanticAnalysisService = new semantic_analysis_js_1.SemanticAnalysisService();
-        this.businessConceptExtractor = new business_concept_extractor_js_1.BusinessConceptExtractor();
-        this.csharpParser = new csharp_parser_js_1.CSharpParser();
+        this.gitAdapter = new GitAdapter();
+        this.azureDevOpsToolRegistry = new AzureDevOpsToolRegistry();
+        this.semanticAnalysisService = new SemanticAnalysisService();
+        this.businessConceptExtractor = new BusinessConceptExtractor();
+        this.csharpParser = new CSharpParser();
     }
     getAllTools() {
         return [
@@ -187,7 +181,7 @@ class ToolRegistry {
             // Add domain context if requested
             if (includeDomainContext) {
                 for (const branch of branches) {
-                    branch.domainContext = git_domain_analyzer_js_1.GitDomainAnalyzer.analyzeBranchDomainContext(branch);
+                    branch.domainContext = GitDomainAnalyzer.analyzeBranchDomainContext(branch);
                 }
             }
             const result = {
@@ -225,19 +219,19 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to list branches', { error });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to list branches: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to list branches: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async createFeatureBranch(args) {
         const { branchName, baseBranch = 'master' } = args;
         if (!branchName) {
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Branch name is required');
+            throw new McpError(ErrorCode.InvalidParams, 'Branch name is required');
         }
         logger.info('Creating feature branch', { branchName, baseBranch });
         try {
             const success = await this.gitAdapter.createFeatureBranch(branchName, baseBranch);
             // Analyze domain context
-            const domainContext = git_domain_analyzer_js_1.GitDomainAnalyzer.analyzeBranchDomainContext({
+            const domainContext = GitDomainAnalyzer.analyzeBranchDomainContext({
                 name: branchName,
                 current: true,
                 remote: null,
@@ -270,7 +264,7 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to create feature branch', { branchName, baseBranch, error });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to create feature branch: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to create feature branch: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async analyzeRecentCommits(args) {
@@ -281,7 +275,7 @@ class ToolRegistry {
             // Add domain analysis if requested
             const analyzedCommits = commits.map(commit => {
                 const analysis = includeDomainAnalysis ?
-                    git_domain_analyzer_js_1.GitDomainAnalyzer.analyzeCommitDomainImpact(commit) :
+                    GitDomainAnalyzer.analyzeCommitDomainImpact(commit) :
                     null;
                 return {
                     hash: commit.hash.substring(0, 7),
@@ -325,18 +319,18 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to analyze recent commits', { error });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to analyze recent commits: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to analyze recent commits: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async getCommitDetails(args) {
         const { commitHash } = args;
         if (!commitHash) {
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Commit hash is required');
+            throw new McpError(ErrorCode.InvalidParams, 'Commit hash is required');
         }
         logger.info('Getting commit details', { commitHash });
         try {
             const commit = await this.gitAdapter.getCommitDetails(commitHash);
-            const domainAnalysis = git_domain_analyzer_js_1.GitDomainAnalyzer.analyzeCommitDomainImpact(commit);
+            const domainAnalysis = GitDomainAnalyzer.analyzeCommitDomainImpact(commit);
             const result = {
                 timestamp: new Date().toISOString(),
                 commit: {
@@ -359,7 +353,7 @@ class ToolRegistry {
                 files: commit.files.map(f => ({
                     path: f.path,
                     status: f.status,
-                    domain: f.domain || git_domain_analyzer_js_1.GitDomainAnalyzer.mapFileToDomain(f.path)
+                    domain: f.domain || GitDomainAnalyzer.mapFileToDomain(f.path)
                 })),
                 recommendations: this.generateCommitRecommendations(domainAnalysis)
             };
@@ -374,13 +368,13 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to get commit details', { commitHash, error });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to get commit details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to get commit details: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async mergeBranch(args) {
         const { sourceBranch, targetBranch = 'master', analyzeOnly = false } = args;
         if (!sourceBranch) {
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InvalidParams, 'Source branch is required');
+            throw new McpError(ErrorCode.InvalidParams, 'Source branch is required');
         }
         logger.info('Analyzing/performing branch merge', { sourceBranch, targetBranch, analyzeOnly });
         try {
@@ -388,7 +382,7 @@ class ToolRegistry {
                 const analysis = await this.gitAdapter.analyzeMerge(sourceBranch, targetBranch);
                 // Add domain analysis for merge changes
                 const filePaths = analysis.previewChanges.map(c => c.path);
-                const codeImpact = git_domain_analyzer_js_1.GitDomainAnalyzer.analyzeCodeImpact(filePaths);
+                const codeImpact = GitDomainAnalyzer.analyzeCodeImpact(filePaths);
                 const result = {
                     timestamp: new Date().toISOString(),
                     mergeAnalysis: {
@@ -410,7 +404,7 @@ class ToolRegistry {
                     previewChanges: analysis.previewChanges.map(c => ({
                         path: c.path,
                         status: c.status,
-                        domain: git_domain_analyzer_js_1.GitDomainAnalyzer.mapFileToDomain(c.path)
+                        domain: GitDomainAnalyzer.mapFileToDomain(c.path)
                     }))
                 };
                 return {
@@ -459,7 +453,7 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to merge branch', { sourceBranch, targetBranch, error });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to merge branch: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to merge branch: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async analyzeCodeImpact(args) {
@@ -474,7 +468,7 @@ class ToolRegistry {
                     pathsToAnalyze = commits[0].files.map(f => f.path);
                 }
             }
-            const codeImpact = git_domain_analyzer_js_1.GitDomainAnalyzer.analyzeCodeImpact(pathsToAnalyze || []);
+            const codeImpact = GitDomainAnalyzer.analyzeCodeImpact(pathsToAnalyze || []);
             const result = {
                 timestamp: new Date().toISOString(),
                 analyzedFiles: pathsToAnalyze?.length || 0,
@@ -482,7 +476,7 @@ class ToolRegistry {
                     domainBreakdown: Array.from(codeImpact.domainBreakdown.entries()).map(([domain, count]) => ({
                         domain,
                         filesAffected: count,
-                        description: git_domain_analyzer_js_1.GitDomainAnalyzer.getDomainDescription(domain)
+                        description: GitDomainAnalyzer.getDomainDescription(domain)
                     })),
                     crossDomainFiles: codeImpact.crossDomainFiles,
                     riskAssessment: codeImpact.riskAssessment,
@@ -490,7 +484,7 @@ class ToolRegistry {
                 },
                 fileAnalysis: pathsToAnalyze?.map((path) => ({
                     path,
-                    domain: git_domain_analyzer_js_1.GitDomainAnalyzer.mapFileToDomain(path),
+                    domain: GitDomainAnalyzer.mapFileToDomain(path),
                     project: this.extractProjectFromPath(path)
                 })) || []
             };
@@ -505,7 +499,7 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to analyze code impact', { error });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to analyze code impact: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to analyze code impact: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async validateGitWorkflow(args) {
@@ -542,13 +536,13 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to validate Git workflow', { error });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to validate Git workflow: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to validate Git workflow: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     calculateDomainDistribution(commits) {
         const distribution = {};
         for (const commit of commits) {
-            const analysis = git_domain_analyzer_js_1.GitDomainAnalyzer.analyzeCommitDomainImpact(commit);
+            const analysis = GitDomainAnalyzer.analyzeCommitDomainImpact(commit);
             for (const domain of analysis.domains) {
                 distribution[domain] = (distribution[domain] || 0) + 1;
             }
@@ -558,7 +552,7 @@ class ToolRegistry {
     calculateRiskDistribution(commits) {
         const distribution = {};
         for (const commit of commits) {
-            const analysis = git_domain_analyzer_js_1.GitDomainAnalyzer.analyzeCommitDomainImpact(commit);
+            const analysis = GitDomainAnalyzer.analyzeCommitDomainImpact(commit);
             distribution[analysis.riskLevel] = (distribution[analysis.riskLevel] || 0) + 1;
         }
         return distribution;
@@ -704,7 +698,7 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to analyze code changes for context', { error, filePaths });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to analyze code changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to analyze code changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async extractBusinessConcepts(args) {
@@ -749,7 +743,7 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to extract business concepts', { error, filePaths });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to extract business concepts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to extract business concepts: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     async identifyBusinessRules(args) {
@@ -788,7 +782,7 @@ class ToolRegistry {
         }
         catch (error) {
             logger.error('Failed to identify business rules', { error, filePaths });
-            throw new types_js_1.McpError(types_js_1.ErrorCode.InternalError, `Failed to identify business rules: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new McpError(ErrorCode.InternalError, `Failed to identify business rules: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     generateAnalysisSummary(results) {
@@ -801,7 +795,6 @@ class ToolRegistry {
         return `Analyzed ${results.length} files, extracted ${totalConcepts} business concepts and ${totalRules} business rules across ${domains.length} domains (${domains.join(', ')}). Average confidence: ${(avgConfidence * 100).toFixed(1)}%`;
     }
 }
-exports.ToolRegistry = ToolRegistry;
 // Export GitToolRegistry as an alias for backward compatibility
-exports.GitToolRegistry = ToolRegistry;
+export const GitToolRegistry = ToolRegistry;
 //# sourceMappingURL=tool-registry.js.map

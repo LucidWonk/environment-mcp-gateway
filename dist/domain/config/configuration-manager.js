@@ -1,23 +1,21 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ConfigurationManager = void 0;
-const dotenv_1 = require("dotenv");
-const path_1 = require("path");
-const fs_1 = require("fs");
-const fs_2 = require("fs");
-const winston_1 = __importDefault(require("winston"));
-const logger = winston_1.default.createLogger({
+import { config } from 'dotenv';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { watch } from 'fs';
+import { existsSync, readFileSync } from 'fs';
+import winston from 'winston';
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const logger = winston.createLogger({
     level: process.env.MCP_LOG_LEVEL ?? 'info',
-    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
+    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
     transports: [
-        new winston_1.default.transports.Console(),
-        new winston_1.default.transports.File({ filename: 'environment-mcp-gateway.log' })
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
-class ConfigurationManager {
+export class ConfigurationManager {
     static instance;
     listeners = [];
     watchers = [];
@@ -27,7 +25,7 @@ class ConfigurationManager {
     isWatching = false;
     constructor() {
         // Use CommonJS __dirname
-        this.envFilePath = (0, path_1.join)(__dirname, '../../../.env.development');
+        this.envFilePath = join(__dirname, '../../../.env.development');
         this.captureCurrentEnvironment();
         this.captureEnvFileContent();
     }
@@ -50,9 +48,9 @@ class ConfigurationManager {
         });
     }
     captureEnvFileContent() {
-        if ((0, fs_2.existsSync)(this.envFilePath)) {
+        if (existsSync(this.envFilePath)) {
             try {
-                this.lastEnvFileContent = (0, fs_2.readFileSync)(this.envFilePath, 'utf8');
+                this.lastEnvFileContent = readFileSync(this.envFilePath, 'utf8');
             }
             catch (error) {
                 logger.warn('Failed to read .env file for content capture', {
@@ -65,7 +63,7 @@ class ConfigurationManager {
     reloadConfiguration() {
         logger.info('Reloading configuration from .env file', { path: this.envFilePath });
         // Reload .env file
-        (0, dotenv_1.config)({ path: this.envFilePath, override: true });
+        config({ path: this.envFilePath, override: true });
         // Detect changes
         const changes = this.detectEnvironmentChanges();
         if (changes.length > 0) {
@@ -106,9 +104,9 @@ class ConfigurationManager {
             return;
         }
         logger.info('Starting configuration file watching', { path: this.envFilePath });
-        if ((0, fs_2.existsSync)(this.envFilePath)) {
+        if (existsSync(this.envFilePath)) {
             try {
-                const watcher = (0, fs_1.watch)(this.envFilePath, (eventType, filename) => {
+                const watcher = watch(this.envFilePath, (eventType, filename) => {
                     if (eventType === 'change') {
                         logger.info('Configuration file changed, reloading...', {
                             filename,
@@ -146,7 +144,7 @@ class ConfigurationManager {
     handleFileChange() {
         try {
             // Check if file content actually changed
-            const newContent = (0, fs_2.readFileSync)(this.envFilePath, 'utf8');
+            const newContent = readFileSync(this.envFilePath, 'utf8');
             if (newContent !== this.lastEnvFileContent) {
                 logger.info('Configuration file content changed, triggering reload');
                 const event = {
@@ -242,5 +240,4 @@ class ConfigurationManager {
         this.listeners = [];
     }
 }
-exports.ConfigurationManager = ConfigurationManager;
 //# sourceMappingURL=configuration-manager.js.map

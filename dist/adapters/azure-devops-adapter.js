@@ -1,30 +1,24 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AzureDevOpsAdapter = void 0;
-const winston_1 = __importDefault(require("winston"));
-const environment_js_1 = require("../domain/config/environment.js");
-const logger = winston_1.default.createLogger({
-    level: environment_js_1.Environment.mcpLogLevel,
-    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
+import winston from 'winston';
+import { Environment } from '../domain/config/environment.js';
+const logger = winston.createLogger({
+    level: Environment.mcpLogLevel,
+    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
     transports: [
-        new winston_1.default.transports.Console(),
-        new winston_1.default.transports.File({ filename: 'environment-mcp-gateway.log' })
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
     ]
 });
-class AzureDevOpsAdapter {
+export class AzureDevOpsAdapter {
     baseUrl;
     organization;
     project;
     pat;
     apiVersion = '7.0';
     constructor() {
-        this.organization = environment_js_1.Environment.azureDevOpsOrganization || '';
-        this.project = environment_js_1.Environment.azureDevOpsProject || '';
-        this.pat = environment_js_1.Environment.azureDevOpsPAT || '';
-        this.baseUrl = `${environment_js_1.Environment.azureDevOpsApiUrl}/${this.organization}/${this.project}/_apis`;
+        this.organization = Environment.azureDevOpsOrganization || '';
+        this.project = Environment.azureDevOpsProject || '';
+        this.pat = Environment.azureDevOpsPAT || '';
+        this.baseUrl = `${Environment.azureDevOpsApiUrl}/${this.organization}/${this.project}/_apis`;
         if (!this.organization || !this.pat) {
             logger.warn('Azure DevOps configuration incomplete - some features may not be available', {
                 hasOrganization: !!this.organization,
@@ -469,5 +463,4 @@ class AzureDevOpsAdapter {
         }
     }
 }
-exports.AzureDevOpsAdapter = AzureDevOpsAdapter;
 //# sourceMappingURL=azure-devops-adapter.js.map

@@ -1,12 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SolutionParser = void 0;
-const fs_1 = require("fs");
-const path_1 = require("path");
-class SolutionParser {
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+export class SolutionParser {
     static parseSolution(solutionPath) {
-        const content = (0, fs_1.readFileSync)(solutionPath, 'utf-8');
-        const solutionDir = (0, path_1.dirname)(solutionPath);
+        const content = readFileSync(solutionPath, 'utf-8');
+        const solutionDir = dirname(solutionPath);
         const solutionName = solutionPath.split('/').pop()?.replace('.sln', '') || 'Unknown';
         const projects = [];
         const solutionFolders = [];
@@ -20,7 +17,7 @@ class SolutionParser {
                 solutionFolders.push(projectName);
                 continue;
             }
-            const fullPath = (0, path_1.join)(solutionDir, projectPath);
+            const fullPath = join(solutionDir, projectPath);
             const projectType = this.getProjectType(projectTypeId, projectPath);
             projects.push({
                 id: projectId,
@@ -149,5 +146,4 @@ class SolutionParser {
         };
     }
 }
-exports.SolutionParser = SolutionParser;
 //# sourceMappingURL=solution-parser.js.map

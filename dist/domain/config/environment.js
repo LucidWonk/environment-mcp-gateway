@@ -1,15 +1,16 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Environment = void 0;
-const dotenv_1 = require("dotenv");
-const path_1 = require("path");
+import { config } from 'dotenv';
+import { join, resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 // Load environment variables from .env.development in parent directory
 // Use resolve to get absolute path - handle both src and dist directories
-const projectRoot = (0, path_1.resolve)(__dirname, '..', '..', '..');
-const envPath = (0, path_1.join)(projectRoot, '.env.development');
+const projectRoot = resolve(__dirname, '..', '..', '..');
+const envPath = join(projectRoot, '.env.development');
 console.info(`Loading environment from: ${envPath}`);
-(0, dotenv_1.config)({ path: envPath });
-class Environment {
+config({ path: envPath });
+export class Environment {
     // Database - development database configuration
     static get dbHost() { return process.env.DB_HOST ?? 'localhost'; }
     static get dbPassword() { return process.env.DB_PASSWORD; }
@@ -24,10 +25,10 @@ class Environment {
     static get mcpServerPort() { return parseInt(process.env.MCP_SERVER_PORT ?? '3001'); }
     static get mcpLogLevel() { return process.env.MCP_LOG_LEVEL ?? 'info'; }
     // Solution and project paths
-    static get solutionPath() { return (0, path_1.join)(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'Lucidwonks.sln'); }
+    static get solutionPath() { return join(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'Lucidwonks.sln'); }
     static get projectRoot() { return process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks'; }
     // Docker configuration
-    static get dockerComposeFile() { return (0, path_1.join)(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'docker-compose.yml'); }
+    static get dockerComposeFile() { return join(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'docker-compose.yml'); }
     // Azure DevOps configuration
     static get azureDevOpsOrganization() { return process.env.AZURE_DEVOPS_ORGANIZATION; }
     static get azureDevOpsProject() { return process.env.AZURE_DEVOPS_PROJECT ?? 'Lucidwonks'; }
@@ -136,5 +137,4 @@ class Environment {
         };
     }
 }
-exports.Environment = Environment;
 //# sourceMappingURL=environment.js.map

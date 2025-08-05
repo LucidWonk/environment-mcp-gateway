@@ -1,8 +1,10 @@
 import { config } from 'dotenv';
-import { join, resolve } from 'path';
+import { join, resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-// Use CommonJS __dirname (available in CommonJS modules)
-declare const __dirname: string;
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load environment variables from .env.development in parent directory
 // Use resolve to get absolute path - handle both src and dist directories

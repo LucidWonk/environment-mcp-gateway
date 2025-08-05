@@ -1,63 +1,24 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.GitIntegrationClient = void 0;
-const fs = __importStar(require("fs"));
-const path = __importStar(require("path"));
-const child_process_1 = require("child_process");
-const winston_1 = __importDefault(require("winston"));
-const environment_js_1 = require("../domain/config/environment.js");
-const semantic_analysis_js_1 = require("../services/semantic-analysis.js");
-const logger = winston_1.default.createLogger({
-    level: environment_js_1.Environment.mcpLogLevel,
-    format: winston_1.default.format.combine(winston_1.default.format.timestamp(), winston_1.default.format.errors({ stack: true }), winston_1.default.format.json()),
+import * as fs from 'fs';
+import * as path from 'path';
+import { execSync } from 'child_process';
+import winston from 'winston';
+import { Environment } from '../domain/config/environment.js';
+import { SemanticAnalysisService } from '../services/semantic-analysis.js';
+const logger = winston.createLogger({
+    level: Environment.mcpLogLevel,
+    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
     transports: [
-        new winston_1.default.transports.Console(),
-        new winston_1.default.transports.File({ filename: 'git-integration.log' })
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'git-integration.log' })
     ]
 });
-class GitIntegrationClient {
+export class GitIntegrationClient {
     semanticAnalysis;
     cacheDir = '.semantic-cache';
     maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
     analysisTimeLimit = 30 * 1000; // 30 seconds total
     constructor() {
-        this.semanticAnalysis = new semantic_analysis_js_1.SemanticAnalysisService();
+        this.semanticAnalysis = new SemanticAnalysisService();
         this.ensureCacheDirectory();
     }
     /**
@@ -107,19 +68,19 @@ class GitIntegrationClient {
     getChangedFiles() {
         try {
             // Get staged files
-            const stagedFiles = (0, child_process_1.execSync)('git diff --cached --name-only', { encoding: 'utf-8' })
+            const stagedFiles = execSync('git diff --cached --name-only', { encoding: 'utf-8' })
                 .trim()
                 .split('\n')
                 .filter(file => file.length > 0);
             // Get modified but unstaged files
-            const modifiedFiles = (0, child_process_1.execSync)('git diff --name-only', { encoding: 'utf-8' })
+            const modifiedFiles = execSync('git diff --name-only', { encoding: 'utf-8' })
                 .trim()
                 .split('\n')
                 .filter(file => file.length > 0);
             // Combine and deduplicate
             const allFiles = [...new Set([...stagedFiles, ...modifiedFiles])];
             // Convert to absolute paths
-            const rootDir = (0, child_process_1.execSync)('git rev-parse --show-toplevel', { encoding: 'utf-8' }).trim();
+            const rootDir = execSync('git rev-parse --show-toplevel', { encoding: 'utf-8' }).trim();
             return allFiles.map(file => path.resolve(rootDir, file));
         }
         catch (error) {
@@ -305,7 +266,7 @@ class GitIntegrationClient {
         }
         // Don't run if git is in middle of rebase, merge, etc.
         try {
-            const gitDir = (0, child_process_1.execSync)('git rev-parse --git-dir', { encoding: 'utf-8' }).trim();
+            const gitDir = execSync('git rev-parse --git-dir', { encoding: 'utf-8' }).trim();
             const conflictMarkers = [
                 path.join(gitDir, 'MERGE_HEAD'),
                 path.join(gitDir, 'REBASE_HEAD'),
@@ -325,5 +286,4 @@ class GitIntegrationClient {
         }
     }
 }
-exports.GitIntegrationClient = GitIntegrationClient;
 //# sourceMappingURL=git-integration.js.map

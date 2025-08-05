@@ -1,11 +1,13 @@
 import { config } from 'dotenv';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { watch, FSWatcher } from 'fs';
 import { existsSync, readFileSync } from 'fs';
 import winston from 'winston';
 
-// Use CommonJS __dirname (available in CommonJS modules)
-declare const __dirname: string;
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const logger = winston.createLogger({
     level: process.env.MCP_LOG_LEVEL ?? 'info',

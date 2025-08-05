@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.GitDomainAnalyzer = exports.TradingDomain = void 0;
-var TradingDomain;
+export var TradingDomain;
 (function (TradingDomain) {
     TradingDomain["ANALYSIS"] = "Analysis";
     TradingDomain["DATA"] = "Data";
@@ -10,8 +7,8 @@ var TradingDomain;
     TradingDomain["TESTS"] = "Tests";
     TradingDomain["INFRASTRUCTURE"] = "Infrastructure";
     TradingDomain["UNKNOWN"] = "Unknown";
-})(TradingDomain || (exports.TradingDomain = TradingDomain = {}));
-class GitDomainAnalyzer {
+})(TradingDomain || (TradingDomain = {}));
+export class GitDomainAnalyzer {
     static DOMAIN_MAPPINGS = [
         {
             domain: TradingDomain.ANALYSIS,
@@ -429,5 +426,4 @@ class GitDomainAnalyzer {
         };
     }
 }
-exports.GitDomainAnalyzer = GitDomainAnalyzer;
 //# sourceMappingURL=git-domain-analyzer.js.map
