@@ -39,7 +39,7 @@ export async function handleGenerateContextFiles(args) {
     const startTime = Date.now();
     try {
         const { targetDomain, includeTemplateData = false } = args;
-        console.log(`[generate-context-files] Starting context generation for domain: ${targetDomain}`);
+        console.info(`[generate-context-files] Starting context generation for domain: ${targetDomain}`);
         // Initialize context generator
         const contextGenerator = new ContextGenerator();
         // Load semantic analysis results from cache
@@ -51,7 +51,7 @@ export async function handleGenerateContextFiles(args) {
                 suggestion: 'Use analyze-code-changes-for-context tool to generate semantic analysis data.'
             };
         }
-        console.log(`[generate-context-files] Loaded ${analysisResults.length} analysis results from cache`);
+        console.info(`[generate-context-files] Loaded ${analysisResults.length} analysis results from cache`);
         // Filter results by target domain if specified
         const domainResults = targetDomain === 'Unknown'
             ? analysisResults
@@ -65,7 +65,7 @@ export async function handleGenerateContextFiles(args) {
                 suggestion: 'Try using a different domain or run analysis on files in the target domain.'
             };
         }
-        console.log(`[generate-context-files] Filtered to ${domainResults.length} results for domain ${targetDomain}`);
+        console.info(`[generate-context-files] Filtered to ${domainResults.length} results for domain ${targetDomain}`);
         // Generate context files
         const contextFiles = await contextGenerator.generateContextFiles(domainResults);
         // Write context files to appropriate directories
@@ -104,7 +104,7 @@ export async function handleGenerateContextFiles(args) {
                 renderingSuccessful: true
             };
         }
-        console.log(`[generate-context-files] Context generation completed successfully in ${duration}ms`);
+        console.info(`[generate-context-files] Context generation completed successfully in ${duration}ms`);
         return response;
     }
     catch (error) {
@@ -158,7 +158,7 @@ export async function handlePreviewContextFiles(args) {
     const startTime = Date.now();
     try {
         const { targetDomain, includeContent = false, maxContentLength = 500 } = args;
-        console.log(`[preview-context-files] Starting context preview for domain: ${targetDomain}`);
+        console.info(`[preview-context-files] Starting context preview for domain: ${targetDomain}`);
         // Initialize context generator
         const contextGenerator = new ContextGenerator();
         // Load semantic analysis results
@@ -233,7 +233,7 @@ export async function handlePreviewContextFiles(args) {
             estimatedBusinessRules: domainResults.reduce((sum, r) => sum + r.businessRules.length, 0),
             qualityScore: Math.round((domainResults.reduce((sum, r) => sum + r.domainAnalysis.confidence, 0) / domainResults.length) * 100)
         };
-        console.log(`[preview-context-files] Preview completed in ${duration}ms`);
+        console.info(`[preview-context-files] Preview completed in ${duration}ms`);
         return preview;
     }
     catch (error) {
@@ -279,7 +279,7 @@ export async function handleValidateContextFiles(args) {
     const startTime = Date.now();
     try {
         const { targetDomain, strictValidation = false, includeRecommendations = true } = args;
-        console.log(`[validate-context-files] Starting validation for domain: ${targetDomain}`);
+        console.info(`[validate-context-files] Starting validation for domain: ${targetDomain}`);
         // This would be implemented to validate existing context files
         // For now, return a structured validation response
         const duration = Date.now() - startTime;

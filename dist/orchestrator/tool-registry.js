@@ -9,6 +9,7 @@ import { contextGenerationTools, contextGenerationHandlers } from '../tools/cont
 import { executeHolisticContextUpdateTool, getHolisticUpdateStatusTool, rollbackHolisticUpdateTool, validateHolisticUpdateConfigTool, performHolisticUpdateMaintenanceTool, handleExecuteHolisticContextUpdate, handleGetHolisticUpdateStatus, handleRollbackHolisticUpdate, handleValidateHolisticUpdateConfig, handlePerformHolisticUpdateMaintenance } from '../tools/holistic-context-updates.js';
 import { getCrossDomainImpactAnalysisTools, getCrossDomainImpactAnalysisHandlers } from '../tools/cross-domain-impact-analysis.js';
 import { getUpdateIntegrationTools, getUpdateIntegrationHandlers } from '../tools/update-integration.js';
+import { documentLifecycleTools, documentLifecycleHandlers } from '../tools/document-lifecycle.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
@@ -43,7 +44,8 @@ export class ToolRegistry {
             ...this.getContextGenerationTools(),
             ...this.getHolisticContextUpdateTools(),
             ...this.getCrossDomainImpactAnalysisTools(),
-            ...this.getUpdateIntegrationTools()
+            ...this.getUpdateIntegrationTools(),
+            ...this.getDocumentLifecycleTools()
         ];
     }
     getGitTools() {
@@ -904,6 +906,30 @@ export class ToolRegistry {
             inputSchema: tool.inputSchema,
             handler: async (args) => {
                 const handlerFn = handlers.get(tool.name);
+                if (!handlerFn) {
+                    throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
+                }
+                const result = await handlerFn(args);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
+            }
+        }));
+    }
+    getDocumentLifecycleTools() {
+        const lifecycleTools = Object.values(documentLifecycleTools);
+        const handlers = documentLifecycleHandlers;
+        return lifecycleTools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'Document lifecycle management tool',
+            inputSchema: tool.inputSchema,
+            handler: async (args) => {
+                const handlerFn = handlers[tool.name];
                 if (!handlerFn) {
                     throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
                 }

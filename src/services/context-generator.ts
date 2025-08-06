@@ -81,7 +81,7 @@ export class ContextGenerator {
             }
             
             const duration = Date.now() - startTime;
-            console.log(`Context generation completed in ${duration}ms for ${analysisResults.length} files`);
+            console.info(`Context generation completed in ${duration}ms for ${analysisResults.length} files`);
             
             // Performance validation - must complete within 5 seconds
             if (duration > 5000) {
@@ -335,7 +335,7 @@ export class ContextGenerator {
                 }
             }
             
-            console.log(`Loaded ${results.length} semantic analysis results from cache`);
+            console.info(`Loaded ${results.length} semantic analysis results from cache`);
             return results;
         } catch (error) {
             console.warn('Failed to load semantic analysis cache:', error);
@@ -389,7 +389,7 @@ export class ContextGenerator {
                 ]);
             }
             
-            console.log(`Context files written to ${contextDir}`);
+            console.info(`Context files written to ${contextDir}`);
         } catch (error) {
             console.error('Failed to write context files:', error);
             throw new Error(`Failed to write context files: ${error instanceof Error ? error.message : 'Unknown error'}`);

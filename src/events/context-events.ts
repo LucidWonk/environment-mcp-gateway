@@ -32,7 +32,19 @@ export type ContextEventType =
     // Domain Events
     | 'DomainBoundaryDetected'
     | 'DomainImpactAnalyzed'
-    | 'DomainContextUpdated';
+    | 'DomainContextUpdated'
+    // Document Lifecycle Events
+    | 'DocumentAnalysisStarted'
+    | 'DocumentAnalysisCompleted'
+    | 'DocumentAnalysisFailed'
+    | 'MigrationProposalStarted'
+    | 'MigrationProposalGenerated'
+    | 'MigrationProposalFailed'
+    | 'MigrationExecutionStarted'
+    | 'MigrationExecutionCompleted'
+    | 'MigrationExecutionFailed'
+    | 'ApprovalRequested'
+    | 'ApprovalResponseSubmitted';
 
 export interface ContextEvent {
     type: ContextEventType;

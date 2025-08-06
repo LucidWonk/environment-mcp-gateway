@@ -27,7 +27,7 @@ export class ContextGenerator {
                 contextFiles.push(contextContent);
             }
             const duration = Date.now() - startTime;
-            console.log(`Context generation completed in ${duration}ms for ${analysisResults.length} files`);
+            console.info(`Context generation completed in ${duration}ms for ${analysisResults.length} files`);
             // Performance validation - must complete within 5 seconds
             if (duration > 5000) {
                 console.warn(`Context generation took ${duration}ms, exceeding 5s performance requirement`);
@@ -245,7 +245,7 @@ export class ContextGenerator {
                     }
                 }
             }
-            console.log(`Loaded ${results.length} semantic analysis results from cache`);
+            console.info(`Loaded ${results.length} semantic analysis results from cache`);
             return results;
         }
         catch (error) {
@@ -295,7 +295,7 @@ export class ContextGenerator {
                     fs.writeFile(join(contextDir, 'recent-changes.md'), context.recentChanges)
                 ]);
             }
-            console.log(`Context files written to ${contextDir}`);
+            console.info(`Context files written to ${contextDir}`);
         }
         catch (error) {
             console.error('Failed to write context files:', error);

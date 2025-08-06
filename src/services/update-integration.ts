@@ -261,7 +261,7 @@ export class UpdateIntegrationOrchestrator {
                     performanceTimeout: 30
                 };
                 await this.crossDomainCoordinator.coordinateUpdate(testCoordRequest);
-            } catch (_error) {
+            } catch {
                 issues.push('Cross-domain coordinator not properly configured');
             }
 
@@ -273,7 +273,7 @@ export class UpdateIntegrationOrchestrator {
                     performanceTimeout: 15
                 };
                 await this.holisticOrchestrator.executeHolisticUpdate(testHolisticRequest);
-            } catch (_error) {
+            } catch {
                 issues.push('Holistic orchestrator not properly configured');
             }
 
