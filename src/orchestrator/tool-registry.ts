@@ -22,6 +22,10 @@ import {
     getCrossDomainImpactAnalysisTools,
     getCrossDomainImpactAnalysisHandlers
 } from '../tools/cross-domain-impact-analysis.js';
+import {
+    getUpdateIntegrationTools,
+    getUpdateIntegrationHandlers
+} from '../tools/update-integration.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
@@ -70,7 +74,8 @@ export class ToolRegistry {
             ...this.getSemanticAnalysisTools(),
             ...this.getContextGenerationTools(),
             ...this.getHolisticContextUpdateTools(),
-            ...this.getCrossDomainImpactAnalysisTools()
+            ...this.getCrossDomainImpactAnalysisTools(),
+            ...this.getUpdateIntegrationTools()
         ];
     }
 
@@ -987,6 +992,33 @@ export class ToolRegistry {
         return crossDomainTools.map(tool => ({
             name: tool.name,
             description: tool.description || 'Cross-domain impact analysis tool',
+            inputSchema: tool.inputSchema as any,
+            handler: async (args: any) => {
+                const handlerFn = handlers.get(tool.name);
+                if (!handlerFn) {
+                    throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
+                }
+                
+                const result = await handlerFn(args);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
+            }
+        }));
+    }
+
+    public getUpdateIntegrationTools(): ToolDefinition[] {
+        const integrationTools = getUpdateIntegrationTools();
+        const handlers = getUpdateIntegrationHandlers();
+
+        return integrationTools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'Update integration tool',
             inputSchema: tool.inputSchema as any,
             handler: async (args: any) => {
                 const handlerFn = handlers.get(tool.name);

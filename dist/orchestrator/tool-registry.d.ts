@@ -40,6 +40,7 @@ export declare class ToolRegistry {
     private generateAnalysisSummary;
     getHolisticContextUpdateTools(): ToolDefinition[];
     getCrossDomainImpactAnalysisTools(): ToolDefinition[];
+    getUpdateIntegrationTools(): ToolDefinition[];
 }
 export declare const GitToolRegistry: typeof ToolRegistry;
 //# sourceMappingURL=tool-registry.d.ts.map

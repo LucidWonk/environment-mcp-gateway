@@ -8,6 +8,7 @@ import { ContextGenerator } from '../services/context-generator.js';
 import { contextGenerationTools, contextGenerationHandlers } from '../tools/context-generation.js';
 import { executeHolisticContextUpdateTool, getHolisticUpdateStatusTool, rollbackHolisticUpdateTool, validateHolisticUpdateConfigTool, performHolisticUpdateMaintenanceTool, handleExecuteHolisticContextUpdate, handleGetHolisticUpdateStatus, handleRollbackHolisticUpdate, handleValidateHolisticUpdateConfig, handlePerformHolisticUpdateMaintenance } from '../tools/holistic-context-updates.js';
 import { getCrossDomainImpactAnalysisTools, getCrossDomainImpactAnalysisHandlers } from '../tools/cross-domain-impact-analysis.js';
+import { getUpdateIntegrationTools, getUpdateIntegrationHandlers } from '../tools/update-integration.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
@@ -41,7 +42,8 @@ export class ToolRegistry {
             ...this.getSemanticAnalysisTools(),
             ...this.getContextGenerationTools(),
             ...this.getHolisticContextUpdateTools(),
-            ...this.getCrossDomainImpactAnalysisTools()
+            ...this.getCrossDomainImpactAnalysisTools(),
+            ...this.getUpdateIntegrationTools()
         ];
     }
     getGitTools() {
@@ -875,6 +877,30 @@ export class ToolRegistry {
         return crossDomainTools.map(tool => ({
             name: tool.name,
             description: tool.description || 'Cross-domain impact analysis tool',
+            inputSchema: tool.inputSchema,
+            handler: async (args) => {
+                const handlerFn = handlers.get(tool.name);
+                if (!handlerFn) {
+                    throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
+                }
+                const result = await handlerFn(args);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
+            }
+        }));
+    }
+    getUpdateIntegrationTools() {
+        const integrationTools = getUpdateIntegrationTools();
+        const handlers = getUpdateIntegrationHandlers();
+        return integrationTools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'Update integration tool',
             inputSchema: tool.inputSchema,
             handler: async (args) => {
                 const handlerFn = handlers.get(tool.name);
