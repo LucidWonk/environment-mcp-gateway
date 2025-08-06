@@ -30,6 +30,14 @@ import {
     documentLifecycleTools,
     documentLifecycleHandlers
 } from '../tools/document-lifecycle.js';
+import {
+    registryLifecycleTools,
+    registryLifecycleHandlers
+} from '../tools/registry-lifecycle.js';
+import {
+    lifecycleIntegrationTools,
+    lifecycleIntegrationHandlers
+} from '../tools/lifecycle-integration.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
@@ -80,7 +88,9 @@ export class ToolRegistry {
             ...this.getHolisticContextUpdateTools(),
             ...this.getCrossDomainImpactAnalysisTools(),
             ...this.getUpdateIntegrationTools(),
-            ...this.getDocumentLifecycleTools()
+            ...this.getDocumentLifecycleTools(),
+            ...this.getRegistryLifecycleTools(),
+            ...this.getLifecycleIntegrationTools()
         ];
     }
 
@@ -1051,6 +1061,60 @@ export class ToolRegistry {
         return lifecycleTools.map(tool => ({
             name: tool.name,
             description: tool.description || 'Document lifecycle management tool',
+            inputSchema: tool.inputSchema as any,
+            handler: async (args: any) => {
+                const handlerFn = handlers[tool.name as keyof typeof handlers];
+                if (!handlerFn) {
+                    throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
+                }
+                
+                const result = await handlerFn(args);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
+            }
+        }));
+    }
+
+    public getRegistryLifecycleTools(): ToolDefinition[] {
+        const lifecycleTools = Object.values(registryLifecycleTools);
+        const handlers = registryLifecycleHandlers;
+
+        return lifecycleTools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'Registry lifecycle management tool',
+            inputSchema: tool.inputSchema as any,
+            handler: async (args: any) => {
+                const handlerFn = handlers[tool.name as keyof typeof handlers];
+                if (!handlerFn) {
+                    throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
+                }
+                
+                const result = await handlerFn(args);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
+            }
+        }));
+    }
+
+    public getLifecycleIntegrationTools(): ToolDefinition[] {
+        const integrationTools = Object.values(lifecycleIntegrationTools);
+        const handlers = lifecycleIntegrationHandlers;
+
+        return integrationTools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'Lifecycle integration management tool',
             inputSchema: tool.inputSchema as any,
             handler: async (args: any) => {
                 const handlerFn = handlers[tool.name as keyof typeof handlers];

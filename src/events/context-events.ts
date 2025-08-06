@@ -44,7 +44,23 @@ export type ContextEventType =
     | 'MigrationExecutionCompleted'
     | 'MigrationExecutionFailed'
     | 'ApprovalRequested'
-    | 'ApprovalResponseSubmitted';
+    | 'ApprovalResponseSubmitted'
+    // Registry Lifecycle Events
+    | 'PlaceholderIDGenerationStarted'
+    | 'PlaceholderIDGenerated'
+    | 'PlaceholderIDGenerationFailed'
+    | 'PlaceholderTransitionStarted'
+    | 'PlaceholderTransitioned'
+    | 'PlaceholderTransitionFailed'
+    | 'CapabilityConversionProposed'
+    | 'CapabilityConversionCreated'
+    | 'CapabilityConversionFailed'
+    | 'CapabilityConversionExecutionStarted'
+    | 'CapabilityConversionExecuted'
+    | 'CapabilityConversionExecutionFailed'
+    | 'RegistryValidationStarted'
+    | 'RegistryValidationCompleted'
+    | 'RegistryValidationFailed';
 
 export interface ContextEvent {
     type: ContextEventType;

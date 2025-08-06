@@ -51,7 +51,9 @@ export default [
             'node_modules/',
             'coverage/',
             '*.js',
-            '*.d.ts'
+            '*.d.ts',
+            'src/**/*.test.ts',
+            'src/**/*.spec.ts'
         ]
     }
 ];

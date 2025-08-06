@@ -42,6 +42,8 @@ export declare class ToolRegistry {
     getCrossDomainImpactAnalysisTools(): ToolDefinition[];
     getUpdateIntegrationTools(): ToolDefinition[];
     getDocumentLifecycleTools(): ToolDefinition[];
+    getRegistryLifecycleTools(): ToolDefinition[];
+    getLifecycleIntegrationTools(): ToolDefinition[];
 }
 export declare const GitToolRegistry: typeof ToolRegistry;
 //# sourceMappingURL=tool-registry.d.ts.map
