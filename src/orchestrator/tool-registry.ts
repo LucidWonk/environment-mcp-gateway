@@ -18,6 +18,10 @@ import {
     handleValidateHolisticUpdateConfig,
     handlePerformHolisticUpdateMaintenance
 } from '../tools/holistic-context-updates.js';
+import {
+    getCrossDomainImpactAnalysisTools,
+    getCrossDomainImpactAnalysisHandlers
+} from '../tools/cross-domain-impact-analysis.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
@@ -65,7 +69,8 @@ export class ToolRegistry {
             ...this.getAzureDevOpsTools(),
             ...this.getSemanticAnalysisTools(),
             ...this.getContextGenerationTools(),
-            ...this.getHolisticContextUpdateTools()
+            ...this.getHolisticContextUpdateTools(),
+            ...this.getCrossDomainImpactAnalysisTools()
         ];
     }
 
@@ -944,25 +949,52 @@ export class ToolRegistry {
                 let result;
                 
                 switch (tool.name) {
-                    case 'execute-holistic-context-update':
-                        result = await handleExecuteHolisticContextUpdate(args);
-                        break;
-                    case 'get-holistic-update-status':
-                        result = await handleGetHolisticUpdateStatus(args);
-                        break;
-                    case 'rollback-holistic-update':
-                        result = await handleRollbackHolisticUpdate(args);
-                        break;
-                    case 'validate-holistic-update-config':
-                        result = await handleValidateHolisticUpdateConfig(args);
-                        break;
-                    case 'perform-holistic-update-maintenance':
-                        result = await handlePerformHolisticUpdateMaintenance(args);
-                        break;
-                    default:
-                        throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
+                case 'execute-holistic-context-update':
+                    result = await handleExecuteHolisticContextUpdate(args);
+                    break;
+                case 'get-holistic-update-status':
+                    result = await handleGetHolisticUpdateStatus(args);
+                    break;
+                case 'rollback-holistic-update':
+                    result = await handleRollbackHolisticUpdate(args);
+                    break;
+                case 'validate-holistic-update-config':
+                    result = await handleValidateHolisticUpdateConfig(args);
+                    break;
+                case 'perform-holistic-update-maintenance':
+                    result = await handlePerformHolisticUpdateMaintenance(args);
+                    break;
+                default:
+                    throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
                 }
                 
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
+            }
+        }));
+    }
+
+    public getCrossDomainImpactAnalysisTools(): ToolDefinition[] {
+        const crossDomainTools = getCrossDomainImpactAnalysisTools();
+        const handlers = getCrossDomainImpactAnalysisHandlers();
+
+        return crossDomainTools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'Cross-domain impact analysis tool',
+            inputSchema: tool.inputSchema as any,
+            handler: async (args: any) => {
+                const handlerFn = handlers.get(tool.name);
+                if (!handlerFn) {
+                    throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
+                }
+                
+                const result = await handlerFn(args);
                 return {
                     content: [
                         {

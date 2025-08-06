@@ -110,39 +110,40 @@ export class AtomicFileManager {
     private async validateOperations(operations: FileOperation[]): Promise<void> {
         for (const operation of operations) {
             switch (operation.type) {
-                case 'create':
-                    // Check that target directory exists or can be created
-                    const targetDir = path.dirname(operation.targetPath);
-                    if (!fs.existsSync(targetDir)) {
-                        await fs.promises.mkdir(targetDir, { recursive: true });
-                    }
+            case 'create': {
+                // Check that target directory exists or can be created
+                const targetDir = path.dirname(operation.targetPath);
+                if (!fs.existsSync(targetDir)) {
+                    await fs.promises.mkdir(targetDir, { recursive: true });
+                }
                     
-                    // Check that file doesn't already exist (for create operations)
-                    if (fs.existsSync(operation.targetPath)) {
-                        throw new Error(`Cannot create file - already exists: ${operation.targetPath}`);
-                    }
-                    break;
+                // Check that file doesn't already exist (for create operations)
+                if (fs.existsSync(operation.targetPath)) {
+                    throw new Error(`Cannot create file - already exists: ${operation.targetPath}`);
+                }
+                break;
+            }
 
-                case 'update':
-                    // Check that file exists for update
-                    if (!fs.existsSync(operation.targetPath)) {
-                        throw new Error(`Cannot update file - does not exist: ${operation.targetPath}`);
-                    }
+            case 'update':
+                // Check that file exists for update
+                if (!fs.existsSync(operation.targetPath)) {
+                    throw new Error(`Cannot update file - does not exist: ${operation.targetPath}`);
+                }
                     
-                    // Check write permissions
-                    try {
-                        await fs.promises.access(operation.targetPath, fs.constants.W_OK);
-                    } catch {
-                        throw new Error(`No write permission for file: ${operation.targetPath}`);
-                    }
-                    break;
+                // Check write permissions
+                try {
+                    await fs.promises.access(operation.targetPath, fs.constants.W_OK);
+                } catch {
+                    throw new Error(`No write permission for file: ${operation.targetPath}`);
+                }
+                break;
 
-                case 'delete':
-                    // Check that file exists for deletion
-                    if (!fs.existsSync(operation.targetPath)) {
-                        throw new Error(`Cannot delete file - does not exist: ${operation.targetPath}`);
-                    }
-                    break;
+            case 'delete':
+                // Check that file exists for deletion
+                if (!fs.existsSync(operation.targetPath)) {
+                    throw new Error(`Cannot delete file - does not exist: ${operation.targetPath}`);
+                }
+                break;
             }
         }
     }
@@ -187,22 +188,23 @@ export class AtomicFileManager {
      */
     private async executeOperation(operation: FileOperation): Promise<void> {
         switch (operation.type) {
-            case 'create':
-            case 'update':
-                if (operation.content === undefined) {
-                    throw new Error(`Content required for ${operation.type} operation on ${operation.targetPath}`);
-                }
+        case 'create':
+        case 'update': {
+            if (operation.content === undefined) {
+                throw new Error(`Content required for ${operation.type} operation on ${operation.targetPath}`);
+            }
                 
-                // Ensure target directory exists
-                const targetDir = path.dirname(operation.targetPath);
-                await fs.promises.mkdir(targetDir, { recursive: true });
+            // Ensure target directory exists
+            const targetDir = path.dirname(operation.targetPath);
+            await fs.promises.mkdir(targetDir, { recursive: true });
                 
-                await fs.promises.writeFile(operation.targetPath, operation.content, 'utf8');
-                break;
+            await fs.promises.writeFile(operation.targetPath, operation.content, 'utf8');
+            break;
+        }
 
-            case 'delete':
-                await fs.promises.unlink(operation.targetPath);
-                break;
+        case 'delete':
+            await fs.promises.unlink(operation.targetPath);
+            break;
         }
     }
 
@@ -220,32 +222,34 @@ export class AtomicFileManager {
             
             try {
                 switch (operation.type) {
-                    case 'create':
-                        // Delete the created file
-                        if (fs.existsSync(operation.targetPath)) {
-                            await fs.promises.unlink(operation.targetPath);
-                        }
-                        break;
+                case 'create':
+                    // Delete the created file
+                    if (fs.existsSync(operation.targetPath)) {
+                        await fs.promises.unlink(operation.targetPath);
+                    }
+                    break;
 
-                    case 'update':
-                        // Restore from backup
-                        const backupPath = path.join(backupTransactionDir, this.generateBackupFileName(operation.targetPath));
-                        if (fs.existsSync(backupPath)) {
-                            const originalContent = await fs.promises.readFile(backupPath, 'utf8');
-                            await fs.promises.writeFile(operation.targetPath, originalContent, 'utf8');
-                        }
-                        break;
+                case 'update': {
+                    // Restore from backup
+                    const backupPath = path.join(backupTransactionDir, this.generateBackupFileName(operation.targetPath));
+                    if (fs.existsSync(backupPath)) {
+                        const originalContent = await fs.promises.readFile(backupPath, 'utf8');
+                        await fs.promises.writeFile(operation.targetPath, originalContent, 'utf8');
+                    }
+                    break;
+                }
 
-                    case 'delete':
-                        // Restore deleted file from backup
-                        const deletedBackupPath = path.join(backupTransactionDir, this.generateBackupFileName(operation.targetPath));
-                        if (fs.existsSync(deletedBackupPath)) {
-                            const originalContent = await fs.promises.readFile(deletedBackupPath, 'utf8');
-                            const targetDir = path.dirname(operation.targetPath);
-                            await fs.promises.mkdir(targetDir, { recursive: true });
-                            await fs.promises.writeFile(operation.targetPath, originalContent, 'utf8');
-                        }
-                        break;
+                case 'delete': {
+                    // Restore deleted file from backup
+                    const deletedBackupPath = path.join(backupTransactionDir, this.generateBackupFileName(operation.targetPath));
+                    if (fs.existsSync(deletedBackupPath)) {
+                        const originalContent = await fs.promises.readFile(deletedBackupPath, 'utf8');
+                        const targetDir = path.dirname(operation.targetPath);
+                        await fs.promises.mkdir(targetDir, { recursive: true });
+                        await fs.promises.writeFile(operation.targetPath, originalContent, 'utf8');
+                    }
+                    break;
+                }
                 }
                 
                 logger.debug(`Rolled back operation: ${operation.type} on ${operation.targetPath}`);

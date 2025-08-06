@@ -69,7 +69,7 @@ export class HolisticUpdateOrchestrator {
         this.contextGenerator = new ContextGenerator();
         
         // Ensure .holistic-ops directory exists for operational metadata
-        const holisticOpsDir = path.join(projectRoot, '.holistic-ops');
+        const _holisticOpsDir = path.join(projectRoot, '.holistic-ops');
         
         logger.info(`Holistic Update Orchestrator initialized for project: ${this.projectRoot}`);
     }
@@ -394,7 +394,7 @@ export class HolisticUpdateOrchestrator {
      */
     private determineUpdateReason(domain: string, semanticResults: SemanticAnalysisResult[]): string {
         if (semanticResults.length === 0) {
-            return `Cross-domain dependency update`;
+            return 'Cross-domain dependency update';
         }
 
         const reasons = semanticResults.map(result => {
@@ -456,7 +456,7 @@ export class HolisticUpdateOrchestrator {
             const contextUpdates = await this.contextGenerator.generateContextFiles(convertedResults);
             
             // Convert ContextFileContent to file paths and create domain updates
-            const domainUpdates = contextUpdates.map((contextContent, index) => {
+            const domainUpdates = contextUpdates.map((contextContent, _index) => {
                 const fileName = `domain-overview-${plan.domain.toLowerCase()}.context`;
                 return {
                     filePath: path.join(plan.contextPath, fileName),

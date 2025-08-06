@@ -73,7 +73,7 @@ export class AtomicFileManager {
     async validateOperations(operations) {
         for (const operation of operations) {
             switch (operation.type) {
-                case 'create':
+                case 'create': {
                     // Check that target directory exists or can be created
                     const targetDir = path.dirname(operation.targetPath);
                     if (!fs.existsSync(targetDir)) {
@@ -84,6 +84,7 @@ export class AtomicFileManager {
                         throw new Error(`Cannot create file - already exists: ${operation.targetPath}`);
                     }
                     break;
+                }
                 case 'update':
                     // Check that file exists for update
                     if (!fs.existsSync(operation.targetPath)) {
@@ -141,7 +142,7 @@ export class AtomicFileManager {
     async executeOperation(operation) {
         switch (operation.type) {
             case 'create':
-            case 'update':
+            case 'update': {
                 if (operation.content === undefined) {
                     throw new Error(`Content required for ${operation.type} operation on ${operation.targetPath}`);
                 }
@@ -150,6 +151,7 @@ export class AtomicFileManager {
                 await fs.promises.mkdir(targetDir, { recursive: true });
                 await fs.promises.writeFile(operation.targetPath, operation.content, 'utf8');
                 break;
+            }
             case 'delete':
                 await fs.promises.unlink(operation.targetPath);
                 break;
@@ -172,7 +174,7 @@ export class AtomicFileManager {
                             await fs.promises.unlink(operation.targetPath);
                         }
                         break;
-                    case 'update':
+                    case 'update': {
                         // Restore from backup
                         const backupPath = path.join(backupTransactionDir, this.generateBackupFileName(operation.targetPath));
                         if (fs.existsSync(backupPath)) {
@@ -180,7 +182,8 @@ export class AtomicFileManager {
                             await fs.promises.writeFile(operation.targetPath, originalContent, 'utf8');
                         }
                         break;
-                    case 'delete':
+                    }
+                    case 'delete': {
                         // Restore deleted file from backup
                         const deletedBackupPath = path.join(backupTransactionDir, this.generateBackupFileName(operation.targetPath));
                         if (fs.existsSync(deletedBackupPath)) {
@@ -190,6 +193,7 @@ export class AtomicFileManager {
                             await fs.promises.writeFile(operation.targetPath, originalContent, 'utf8');
                         }
                         break;
+                    }
                 }
                 logger.debug(`Rolled back operation: ${operation.type} on ${operation.targetPath}`);
             }

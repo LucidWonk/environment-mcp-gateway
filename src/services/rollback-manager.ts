@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import winston from 'winston';
-import { FileOperation, RollbackData, AtomicFileManager } from './atomic-file-manager.js';
+import { FileOperation, AtomicFileManager } from './atomic-file-manager.js';
 
 const logger = winston.createLogger({
     level: 'info',

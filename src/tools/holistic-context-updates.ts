@@ -349,9 +349,9 @@ async function validateProjectStructure(): Promise<{ success: boolean, details: 
         } else {
             details.push(`✅ Project root found: ${projectRoot}`);
         }
-    } catch (_error) {
+    } catch (error) {
         success = false;
-        details.push(`❌ Cannot access project root: ${projectRoot}`);
+        details.push(`❌ Cannot access project root: ${projectRoot}. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     // Check for essential domain directories
@@ -365,8 +365,8 @@ async function validateProjectStructure(): Promise<{ success: boolean, details: 
             } else {
                 details.push(`⚠️ Domain path exists but is not a directory: ${domain}`);
             }
-        } catch (_error) {
-            details.push(`⚠️ Domain directory not found: ${domain}`);
+        } catch (error) {
+            details.push(`⚠️ Domain directory not found: ${domain}. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
@@ -390,14 +390,14 @@ async function validateFilePermissions(): Promise<{ success: boolean, details: s
             await fs.promises.mkdir(testDir, { recursive: true });
             await fs.promises.rmdir(testDir);
             details.push('✅ Can create and remove directories');
-        } catch (_error) {
+        } catch (error) {
             success = false;
-            details.push('❌ Cannot create directories in project root');
+            details.push(`❌ Cannot create directories in project root. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
 
-    } catch (_error) {
+    } catch (error) {
         success = false;
-        details.push('❌ Insufficient permissions on project root');
+        details.push(`❌ Insufficient permissions on project root. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     return { success, details };
