@@ -4,6 +4,17 @@ export interface BusinessConcept {
     domain: string;
     confidence: number;
     context: string;
+    filePath?: string;
+    properties?: Array<{
+        name: string;
+        type: string;
+    }>;
+    methods?: Array<{
+        name: string;
+        returnType: string;
+    }>;
+    dependencies?: string[];
+    namespace?: string;
 }
 export interface BusinessRule {
     id: string;
@@ -35,7 +46,7 @@ export declare class SemanticAnalysisService {
      */
     private analyzeFile;
     /**
-     * Extract business concepts from C# code
+     * Extract business concepts from C# code with deep analysis
      */
     private extractCSharpBusinessConcepts;
     /**
@@ -52,6 +63,30 @@ export declare class SemanticAnalysisService {
     private extractTypeScriptBusinessRules;
     private detectLanguage;
     private extractDomainFromNamespace;
+    /**
+     * Extract properties from class body content
+     */
+    private extractProperties;
+    /**
+     * Extract methods from class body content
+     */
+    private extractMethods;
+    /**
+     * Extract dependencies from using statements and constructor parameters
+     */
+    private extractDependencies;
+    /**
+     * Determine the purpose of a class/service based on name and content
+     */
+    private determinePurpose;
+    /**
+     * Calculate confidence level for business concept identification
+     */
+    private calculateConceptConfidence;
+    /**
+     * Generate rich context description for business concept
+     */
+    private generateContext;
     private extractDomainFromPath;
     private extractContext;
     private getLineNumber;

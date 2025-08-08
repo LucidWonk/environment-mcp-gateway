@@ -353,14 +353,14 @@ export class ContextGenerator {
             businessConcepts: cached.businessConcepts || [],
             businessRules: cached.businessRules || [],
             domainAnalysis: {
-                primaryDomain: cached.primaryDomain || 'Unknown',
-                confidence: cached.domainConfidence || 0.5,
-                crossDomainDependencies: cached.crossDomainDependencies || []
+                primaryDomain: cached.domainAnalysis?.primaryDomain || cached.primaryDomain || 'Unknown',
+                confidence: cached.domainAnalysis?.confidence || cached.domainConfidence || 0.5,
+                crossDomainDependencies: cached.domainAnalysis?.crossDomainDependencies || cached.crossDomainDependencies || []
             },
             changeAnalysis: {
-                changeType: cached.changeType || 'modified',
-                impactLevel: cached.impactLevel || 'medium',
-                affectedComponents: cached.affectedComponents || []
+                changeType: cached.changeAnalysis?.changeType || cached.changeType || 'modified',
+                impactLevel: cached.changeAnalysis?.impactLevel || cached.impactLevel || 'medium',
+                affectedComponents: cached.changeAnalysis?.affectedComponents || cached.affectedComponents || []
             }
         };
     }

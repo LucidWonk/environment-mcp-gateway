@@ -808,6 +808,9 @@ export class ToolRegistry {
         try {
             const results = await this.semanticAnalysisService.analyzeCodeChanges(filePaths);
             
+            // Convert results to the format expected by context generator and cache them
+            const enhancedResults = await this.enhanceAndCacheResults(results);
+            
             const analysis = {
                 timestamp: new Date().toISOString(),
                 filesAnalyzed: results.length,
@@ -820,17 +823,29 @@ export class ToolRegistry {
                         name: concept.name,
                         type: concept.type,
                         domain: concept.domain,
-                        confidence: concept.confidence
+                        confidence: concept.confidence,
+                        context: concept.context || '',
+                        properties: concept.properties || [],
+                        methods: concept.methods || [],
+                        dependencies: concept.dependencies || [],
+                        namespace: concept.namespace || ''
                     })),
                     businessRules: includeBusinessRules ? result.businessRules.map(rule => ({
                         id: rule.id,
                         description: rule.description,
                         domain: rule.domain,
-                        confidence: rule.confidence
+                        confidence: rule.confidence,
+                        sourceLocation: rule.sourceLocation || '',
+                        conditions: rule.conditions || [],
+                        actions: rule.actions || []
                     })) : [],
                     analysisTime: result.analysisTime
                 })),
-                summary: this.generateAnalysisSummary(results)
+                summary: this.generateAnalysisSummary(results),
+                cacheInfo: {
+                    cachedFiles: enhancedResults.length,
+                    cacheLocation: '.semantic-cache'
+                }
             };
 
             return {
@@ -845,6 +860,162 @@ export class ToolRegistry {
             logger.error('Failed to analyze code changes for context', { error, filePaths });
             throw new McpError(ErrorCode.InternalError, `Failed to analyze code changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
+    }
+
+    /**
+     * Enhance semantic analysis results with domain analysis and change analysis,
+     * then cache them in the format expected by the context generator
+     */
+    private async enhanceAndCacheResults(results: any[]): Promise<any[]> {
+        const fs = require('fs').promises;
+        const path = require('path');
+        const cacheDir = '.semantic-cache';
+        
+        // Ensure cache directory exists
+        try {
+            await fs.mkdir(cacheDir, { recursive: true });
+        } catch (error) {
+            logger.warn('Failed to create cache directory', { error });
+        }
+
+        const enhancedResults = [];
+
+        for (const result of results) {
+            try {
+                // Enhance with domain and change analysis
+                const enhanced = {
+                    filePath: result.filePath,
+                    language: result.language,
+                    businessConcepts: result.businessConcepts || [],
+                    businessRules: result.businessRules || [],
+                    domainAnalysis: {
+                        primaryDomain: result.domainContext || this.extractDomainFromPath(result.filePath),
+                        confidence: this.calculateDomainConfidence(result),
+                        crossDomainDependencies: this.extractCrossDomainDependencies(result)
+                    },
+                    changeAnalysis: {
+                        changeType: 'modified' as const, // Default since we're analyzing existing files
+                        impactLevel: this.calculateImpactLevel(result),
+                        affectedComponents: this.extractAffectedComponents(result)
+                    }
+                };
+
+                // Cache this enhanced result
+                const cacheFilename = path.join(cacheDir, `${path.basename(result.filePath, path.extname(result.filePath))}.json`);
+                const cacheData = {
+                    analysisResult: enhanced,
+                    timestamp: new Date().toISOString(),
+                    version: '1.0'
+                };
+
+                await fs.writeFile(cacheFilename, JSON.stringify(cacheData, null, 2));
+                enhancedResults.push(enhanced);
+
+                logger.debug('Cached enhanced analysis result', { filePath: result.filePath, cacheFile: cacheFilename });
+            } catch (error) {
+                logger.warn('Failed to enhance/cache result', { filePath: result.filePath, error });
+                // Continue with other files even if one fails
+            }
+        }
+
+        logger.info(`Enhanced and cached ${enhancedResults.length} analysis results`);
+        return enhancedResults;
+    }
+
+    /**
+     * Extract domain from file path
+     */
+    private extractDomainFromPath(filePath: string): string {
+        const pathParts = filePath.split(/[/\\]/);
+        for (const part of pathParts) {
+            if (['Analysis', 'Data', 'Messaging', 'Infrastructure', 'Testing'].includes(part)) {
+                return part;
+            }
+        }
+        return 'Unknown';
+    }
+
+    /**
+     * Calculate domain confidence based on analysis results
+     */
+    private calculateDomainConfidence(result: any): number {
+        if (!result.businessConcepts || result.businessConcepts.length === 0) {
+            return 0.5; // Default confidence
+        }
+        
+        const avgConceptConfidence = result.businessConcepts.reduce((sum: number, concept: any) => 
+            sum + (concept.confidence || 0.5), 0) / result.businessConcepts.length;
+        
+        // Boost confidence if we have multiple concepts
+        const conceptBoost = Math.min(result.businessConcepts.length * 0.05, 0.2);
+        
+        return Math.min(avgConceptConfidence + conceptBoost, 0.95);
+    }
+
+    /**
+     * Extract cross-domain dependencies from the analysis result
+     */
+    private extractCrossDomainDependencies(result: any): string[] {
+        const dependencies: string[] = [];
+        
+        if (result.businessConcepts) {
+            result.businessConcepts.forEach((concept: any) => {
+                if (concept.dependencies) {
+                    concept.dependencies.forEach((dep: string) => {
+                        // Extract domain from namespace/dependency
+                        const domainMatch = dep.match(/\.(?:Analysis|Data|Messaging|Infrastructure|Testing)\./);
+                        if (domainMatch) {
+                            const domain = domainMatch[0].replace(/\./g, '');
+                            if (!dependencies.includes(domain)) {
+                                dependencies.push(domain);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        
+        return dependencies;
+    }
+
+    /**
+     * Calculate impact level based on the analysis results
+     */
+    private calculateImpactLevel(result: any): 'low' | 'medium' | 'high' {
+        const conceptCount = result.businessConcepts ? result.businessConcepts.length : 0;
+        const ruleCount = result.businessRules ? result.businessRules.length : 0;
+        
+        // Simple heuristic: more concepts and rules = higher impact
+        const totalItems = conceptCount + ruleCount;
+        
+        if (totalItems >= 5) return 'high';
+        if (totalItems >= 2) return 'medium';
+        return 'low';
+    }
+
+    /**
+     * Extract affected components from analysis results
+     */
+    private extractAffectedComponents(result: any): string[] {
+        const components: string[] = [];
+        
+        if (result.businessConcepts) {
+            result.businessConcepts.forEach((concept: any) => {
+                components.push(concept.name);
+                
+                // Add related components from dependencies
+                if (concept.dependencies) {
+                    concept.dependencies.slice(0, 3).forEach((dep: string) => {
+                        const parts = dep.split('.');
+                        if (parts.length > 0) {
+                            components.push(parts[parts.length - 1]);
+                        }
+                    });
+                }
+            });
+        }
+        
+        return [...new Set(components)]; // Remove duplicates
     }
 
     private async extractBusinessConcepts(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {

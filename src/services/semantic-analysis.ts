@@ -22,6 +22,11 @@ export interface BusinessConcept {
     domain: string;
     confidence: number;
     context: string;
+    filePath?: string;
+    properties?: Array<{name: string, type: string}>;
+    methods?: Array<{name: string, returnType: string}>;
+    dependencies?: string[];
+    namespace?: string;
 }
 
 export interface BusinessRule {
@@ -126,90 +131,146 @@ export class SemanticAnalysisService {
     }
 
     /**
-     * Extract business concepts from C# code
+     * Extract business concepts from C# code with deep analysis
      */
     private async extractCSharpBusinessConcepts(content: string, filePath: string): Promise<BusinessConcept[]> {
         const concepts: BusinessConcept[] = [];
         
-        // Pattern matching for C# DDD patterns
+        // Enhanced pattern matching for C# DDD patterns
         const patterns = {
-            entity: /public\s+(?:partial\s+)?class\s+(\w+)\s*(?::\s*Entity)?/g,
-            valueObject: /public\s+(?:sealed\s+|readonly\s+)?(?:class|struct|record)\s+(\w+)\s*(?::\s*ValueObject)?/g,
-            service: /public\s+(?:interface|class)\s+(I?\w*Service)\s*/g,
-            repository: /public\s+interface\s+(I\w*Repository)\s*/g,
-            event: /public\s+(?:class|record)\s+(\w+Event)\s*/g,
-            command: /public\s+(?:class|record)\s+(\w+Command)\s*/g
+            entity: /public\s+(?:partial\s+)?class\s+(\w+)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            valueObject: /public\s+(?:sealed\s+|readonly\s+)?(?:class|struct|record)\s+(\w+)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            service: /public\s+(?:interface|class)\s+(I?\w*(?:Service|Manager|Factory|Processor))\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            repository: /public\s+(?:interface|class)\s+(I?\w*(?:Repository|DAL))\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            event: /public\s+(?:class|record)\s+(\w+Event)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            command: /public\s+(?:class|record)\s+(\w+Command)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            algorithm: /public\s+(?:async\s+)?(?:Task\<?[\w\?]*\>?\s+)?(\w*Algorithm\w*|\w*Analysis\w*|\w*Calculator\w*)\s*\(([^)]*)\)/g,
+            dto: /public\s+(?:class|record)\s+(\w+(?:Data|DTO|Response|Request))\s*(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g
         };
 
-        // Extract entities
+        const domainFromFile = this.extractDomainFromPath(filePath);
+        const namespaceMatch = content.match(/namespace\s+([^\s\{;]+)/);
+        const namespace = namespaceMatch ? namespaceMatch[1] : '';
+
+        // Extract entities with detailed analysis
         let match;
         while ((match = patterns.entity.exec(content)) !== null) {
+            const className = match[1];
+            const classBody = match[2] || '';
+            
+            // Extract properties and methods from class body
+            const properties = this.extractProperties(classBody);
+            const methods = this.extractMethods(classBody);
+            const dependencies = this.extractDependencies(content, className);
+            
+            // Determine purpose from class name and content
+            const purpose = this.determinePurpose(className, classBody, 'Entity');
+            
             concepts.push({
-                name: match[1],
+                name: className,
                 type: 'Entity',
-                domain: this.extractDomainFromNamespace(content),
-                confidence: 0.85,
-                context: this.extractContext(content, match.index)
+                domain: domainFromFile,
+                confidence: this.calculateConceptConfidence(className, classBody, 'Entity'),
+                context: this.generateContext(className, purpose, properties, methods, dependencies),
+                filePath: filePath,
+                properties: properties,
+                methods: methods,
+                dependencies: dependencies,
+                namespace: namespace
             });
         }
 
-        // Extract value objects
-        patterns.valueObject.lastIndex = 0;
-        while ((match = patterns.valueObject.exec(content)) !== null) {
-            concepts.push({
-                name: match[1],
-                type: 'ValueObject',
-                domain: this.extractDomainFromNamespace(content),
-                confidence: 0.80,
-                context: this.extractContext(content, match.index)
-            });
-        }
-
-        // Extract services
+        // Extract services with detailed analysis
         patterns.service.lastIndex = 0;
         while ((match = patterns.service.exec(content)) !== null) {
+            const serviceName = match[1];
+            const serviceBody = match[2] || '';
+            
+            const methods = this.extractMethods(serviceBody);
+            const dependencies = this.extractDependencies(content, serviceName);
+            const purpose = this.determinePurpose(serviceName, serviceBody, 'Service');
+            
             concepts.push({
-                name: match[1],
+                name: serviceName,
                 type: 'Service',
-                domain: this.extractDomainFromNamespace(content),
-                confidence: 0.85,
-                context: this.extractContext(content, match.index)
+                domain: domainFromFile,
+                confidence: this.calculateConceptConfidence(serviceName, serviceBody, 'Service'),
+                context: this.generateContext(serviceName, purpose, [], methods, dependencies),
+                filePath: filePath,
+                properties: [],
+                methods: methods,
+                dependencies: dependencies,
+                namespace: namespace
             });
         }
 
-        // Extract repositories
+        // Extract repositories with detailed analysis
         patterns.repository.lastIndex = 0;
         while ((match = patterns.repository.exec(content)) !== null) {
+            const repoName = match[1];
+            const repoBody = match[2] || '';
+            
+            const methods = this.extractMethods(repoBody);
+            const dependencies = this.extractDependencies(content, repoName);
+            const purpose = this.determinePurpose(repoName, repoBody, 'Repository');
+            
             concepts.push({
-                name: match[1],
+                name: repoName,
                 type: 'Repository',
-                domain: this.extractDomainFromNamespace(content),
-                confidence: 0.90,
-                context: this.extractContext(content, match.index)
+                domain: domainFromFile,
+                confidence: this.calculateConceptConfidence(repoName, repoBody, 'Repository'),
+                context: this.generateContext(repoName, purpose, [], methods, dependencies),
+                filePath: filePath,
+                properties: [],
+                methods: methods,
+                dependencies: dependencies,
+                namespace: namespace
             });
         }
 
-        // Extract events
+        // Extract domain events
         patterns.event.lastIndex = 0;
         while ((match = patterns.event.exec(content)) !== null) {
+            const eventName = match[1];
+            const eventBody = match[2] || '';
+            
+            const properties = this.extractProperties(eventBody);
+            const purpose = this.determinePurpose(eventName, eventBody, 'Event');
+            
             concepts.push({
-                name: match[1],
+                name: eventName,
                 type: 'Event',
-                domain: this.extractDomainFromNamespace(content),
-                confidence: 0.90,
-                context: this.extractContext(content, match.index)
+                domain: domainFromFile,
+                confidence: this.calculateConceptConfidence(eventName, eventBody, 'Event'),
+                context: this.generateContext(eventName, purpose, properties, [], []),
+                filePath: filePath,
+                properties: properties,
+                methods: [],
+                dependencies: [],
+                namespace: namespace
             });
         }
 
-        // Extract commands
-        patterns.command.lastIndex = 0;
-        while ((match = patterns.command.exec(content)) !== null) {
+        // Extract DTOs and Data objects
+        patterns.dto.lastIndex = 0;
+        while ((match = patterns.dto.exec(content)) !== null) {
+            const dtoName = match[1];
+            const dtoBody = match[2] || '';
+            
+            const properties = this.extractProperties(dtoBody);
+            const purpose = this.determinePurpose(dtoName, dtoBody, 'ValueObject');
+            
             concepts.push({
-                name: match[1],
-                type: 'Command',
-                domain: this.extractDomainFromNamespace(content),
-                confidence: 0.90,
-                context: this.extractContext(content, match.index)
+                name: dtoName,
+                type: 'ValueObject',
+                domain: domainFromFile,
+                confidence: this.calculateConceptConfidence(dtoName, dtoBody, 'ValueObject'),
+                context: this.generateContext(dtoName, purpose, properties, [], []),
+                filePath: filePath,
+                properties: properties,
+                methods: [],
+                dependencies: [],
+                namespace: namespace
             });
         }
 
@@ -391,6 +452,229 @@ export class SemanticAnalysisService {
         return 'Unknown';
     }
 
+    /**
+     * Extract properties from class body content
+     */
+    private extractProperties(classBody: string): Array<{name: string, type: string}> {
+        const properties: Array<{name: string, type: string}> = [];
+        
+        // Match C# property patterns
+        const propertyPattern = /(?:public|private|protected|internal)\s+(?:static\s+)?(?:virtual\s+)?(?:override\s+)?(\w+(?:<[^>]+>)?(?:\[\])?)\s+(\w+)\s*\{[^}]*\}/g;
+        
+        let match: RegExpExecArray | null;
+        while ((match = propertyPattern.exec(classBody)) !== null) {
+            properties.push({
+                name: match[2],
+                type: match[1]
+            });
+        }
+        
+        // Also match auto-properties
+        const autoPropertyPattern = /(?:public|private|protected|internal)\s+(?:static\s+)?(\w+(?:<[^>]+>)?(?:\[\])?)\s+(\w+)\s*\{\s*get;\s*(?:set;)?\s*\}/g;
+        while ((match = autoPropertyPattern.exec(classBody)) !== null) {
+            if (!properties.some(p => p.name === match![2])) {
+                properties.push({
+                    name: match![2],
+                    type: match![1]
+                });
+            }
+        }
+        
+        return properties;
+    }
+    
+    /**
+     * Extract methods from class body content
+     */
+    private extractMethods(classBody: string): Array<{name: string, returnType: string}> {
+        const methods: Array<{name: string, returnType: string}> = [];
+        
+        // Match C# method patterns (more comprehensive)
+        const methodPattern = /(?:public|private|protected|internal)\s+(?:static\s+)?(?:virtual\s+)?(?:override\s+)?(?:async\s+)?(\w+(?:<[^>]+>)?(?:\[\])?|Task(?:<[^>]+>)?|void)\s+(\w+)\s*\([^)]*\)/g;
+        
+        let match;
+        while ((match = methodPattern.exec(classBody)) !== null) {
+            const methodName = match[2];
+            const returnType = match[1];
+            
+            // Skip property getters/setters and constructors
+            if (!methodName.startsWith('get_') && !methodName.startsWith('set_') && 
+                !classBody.includes(`class ${methodName}`)) {
+                methods.push({
+                    name: methodName,
+                    returnType: returnType
+                });
+            }
+        }
+        
+        return methods;
+    }
+    
+    /**
+     * Extract dependencies from using statements and constructor parameters
+     */
+    private extractDependencies(content: string, className: string): string[] {
+        const dependencies: string[] = [];
+        
+        // Extract using statements
+        const usingPattern = /using\s+([\w\.]+);/g;
+        let match;
+        while ((match = usingPattern.exec(content)) !== null) {
+            const usingNamespace = match[1];
+            // Filter to relevant dependencies (not system namespaces)
+            if (!usingNamespace.startsWith('System') && 
+                !usingNamespace.startsWith('Microsoft') &&
+                usingNamespace.includes('.'))
+            {
+                dependencies.push(usingNamespace);
+            }
+        }
+        
+        // Extract constructor dependencies
+        const constructorPattern = new RegExp(`public\\s+${className}\\s*\\(([^)]*)\\)`, 'i');
+        const constructorMatch = constructorPattern.exec(content);
+        
+        if (constructorMatch && constructorMatch[1]) {
+            const parameters = constructorMatch[1].split(',');
+            parameters.forEach(param => {
+                const paramMatch = param.trim().match(/^(\w+(?:<[^>]+>)?(?:\[\])?)/);  
+                if (paramMatch && !paramMatch[1].match(/^(string|int|bool|decimal|DateTime|double|float)$/i)) {
+                    dependencies.push(paramMatch[1]);
+                }
+            });
+        }
+        
+        return Array.from(new Set(dependencies)); // Remove duplicates
+    }
+    
+    /**
+     * Determine the purpose of a class/service based on name and content
+     */
+    private determinePurpose(name: string, classBody: string, type: string): string {
+        // Analyze class name patterns
+        if (name.endsWith('Service')) {
+            if (name.includes('Analysis')) return 'Performs analysis and processing operations';
+            if (name.includes('Data') || name.includes('DAL')) return 'Provides data access and persistence';
+            if (name.includes('Message') || name.includes('Event')) return 'Handles messaging and event processing';
+            return 'Provides business logic and application services';
+        }
+        
+        if (name.endsWith('Repository') || name.endsWith('DAL')) {
+            return 'Provides data access abstraction and persistence operations';
+        }
+        
+        if (name.endsWith('Manager')) {
+            return 'Manages lifecycle and coordination of business processes';
+        }
+        
+        if (name.endsWith('Factory')) {
+            return 'Creates and configures instances of domain objects';
+        }
+        
+        if (name.endsWith('Event')) {
+            return 'Represents domain event with associated data payload';
+        }
+        
+        if (name.endsWith('Command')) {
+            return 'Encapsulates command request with validation logic';
+        }
+        
+        if (name.endsWith('Data') || name.endsWith('DTO')) {
+            return 'Transfers data between layers with structured format';
+        }
+        
+        // Analyze content for purpose clues
+        if (classBody.includes('async') && classBody.includes('Task')) {
+            return 'Provides asynchronous operations and processing';
+        }
+        
+        if (classBody.includes('IRepository') || classBody.includes('DbContext')) {
+            return 'Implements data access patterns with repository abstraction';
+        }
+        
+        // Default purposes by type
+        switch (type) {
+            case 'Entity': return 'Core domain entity with business logic and state';
+            case 'ValueObject': return 'Immutable value object representing domain concept';
+            case 'Service': return 'Application service implementing business operations';
+            case 'Repository': return 'Data access repository with persistence operations';
+            case 'Event': return 'Domain event signaling important business occurrence';
+            case 'Command': return 'Command object encapsulating business operation request';
+            default: return 'Domain component with specialized business functionality';
+        }
+    }
+    
+    /**
+     * Calculate confidence level for business concept identification
+     */
+    private calculateConceptConfidence(name: string, classBody: string, type: string): number {
+        let confidence = 0.5; // Base confidence
+        
+        // Name-based confidence boosts
+        if (type === 'Entity' && !name.endsWith('Service') && !name.endsWith('Repository')) {
+            confidence += 0.2;
+        }
+        
+        if (type === 'Service' && name.endsWith('Service')) {
+            confidence += 0.3;
+        }
+        
+        if (type === 'Repository' && (name.endsWith('Repository') || name.endsWith('DAL'))) {
+            confidence += 0.3;
+        }
+        
+        if (type === 'Event' && name.endsWith('Event')) {
+            confidence += 0.35;
+        }
+        
+        // Content-based confidence adjustments
+        if (classBody.includes('public') && classBody.includes('{')) {
+            confidence += 0.1; // Has proper class structure
+        }
+        
+        if (classBody.includes('async') || classBody.includes('await')) {
+            confidence += 0.05; // Modern async patterns
+        }
+        
+        if (classBody.match(/\/\/.*Business|BR:/)) {
+            confidence += 0.15; // Contains business rule comments
+        }
+        
+        return Math.min(confidence, 0.95); // Cap at 95%
+    }
+    
+    /**
+     * Generate rich context description for business concept
+     */
+    private generateContext(name: string, purpose: string, properties: Array<{name: string, type: string}>, methods: Array<{name: string, returnType: string}>, dependencies: string[]): string {
+        let context = purpose;
+        
+        if (properties.length > 0) {
+            const keyProps = properties.slice(0, 3).map(p => `${p.name}:${p.type}`).join(', ');
+            context += `. Key properties: ${keyProps}`;
+            if (properties.length > 3) {
+                context += ` (${properties.length - 3} more)`;
+            }
+        }
+        
+        if (methods.length > 0) {
+            const keyMethods = methods.slice(0, 3).map(m => `${m.name}():${m.returnType}`).join(', ');
+            context += `. Primary methods: ${keyMethods}`;
+            if (methods.length > 3) {
+                context += ` (${methods.length - 3} more)`;
+            }
+        }
+        
+        if (dependencies.length > 0) {
+            context += `. Dependencies: ${dependencies.slice(0, 2).join(', ')}`;
+            if (dependencies.length > 2) {
+                context += ` (${dependencies.length - 2} more)`;
+            }
+        }
+        
+        return context;
+    }
+    
     private extractDomainFromPath(filePath: string): string {
         const parts = filePath.split(/[/\\]/);
         for (const part of parts) {

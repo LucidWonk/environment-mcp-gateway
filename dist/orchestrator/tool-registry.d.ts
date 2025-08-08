@@ -35,6 +35,31 @@ export declare class ToolRegistry {
     getSemanticAnalysisTools(): ToolDefinition[];
     getContextGenerationTools(): ToolDefinition[];
     private analyzeCodeChangesForContext;
+    /**
+     * Enhance semantic analysis results with domain analysis and change analysis,
+     * then cache them in the format expected by the context generator
+     */
+    private enhanceAndCacheResults;
+    /**
+     * Extract domain from file path
+     */
+    private extractDomainFromPath;
+    /**
+     * Calculate domain confidence based on analysis results
+     */
+    private calculateDomainConfidence;
+    /**
+     * Extract cross-domain dependencies from the analysis result
+     */
+    private extractCrossDomainDependencies;
+    /**
+     * Calculate impact level based on the analysis results
+     */
+    private calculateImpactLevel;
+    /**
+     * Extract affected components from analysis results
+     */
+    private extractAffectedComponents;
     private extractBusinessConcepts;
     private identifyBusinessRules;
     private generateAnalysisSummary;
