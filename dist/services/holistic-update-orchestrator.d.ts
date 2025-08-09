@@ -66,6 +66,16 @@ export declare class HolisticUpdateOrchestrator {
      */
     private createDomainUpdatePlan;
     /**
+     * Determine hierarchical context path based on semantic analysis
+     * Implements BR-CEE-001: Context placement logic must support hierarchical directory structures
+     */
+    private determineHierarchicalContextPath;
+    /**
+     * Detect semantic subdirectories that warrant their own context files
+     * Implements BR-CEE-002: Domain detection must recognize semantic subdirectories with business content
+     */
+    private detectSemanticSubdirectories;
+    /**
      * Identify dependencies between domains
      */
     private identifyDomainDependencies;

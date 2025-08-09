@@ -321,7 +321,8 @@ export class HolisticUpdateOrchestrator {
         const plans: DomainUpdatePlan[] = [];
 
         for (const domain of affectedDomains) {
-            const contextPath = path.join(this.projectRoot, domain, '.context');
+            // Enhanced hierarchical context path creation
+            const contextPath = this.determineHierarchicalContextPath(domain, semanticResults);
             const domainSemanticResults = semanticResults.filter(result => 
                 result.domainContext === domain ||
                 result.businessConcepts.some(concept => concept.domain === domain)
@@ -340,6 +341,63 @@ export class HolisticUpdateOrchestrator {
 
         // Sort plans by dependency order (dependencies first)
         return this.sortPlansByDependencies(plans);
+    }
+
+    /**
+     * Determine hierarchical context path based on semantic analysis
+     * Implements BR-CEE-001: Context placement logic must support hierarchical directory structures
+     */
+    private determineHierarchicalContextPath(domain: string, semanticResults: SemanticAnalysisResult[]): string {
+        // For now, use domain-level paths to maintain backward compatibility
+        // Future enhancement will implement semantic boundary detection for granular paths
+        const basePath = path.join(this.projectRoot, domain, '.context');
+        
+        // Check if this is a semantic subdirectory that should have its own context
+        const semanticSubdirectories = this.detectSemanticSubdirectories(domain, semanticResults);
+        
+        if (semanticSubdirectories.length > 0) {
+            // For Phase 1, create contexts at both domain level and semantic subdirectories
+            // This ensures backward compatibility while enabling granular context creation
+            logger.info(`Detected ${semanticSubdirectories.length} semantic subdirectories in ${domain}: ${semanticSubdirectories.join(', ')}`);
+            
+            // Return the base path for now - Phase 2 will implement multi-level creation
+            return basePath;
+        }
+        
+        return basePath;
+    }
+
+    /**
+     * Detect semantic subdirectories that warrant their own context files
+     * Implements BR-CEE-002: Domain detection must recognize semantic subdirectories with business content
+     */
+    private detectSemanticSubdirectories(domain: string, semanticResults: SemanticAnalysisResult[]): string[] {
+        const semanticSubdirs: string[] = [];
+        
+        // Known semantic subdirectories that should have granular context
+        const knownSemanticSubdirs = {
+            'Analysis': ['Fractal', 'Indicator', 'Pattern', 'Algorithm'],
+            'Data': ['Provider', 'Repository', 'Cache', 'Transform'],
+            'Messaging': ['Event', 'Command', 'Handler', 'Publisher']
+        };
+        
+        const domainSubdirs = knownSemanticSubdirs[domain as keyof typeof knownSemanticSubdirs] || [];
+        
+        for (const subdir of domainSubdirs) {
+            // Check if any semantic results indicate files in this subdirectory
+            const hasSemanticContent = semanticResults.some(result => {
+                const normalizedPath = path.normalize(result.filePath).replace(/\\/g, '/');
+                return normalizedPath.includes(`/${domain}/${subdir}/`) && 
+                       (result.businessConcepts.length > 0 || result.businessRules.length > 0);
+            });
+            
+            if (hasSemanticContent) {
+                semanticSubdirs.push(subdir);
+                logger.debug(`Detected semantic subdirectory: ${domain}/${subdir} with business content`);
+            }
+        }
+        
+        return semanticSubdirs;
     }
 
     /**

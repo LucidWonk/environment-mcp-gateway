@@ -546,8 +546,42 @@ export class SemanticAnalysisService {
     }
     extractDomainFromPath(filePath) {
         const parts = filePath.split(/[/\\]/);
+        // Enhanced domain detection to support semantic subdirectories
+        // BR-CEE-002: Domain detection must recognize semantic subdirectories with business content
+        // First, look for semantic subdirectories that should be treated as domains
+        const semanticSubdirectoryPatterns = {
+            // Analysis domain subdirectories
+            'fractal': 'Analysis.Fractal',
+            'indicator': 'Analysis.Indicator',
+            'pattern': 'Analysis.Pattern',
+            'algorithm': 'Analysis.Algorithm',
+            // Data domain subdirectories
+            'provider': 'Data.Provider',
+            'repository': 'Data.Repository',
+            'cache': 'Data.Cache',
+            'transform': 'Data.Transform',
+            // Messaging domain subdirectories
+            'event': 'Messaging.Event',
+            'command': 'Messaging.Command',
+            'handler': 'Messaging.Handler',
+            'publisher': 'Messaging.Publisher'
+        };
+        // Check for semantic subdirectory patterns first (more specific)
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i].toLowerCase();
+            if (semanticSubdirectoryPatterns[part]) {
+                // Verify this is actually in the expected domain context
+                const expectedDomain = semanticSubdirectoryPatterns[part].split('.')[0].toLowerCase();
+                const hasParentDomain = parts.some((p, idx) => idx < i && p.toLowerCase() === expectedDomain);
+                if (hasParentDomain || parts.some(p => p.toLowerCase().includes(expectedDomain))) {
+                    return semanticSubdirectoryPatterns[part];
+                }
+            }
+        }
+        // Fallback to traditional domain detection (backward compatibility)
         for (const part of parts) {
-            if (['analysis', 'data', 'messaging', 'trading', 'market', 'domain'].includes(part.toLowerCase())) {
+            const lowerPart = part.toLowerCase();
+            if (['analysis', 'data', 'messaging', 'trading', 'market', 'domain'].includes(lowerPart)) {
                 return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
             }
         }
