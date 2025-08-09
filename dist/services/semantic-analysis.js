@@ -87,17 +87,17 @@ export class SemanticAnalysisService {
         const concepts = [];
         // Enhanced pattern matching for C# DDD patterns
         const patterns = {
-            entity: /public\s+(?:partial\s+)?class\s+(\w+)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            valueObject: /public\s+(?:sealed\s+|readonly\s+)?(?:class|struct|record)\s+(\w+)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            service: /public\s+(?:interface|class)\s+(I?\w*(?:Service|Manager|Factory|Processor))\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            repository: /public\s+(?:interface|class)\s+(I?\w*(?:Repository|DAL))\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            event: /public\s+(?:class|record)\s+(\w+Event)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            command: /public\s+(?:class|record)\s+(\w+Command)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            algorithm: /public\s+(?:async\s+)?(?:Task\<?[\w\?]*\>?\s+)?(\w*Algorithm\w*|\w*Analysis\w*|\w*Calculator\w*)\s*\(([^)]*)\)/g,
+            entity: /public\s+(?:partial\s+)?class\s+(\w+)\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            valueObject: /public\s+(?:sealed\s+|readonly\s+)?(?:class|struct|record)\s+(\w+)\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            service: /public\s+(?:interface|class)\s+(I?\w*(?:Service|Manager|Factory|Processor))\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            repository: /public\s+(?:interface|class)\s+(I?\w*(?:Repository|DAL))\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            event: /public\s+(?:class|record)\s+(\w+Event)\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            command: /public\s+(?:class|record)\s+(\w+Command)\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            algorithm: /public\s+(?:async\s+)?(?:Task<?[\w?]*>?\s+)?(\w*Algorithm\w*|\w*Analysis\w*|\w*Calculator\w*)\s*\(([^)]*)\)/g,
             dto: /public\s+(?:class|record)\s+(\w+(?:Data|DTO|Response|Request))\s*(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g
         };
         const domainFromFile = this.extractDomainFromPath(filePath);
-        const namespaceMatch = content.match(/namespace\s+([^\s\{;]+)/);
+        const namespaceMatch = content.match(/namespace\s+([^\s{;]+)/);
         const namespace = namespaceMatch ? namespaceMatch[1] : '';
         // Extract entities with detailed analysis
         let match;
@@ -412,7 +412,7 @@ export class SemanticAnalysisService {
     extractDependencies(content, className) {
         const dependencies = [];
         // Extract using statements
-        const usingPattern = /using\s+([\w\.]+);/g;
+        const usingPattern = /using\s+([\w.]+);/g;
         let match;
         while ((match = usingPattern.exec(content)) !== null) {
             const usingNamespace = match[1];

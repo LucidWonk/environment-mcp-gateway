@@ -4,6 +4,10 @@ import { Tool } from '@modelcontextprotocol/sdk/types.js';
  */
 export declare const executeHolisticContextUpdateTool: Tool;
 /**
+ * MCP Tool: Execute full repository re-indexing with cleanup
+ */
+export declare const executeFullRepositoryReindexTool: Tool;
+/**
  * MCP Tool: Get holistic update status and history
  */
 export declare const getHolisticUpdateStatusTool: Tool;
@@ -27,4 +31,8 @@ export declare function handleGetHolisticUpdateStatus(args: any): Promise<any>;
 export declare function handleRollbackHolisticUpdate(args: any): Promise<any>;
 export declare function handleValidateHolisticUpdateConfig(args: any): Promise<any>;
 export declare function handlePerformHolisticUpdateMaintenance(args: any): Promise<any>;
+/**
+ * Handler for full repository re-indexing with cleanup
+ */
+export declare function handleExecuteFullRepositoryReindex(args: any): Promise<any>;
 //# sourceMappingURL=holistic-context-updates.d.ts.map

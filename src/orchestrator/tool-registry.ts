@@ -8,11 +8,13 @@ import { ContextGenerator } from '../services/context-generator.js';
 import { contextGenerationTools, contextGenerationHandlers } from '../tools/context-generation.js';
 import { 
     executeHolisticContextUpdateTool,
+    executeFullRepositoryReindexTool,
     getHolisticUpdateStatusTool,
     rollbackHolisticUpdateTool,
     validateHolisticUpdateConfigTool,
     performHolisticUpdateMaintenanceTool,
     handleExecuteHolisticContextUpdate,
+    handleExecuteFullRepositoryReindex,
     handleGetHolisticUpdateStatus,
     handleRollbackHolisticUpdate,
     handleValidateHolisticUpdateConfig,
@@ -867,8 +869,8 @@ export class ToolRegistry {
      * then cache them in the format expected by the context generator
      */
     private async enhanceAndCacheResults(results: any[]): Promise<any[]> {
-        const fs = require('fs').promises;
-        const path = require('path');
+        const fs = await import('fs/promises');
+        const path = await import('path');
         const cacheDir = '.semantic-cache';
         
         // Ensure cache directory exists
@@ -1126,6 +1128,7 @@ export class ToolRegistry {
     public getHolisticContextUpdateTools(): ToolDefinition[] {
         const holisticTools = [
             executeHolisticContextUpdateTool,
+            executeFullRepositoryReindexTool,
             getHolisticUpdateStatusTool,
             rollbackHolisticUpdateTool,
             validateHolisticUpdateConfigTool,
@@ -1142,6 +1145,9 @@ export class ToolRegistry {
                 switch (tool.name) {
                 case 'execute-holistic-context-update':
                     result = await handleExecuteHolisticContextUpdate(args);
+                    break;
+                case 'execute-full-repository-reindex':
+                    result = await handleExecuteFullRepositoryReindex(args);
                     break;
                 case 'get-holistic-update-status':
                     result = await handleGetHolisticUpdateStatus(args);

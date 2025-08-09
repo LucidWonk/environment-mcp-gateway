@@ -6,7 +6,7 @@ import { BusinessConceptExtractor } from '../services/business-concept-extractor
 import { CSharpParser } from '../services/csharp-parser.js';
 import { ContextGenerator } from '../services/context-generator.js';
 import { contextGenerationTools, contextGenerationHandlers } from '../tools/context-generation.js';
-import { executeHolisticContextUpdateTool, getHolisticUpdateStatusTool, rollbackHolisticUpdateTool, validateHolisticUpdateConfigTool, performHolisticUpdateMaintenanceTool, handleExecuteHolisticContextUpdate, handleGetHolisticUpdateStatus, handleRollbackHolisticUpdate, handleValidateHolisticUpdateConfig, handlePerformHolisticUpdateMaintenance } from '../tools/holistic-context-updates.js';
+import { executeHolisticContextUpdateTool, executeFullRepositoryReindexTool, getHolisticUpdateStatusTool, rollbackHolisticUpdateTool, validateHolisticUpdateConfigTool, performHolisticUpdateMaintenanceTool, handleExecuteHolisticContextUpdate, handleExecuteFullRepositoryReindex, handleGetHolisticUpdateStatus, handleRollbackHolisticUpdate, handleValidateHolisticUpdateConfig, handlePerformHolisticUpdateMaintenance } from '../tools/holistic-context-updates.js';
 import { getCrossDomainImpactAnalysisTools, getCrossDomainImpactAnalysisHandlers } from '../tools/cross-domain-impact-analysis.js';
 import { getUpdateIntegrationTools, getUpdateIntegrationHandlers } from '../tools/update-integration.js';
 import { documentLifecycleTools, documentLifecycleHandlers } from '../tools/document-lifecycle.js';
@@ -759,8 +759,8 @@ export class ToolRegistry {
      * then cache them in the format expected by the context generator
      */
     async enhanceAndCacheResults(results) {
-        const fs = require('fs').promises;
-        const path = require('path');
+        const fs = await import('fs/promises');
+        const path = await import('path');
         const cacheDir = '.semantic-cache';
         // Ensure cache directory exists
         try {
@@ -986,6 +986,7 @@ export class ToolRegistry {
     getHolisticContextUpdateTools() {
         const holisticTools = [
             executeHolisticContextUpdateTool,
+            executeFullRepositoryReindexTool,
             getHolisticUpdateStatusTool,
             rollbackHolisticUpdateTool,
             validateHolisticUpdateConfigTool,
@@ -1000,6 +1001,9 @@ export class ToolRegistry {
                 switch (tool.name) {
                     case 'execute-holistic-context-update':
                         result = await handleExecuteHolisticContextUpdate(args);
+                        break;
+                    case 'execute-full-repository-reindex':
+                        result = await handleExecuteFullRepositoryReindex(args);
                         break;
                     case 'get-holistic-update-status':
                         result = await handleGetHolisticUpdateStatus(args);

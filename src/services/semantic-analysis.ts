@@ -138,18 +138,18 @@ export class SemanticAnalysisService {
         
         // Enhanced pattern matching for C# DDD patterns
         const patterns = {
-            entity: /public\s+(?:partial\s+)?class\s+(\w+)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            valueObject: /public\s+(?:sealed\s+|readonly\s+)?(?:class|struct|record)\s+(\w+)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            service: /public\s+(?:interface|class)\s+(I?\w*(?:Service|Manager|Factory|Processor))\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            repository: /public\s+(?:interface|class)\s+(I?\w*(?:Repository|DAL))\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            event: /public\s+(?:class|record)\s+(\w+Event)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            command: /public\s+(?:class|record)\s+(\w+Command)\s*(?::\s*[^\{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
-            algorithm: /public\s+(?:async\s+)?(?:Task\<?[\w\?]*\>?\s+)?(\w*Algorithm\w*|\w*Analysis\w*|\w*Calculator\w*)\s*\(([^)]*)\)/g,
+            entity: /public\s+(?:partial\s+)?class\s+(\w+)\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            valueObject: /public\s+(?:sealed\s+|readonly\s+)?(?:class|struct|record)\s+(\w+)\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            service: /public\s+(?:interface|class)\s+(I?\w*(?:Service|Manager|Factory|Processor))\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            repository: /public\s+(?:interface|class)\s+(I?\w*(?:Repository|DAL))\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            event: /public\s+(?:class|record)\s+(\w+Event)\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            command: /public\s+(?:class|record)\s+(\w+Command)\s*(?::\s*[^{]*)?(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g,
+            algorithm: /public\s+(?:async\s+)?(?:Task<?[\w?]*>?\s+)?(\w*Algorithm\w*|\w*Analysis\w*|\w*Calculator\w*)\s*\(([^)]*)\)/g,
             dto: /public\s+(?:class|record)\s+(\w+(?:Data|DTO|Response|Request))\s*(?:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\})?/g
         };
 
         const domainFromFile = this.extractDomainFromPath(filePath);
-        const namespaceMatch = content.match(/namespace\s+([^\s\{;]+)/);
+        const namespaceMatch = content.match(/namespace\s+([^\s{;]+)/);
         const namespace = namespaceMatch ? namespaceMatch[1] : '';
 
         // Extract entities with detailed analysis
@@ -517,7 +517,7 @@ export class SemanticAnalysisService {
         const dependencies: string[] = [];
         
         // Extract using statements
-        const usingPattern = /using\s+([\w\.]+);/g;
+        const usingPattern = /using\s+([\w.]+);/g;
         let match;
         while ((match = usingPattern.exec(content)) !== null) {
             const usingNamespace = match[1];
@@ -594,13 +594,13 @@ export class SemanticAnalysisService {
         
         // Default purposes by type
         switch (type) {
-            case 'Entity': return 'Core domain entity with business logic and state';
-            case 'ValueObject': return 'Immutable value object representing domain concept';
-            case 'Service': return 'Application service implementing business operations';
-            case 'Repository': return 'Data access repository with persistence operations';
-            case 'Event': return 'Domain event signaling important business occurrence';
-            case 'Command': return 'Command object encapsulating business operation request';
-            default: return 'Domain component with specialized business functionality';
+        case 'Entity': return 'Core domain entity with business logic and state';
+        case 'ValueObject': return 'Immutable value object representing domain concept';
+        case 'Service': return 'Application service implementing business operations';
+        case 'Repository': return 'Data access repository with persistence operations';
+        case 'Event': return 'Domain event signaling important business occurrence';
+        case 'Command': return 'Command object encapsulating business operation request';
+        default: return 'Domain component with specialized business functionality';
         }
     }
     
