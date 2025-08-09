@@ -547,7 +547,7 @@ export class SemanticBoundaryDetector {
         config: BoundaryDetectionConfig; 
         validation: ConfigValidationResult;
         repositoryTypes: string[];
-    } {
+        } {
         const validation = this.configManager.validateConfiguration(this.config);
         const repositoryTypes = this.configManager.getAvailableRepositoryTypes().map(rt => rt.name);
         

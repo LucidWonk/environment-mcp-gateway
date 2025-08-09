@@ -651,10 +651,6 @@ export class HolisticUpdateOrchestrator {
             // Convert to context generator format
             const convertedResults = this.convertToContextGeneratorFormat(domainSemanticResults);
             
-            // Debug logging to trace business rules through the pipeline
-            logger.info(`Debug: Domain ${plan.domain} - Original semantic results have ${domainSemanticResults.reduce((sum, r) => sum + r.businessRules.length, 0)} business rules`);
-            logger.info(`Debug: Domain ${plan.domain} - Converted results have ${convertedResults.reduce((sum, r) => sum + r.businessRules.length, 0)} business rules`);
-            
             const contextUpdates = await this.contextGenerator.generateContextFiles(convertedResults);
             
             // Convert ContextFileContent to file paths and create domain updates

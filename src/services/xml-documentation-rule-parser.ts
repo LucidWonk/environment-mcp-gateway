@@ -398,7 +398,7 @@ export class XmlDocumentationRuleParser {
         
         while ((match = multiAttributeRegex.exec(content)) !== null) {
             const fullMatch = match[0];
-            const propertyType = match[1];
+            const _propertyType = match[1];
             const propertyName = match[2];
             
             // Count attributes on this property
@@ -517,7 +517,7 @@ export class XmlDocumentationRuleParser {
         
         if (nameMatch) {
             const indicatorName = nameMatch[1];
-            const indicatorDescription = descMatch ? descMatch[1] : '';
+            const _indicatorDescription = descMatch ? descMatch[1] : '';
             
             // Classify indicator type based on naming patterns
             const indicatorTypes = [
@@ -544,7 +544,7 @@ export class XmlDocumentationRuleParser {
             if (className.toLowerCase().includes(indicatorName.toLowerCase().replace(/\s+/g, ''))) {
                 rules.push({
                     rule: `naming-consistency: Class name ${className} matches indicator name ${indicatorName}`,
-                    description: `Consistent naming between indicator definition and implementation class ensures maintainability`,
+                    description: 'Consistent naming between indicator definition and implementation class ensures maintainability',
                     source: path.basename(filePath),
                     type: XmlRuleType.ConfigurationRule,
                     confidence: 0.95,
@@ -772,20 +772,20 @@ export class XmlDocumentationRuleParser {
      */
     private generateRuleDescription(ruleText: string, ruleType: XmlRuleType): string {
         switch (ruleType) {
-            case XmlRuleType.ValidationRule:
-                return `Validation requirement: ${ruleText}. This constraint must be satisfied for proper operation.`;
-            case XmlRuleType.ConstraintRule:
-                return `Parameter constraint: ${ruleText}. Values must comply with this restriction.`;
-            case XmlRuleType.CalculationRule:
-                return `Calculation rule: ${ruleText}. This defines how values are computed or processed.`;
-            case XmlRuleType.AlgorithmRule:
-                return `Algorithm requirement: ${ruleText}. This governs the processing logic and behavior.`;
-            case XmlRuleType.ConfigurationRule:
-                return `Configuration rule: ${ruleText}. This defines required setup or initialization.`;
-            case XmlRuleType.PerformanceRule:
-                return `Performance consideration: ${ruleText}. This affects efficiency and optimization.`;
-            default:
-                return `Business rule: ${ruleText}. This defines important operational constraints or behavior.`;
+        case XmlRuleType.ValidationRule:
+            return `Validation requirement: ${ruleText}. This constraint must be satisfied for proper operation.`;
+        case XmlRuleType.ConstraintRule:
+            return `Parameter constraint: ${ruleText}. Values must comply with this restriction.`;
+        case XmlRuleType.CalculationRule:
+            return `Calculation rule: ${ruleText}. This defines how values are computed or processed.`;
+        case XmlRuleType.AlgorithmRule:
+            return `Algorithm requirement: ${ruleText}. This governs the processing logic and behavior.`;
+        case XmlRuleType.ConfigurationRule:
+            return `Configuration rule: ${ruleText}. This defines required setup or initialization.`;
+        case XmlRuleType.PerformanceRule:
+            return `Performance consideration: ${ruleText}. This affects efficiency and optimization.`;
+        default:
+            return `Business rule: ${ruleText}. This defines important operational constraints or behavior.`;
         }
     }
 
@@ -852,14 +852,14 @@ export class XmlDocumentationRuleParser {
      */
     private mapXmlRuleTypeToBusinessRuleType(xmlType: XmlRuleType): string {
         switch (xmlType) {
-            case XmlRuleType.ValidationRule: return 'Validation';
-            case XmlRuleType.ConstraintRule: return 'Constraint';
-            case XmlRuleType.CalculationRule: return 'Calculation';
-            case XmlRuleType.AlgorithmRule: return 'Algorithm';
-            case XmlRuleType.ConfigurationRule: return 'Configuration';
-            case XmlRuleType.PerformanceRule: return 'Performance';
-            case XmlRuleType.BusinessLogicRule: return 'Business Logic';
-            default: return 'General';
+        case XmlRuleType.ValidationRule: return 'Validation';
+        case XmlRuleType.ConstraintRule: return 'Constraint';
+        case XmlRuleType.CalculationRule: return 'Calculation';
+        case XmlRuleType.AlgorithmRule: return 'Algorithm';
+        case XmlRuleType.ConfigurationRule: return 'Configuration';
+        case XmlRuleType.PerformanceRule: return 'Performance';
+        case XmlRuleType.BusinessLogicRule: return 'Business Logic';
+        default: return 'General';
         }
     }
 

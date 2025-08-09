@@ -313,7 +313,7 @@ export class XmlDocumentationRuleParser {
         let match;
         while ((match = multiAttributeRegex.exec(content)) !== null) {
             const fullMatch = match[0];
-            const propertyType = match[1];
+            const _propertyType = match[1];
             const propertyName = match[2];
             // Count attributes on this property
             const attributeCount = (fullMatch.match(/\[/g) || []).length;
@@ -415,7 +415,7 @@ export class XmlDocumentationRuleParser {
         const descMatch = attributeContent.match(/"[^"]+",\s*"([^"]+)"/);
         if (nameMatch) {
             const indicatorName = nameMatch[1];
-            const indicatorDescription = descMatch ? descMatch[1] : '';
+            const _indicatorDescription = descMatch ? descMatch[1] : '';
             // Classify indicator type based on naming patterns
             const indicatorTypes = [
                 { pattern: /rsi|strength|momentum/i, type: 'Momentum', rule: 'Momentum indicators measure price change velocity and overbought/oversold conditions' },
@@ -439,7 +439,7 @@ export class XmlDocumentationRuleParser {
             if (className.toLowerCase().includes(indicatorName.toLowerCase().replace(/\s+/g, ''))) {
                 rules.push({
                     rule: `naming-consistency: Class name ${className} matches indicator name ${indicatorName}`,
-                    description: `Consistent naming between indicator definition and implementation class ensures maintainability`,
+                    description: 'Consistent naming between indicator definition and implementation class ensures maintainability',
                     source: path.basename(filePath),
                     type: XmlRuleType.ConfigurationRule,
                     confidence: 0.95,
