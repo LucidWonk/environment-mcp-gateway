@@ -1,0 +1,1 @@
+{"version":3,"file":"health-server.d.ts","sourceRoot":"","sources":["../src/health-server.ts"],"names":[],"mappings":"AAGA;;;GAGG;AACH,qBAAa,YAAY;IACrB,OAAO,CAAC,MAAM,CAAc;IAC5B,OAAO,CAAC,QAAQ,CAAC,IAAI,CAAS;gBAElB,IAAI,GAAE,MAAa;IAK/B,OAAO,CAAC,YAAY;IAwBpB,OAAO,CAAC,iBAAiB;IAazB,OAAO,CAAC,iBAAiB;IAqBlB,KAAK,IAAI,OAAO,CAAC,IAAI,CAAC;IAetB,IAAI,IAAI,OAAO,CAAC,IAAI,CAAC;CAO/B"}

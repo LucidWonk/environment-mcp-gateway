@@ -1,46 +1,55 @@
-version: '3.8'
+name: lucidwonks-environment
 
 services:
   environment-mcp-gateway:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: lucidwonks-environment-mcp-gateway
+    container_name: environment-mcp-gateway
     ports:
       - "3001:3001"
     environment:
       - NODE_ENV=production
       - MCP_SERVER_PORT=3001
       - MCP_LOG_LEVEL=info
+      - PROJECT_ROOT=/workspace
+      # Use host database connection
+      - DATABASE_URL=postgresql://postgres:password@host.docker.internal:5432/pricehistorydb
+      # Set data directories to mounted volumes
+      - ATOMIC_OPS_DIR=/app/.atomic-ops
+      - HOLISTIC_ROLLBACK_DIR=/app/.holistic-rollback
+      - SEMANTIC_CACHE_DIR=/app/.semantic-cache
+      # Required environment variables
+      - DB_PASSWORD=password
+      - GIT_USER_NAME=Environment MCP Gateway
+      - GIT_USER_EMAIL=noreply@lucidwonks.com
     env_file:
       - ../.env.development
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${GIT_REPO_PATH:-/mnt/m/Projects/Lucidwonks}:/workspace:ro
-    depends_on:
-      - timescaledb
+      - ${GIT_REPO_PATH:-M:/Projects/Lucidwonks}:/workspace:ro
+      # Persistent storage for MCP server data
+      - mcp_cache:/app/.semantic-cache
+      - mcp_rollback:/app/.holistic-rollback  
+      - mcp_atomic:/app/.atomic-ops
     restart: unless-stopped
     networks:
-      - lucidwonks-dev
-
-  timescaledb:
-    image: timescale/timescaledb:latest-pg14
-    container_name: lucidwonks-timescaledb
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=pricehistorydb
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-    volumes:
-      - timescale_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - lucidwonks-dev
+      - environment-mcp-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      - "com.lucidwonks.service=environment-mcp-gateway"
+      - "com.lucidwonks.version=1.0"
 
 volumes:
-  timescale_data:
+  mcp_cache:
+    driver: local
+  mcp_rollback:
+    driver: local
+  mcp_atomic:
+    driver: local
 
 networks:
-  lucidwonks-dev:
+  environment-mcp-network:
     driver: bridge
+    name: environment-mcp-network

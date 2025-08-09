@@ -10,11 +10,13 @@ RUN npm ci --only=production
 COPY dist/ ./dist/
 COPY .env* ./
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+# Create non-root user and directories with proper permissions
+RUN addgroup -g 1001 -S mcpuser && \
+    adduser -S mcpuser -u 1001 -G mcpuser && \
+    mkdir -p /app/.semantic-cache /app/.holistic-rollback /app/.atomic-ops && \
+    chown -R mcpuser:mcpuser /app
 
-USER nextjs
+USER mcpuser
 
 EXPOSE 3001
 

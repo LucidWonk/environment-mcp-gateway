@@ -9,7 +9,7 @@ export class ContextGenerator {
     constructor() {
         // Navigate up from EnvironmentMCPGateway/src/services to project root
         this.projectRoot = join(__dirname, '..', '..', '..');
-        this.cacheDir = join(this.projectRoot, '.semantic-cache');
+        this.cacheDir = process.env.SEMANTIC_CACHE_DIR || join(this.projectRoot, '.semantic-cache');
     }
     /**
      * Generate enhanced context files from semantic analysis results

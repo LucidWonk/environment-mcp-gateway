@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  environment-mcp-gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.multistage
+      args:
+        - NODE_ENV=production
+    container_name: lucidwonks-environment-mcp-gateway
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - MCP_SERVER_PORT=3001
+      - MCP_LOG_LEVEL=info
+      - PROJECT_ROOT=/workspace
+    env_file:
+      - ../.env.development
+    volumes:
+      # Mount your VS2022 workspace (adjust path as needed)
+      - ${LUCIDWONKS_PROJECT_PATH:-M:/Projects/Lucidwonks}:/workspace:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Persistent storage for MCP server data
+      - mcp_cache:/app/.semantic-cache
+      - mcp_rollback:/app/.holistic-rollback
+      - mcp_atomic:/app/.atomic-ops
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - lucidwonks-dev
+    labels:
+      - "com.lucidwonks.service=environment-mcp-gateway"
+      - "com.lucidwonks.version=1.0"
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    container_name: lucidwonks-timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=pricehistorydb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+    networks:
+      - lucidwonks-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pricehistorydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      - "com.lucidwonks.service=database"
+
+  # RedPanda for messaging (optional - uncomment if needed)
+  # redpanda:
+  #   image: docker.redpanda.com/vectorized/redpanda:latest
+  #   container_name: lucidwonks-redpanda
+  #   ports:
+  #     - "9092:9092"
+  #     - "8080:8080"
+  #   command:
+  #     - redpanda
+  #     - start
+  #     - --smp 1
+  #     - --memory 1G
+  #     - --overprovisioned
+  #     - --node-id 0
+  #     - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+  #     - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+  #   networks:
+  #     - lucidwonks-dev
+
+volumes:
+  timescale_data:
+    driver: local
+  mcp_cache:
+    driver: local
+  mcp_rollback:
+    driver: local
+  mcp_atomic:
+    driver: local
+
+networks:
+  lucidwonks-dev:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

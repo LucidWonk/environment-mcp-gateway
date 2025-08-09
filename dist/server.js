@@ -6,6 +6,7 @@ import { Environment } from './domain/config/environment.js';
 import { SolutionParser } from './infrastructure/solution-parser.js';
 import { AdapterManager } from './adapters/adapter-manager.js';
 import { ToolRegistry } from './orchestrator/tool-registry.js';
+import { HealthServer } from './health-server.js';
 import winston from 'winston';
 // Initialize environment and logging
 try {
@@ -799,10 +800,24 @@ class EnvironmentMCPGateway {
         }
     }
 }
-// Start the server
-const server = new EnvironmentMCPGateway();
-server.run().catch((error) => {
-    logger.error('Server failed to start:', error);
-    process.exit(1);
-});
+// Start the server with health check
+async function startServer() {
+    try {
+        // Start health server for Docker health checks
+        if (process.env.NODE_ENV === 'production' || process.env.ENABLE_HEALTH_SERVER === 'true') {
+            const healthServer = new HealthServer(parseInt(process.env.MCP_SERVER_PORT || '3001'));
+            await healthServer.start();
+            logger.info('Health server started for Docker health checks');
+        }
+        // Start MCP server
+        const server = new EnvironmentMCPGateway();
+        await server.run();
+        logger.info('Environment MCP Gateway started successfully');
+    }
+    catch (error) {
+        logger.error('Server failed to start:', error);
+        process.exit(1);
+    }
+}
+startServer();
 //# sourceMappingURL=server.js.map

@@ -13,7 +13,7 @@ const logger = winston.createLogger({
 });
 export class SemanticAnalysisService {
     maxAnalysisTime = 15000; // 15 seconds as per requirements
-    cacheDir = '.semantic-cache';
+    cacheDir = process.env.SEMANTIC_CACHE_DIR || '.semantic-cache';
     xmlRuleParser;
     constructor() {
         // Ensure cache directory exists

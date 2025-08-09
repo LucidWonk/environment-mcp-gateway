@@ -4,7 +4,9 @@ import path from 'path';
 // Initialize orchestrator with project root
 const projectRoot = path.resolve(process.cwd(), '..');
 const orchestrator = new HolisticUpdateOrchestrator(projectRoot);
-const rollbackManager = new RollbackManager(path.join(projectRoot, '.holistic-rollback'));
+// Use environment-specific path for rollback directory in containerized environments
+const rollbackDir = process.env.HOLISTIC_ROLLBACK_DIR || path.join(projectRoot, '.holistic-rollback');
+const rollbackManager = new RollbackManager(rollbackDir);
 /**
  * MCP Tool: Execute holistic context update across all affected domains
  */

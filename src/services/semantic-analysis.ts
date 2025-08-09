@@ -51,7 +51,7 @@ export interface SemanticAnalysisResult {
 
 export class SemanticAnalysisService {
     private readonly maxAnalysisTime = 15000; // 15 seconds as per requirements
-    private readonly cacheDir = '.semantic-cache';
+    private readonly cacheDir = process.env.SEMANTIC_CACHE_DIR || '.semantic-cache';
     private readonly xmlRuleParser: XmlDocumentationRuleParser;
 
     constructor() {

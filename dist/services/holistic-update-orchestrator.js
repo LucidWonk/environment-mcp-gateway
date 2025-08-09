@@ -25,8 +25,11 @@ export class HolisticUpdateOrchestrator {
     projectRoot;
     constructor(projectRoot = '.') {
         this.projectRoot = path.resolve(projectRoot);
-        this.atomicFileManager = new AtomicFileManager(path.join(projectRoot, '.atomic-ops'));
-        this.rollbackManager = new RollbackManager(path.join(projectRoot, '.holistic-rollback'));
+        // Use environment-specific paths for data directories in containerized environments
+        const atomicOpsDir = process.env.ATOMIC_OPS_DIR || path.join(projectRoot, '.atomic-ops');
+        const rollbackDir = process.env.HOLISTIC_ROLLBACK_DIR || path.join(projectRoot, '.holistic-rollback');
+        this.atomicFileManager = new AtomicFileManager(atomicOpsDir);
+        this.rollbackManager = new RollbackManager(rollbackDir);
         this.semanticAnalysis = new SemanticAnalysisService();
         this.contextGenerator = new ContextGenerator();
         // Ensure .holistic-ops directory exists for operational metadata

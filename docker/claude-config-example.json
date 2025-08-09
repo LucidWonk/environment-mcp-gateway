@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "lucidwonks-environment-gateway": {
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "-d", "@-",
+        "http://localhost:3001/mcp"
+      ],
+      "env": {
+        "MCP_SERVER_URL": "http://localhost:3001"
+      }
+    }
+  }
+}
