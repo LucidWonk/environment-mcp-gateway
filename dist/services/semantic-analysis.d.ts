@@ -36,6 +36,7 @@ export interface SemanticAnalysisResult {
 export declare class SemanticAnalysisService {
     private readonly maxAnalysisTime;
     private readonly cacheDir;
+    private readonly xmlRuleParser;
     constructor();
     /**
      * Analyze code changes for semantic meaning
@@ -50,9 +51,18 @@ export declare class SemanticAnalysisService {
      */
     private extractCSharpBusinessConcepts;
     /**
-     * Extract business rules from C# code
+     * Extract business rules from C# code using enhanced XML documentation parser
+     * Step 3.1 & 3.2: Enhanced Business Rule Mining
+     * BR-CEE-009: Extract 15+ rules from Fractal Analysis domain
+     * BR-CEE-010: Extract 10+ rules from Indicator domain
+     * BR-CEE-011: >80% accuracy in classification
+     * BR-CEE-012: Focus on semantic value for AI development
      */
     private extractCSharpBusinessRules;
+    /**
+     * Legacy business rule extraction for compatibility and fallback
+     */
+    private extractLegacyCSharpBusinessRules;
     /**
      * Extract business concepts from TypeScript/JavaScript code
      */

@@ -111,10 +111,22 @@ export class ContextGenerator {
      */
     generateBusinessRules(results) {
         const allRules = results.flatMap(r => r.businessRules);
+        // Debug logging to trace business rules
+        console.info(`Debug: Context generator received ${results.length} results with total ${allRules.length} business rules`);
+        results.forEach((result, i) => {
+            console.info(`Debug: Result ${i} (${result.filePath}) has ${result.businessRules.length} business rules`);
+            result.businessRules.forEach((rule, j) => {
+                console.info(`Debug: Rule ${j}: ${rule.description.substring(0, 50)}...`);
+            });
+        });
         let rules = '# Business Rules\n\n';
         rules += `Extracted ${allRules.length} business rules from semantic analysis.\n\n`;
+        console.info(`Debug: generateBusinessRules - Processing ${allRules.length} total rules`);
         // Group rules by category
         const rulesByCategory = new Map();
+        allRules.forEach((rule, index) => {
+            console.info(`Debug: Processing rule ${index}: category=${rule.category}, desc=${rule.description.substring(0, 50)}...`);
+        });
         allRules.forEach(rule => {
             if (!rulesByCategory.has(rule.category)) {
                 rulesByCategory.set(rule.category, []);

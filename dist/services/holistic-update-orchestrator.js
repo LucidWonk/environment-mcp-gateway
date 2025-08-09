@@ -220,11 +220,28 @@ export class HolisticUpdateOrchestrator {
         return crossCuttingDomains;
     }
     /**
+     * Consolidate subdomains into their parent domains to avoid context file fragmentation
+     * E.g., Analysis.Indicator, Analysis.Pattern -> Analysis
+     * Data.Provider, Data.Repository -> Data
+     */
+    consolidateSubdomains(domains) {
+        const parentDomains = new Set();
+        for (const domain of domains) {
+            // Extract parent domain (everything before the first dot)
+            const parentDomain = domain.includes('.') ? domain.split('.')[0] : domain;
+            parentDomains.add(parentDomain);
+        }
+        return Array.from(parentDomains);
+    }
+    /**
      * Create update plan for all affected domains
      */
     async createDomainUpdatePlan(affectedDomains, semanticResults) {
         const plans = [];
-        for (const domain of affectedDomains) {
+        // Consolidate subdomains into parent domains to avoid fragmented context files
+        // E.g., Analysis.Indicator should be consolidated into Analysis
+        const consolidatedDomains = this.consolidateSubdomains(affectedDomains);
+        for (const domain of consolidatedDomains) {
             // Enhanced hierarchical context path creation
             const contextPath = this.determineHierarchicalContextPath(domain, semanticResults);
             const domainSemanticResults = semanticResults.filter(result => result.domainContext === domain ||
@@ -342,29 +359,125 @@ export class HolisticUpdateOrchestrator {
     }
     /**
      * Convert semantic analysis results to context generator format
+     * Fixed: Enhanced mapping to properly handle business rules from XML documentation parser
      */
     convertToContextGeneratorFormat(results) {
         return results.map(result => ({
             filePath: result.filePath,
             language: result.language,
             businessConcepts: result.businessConcepts,
-            businessRules: result.businessRules.map(rule => ({
-                description: rule.description,
-                category: 'business-logic',
-                confidence: rule.confidence,
-                sourceLocation: rule.sourceLocation
-            })),
+            businessRules: result.businessRules.map(rule => {
+                // Enhanced business rule mapping with proper categorization
+                let category = 'business-logic';
+                // Map XML documentation rule types to context generator categories
+                if (rule.id && rule.id.startsWith('XML-')) {
+                    // Enhanced rules from XML documentation parser - categorize based on description
+                    const desc = rule.description.toLowerCase();
+                    if (desc.includes('validation') || desc.includes('validate') || desc.includes('constraint')) {
+                        category = 'validation';
+                    }
+                    else if (desc.includes('workflow') || desc.includes('process') || desc.includes('sequence')) {
+                        category = 'workflow';
+                    }
+                    else if (desc.includes('constraint') || desc.includes('limit') || desc.includes('requirement')) {
+                        category = 'constraint';
+                    }
+                    else {
+                        category = 'business-logic';
+                    }
+                }
+                else {
+                    // Legacy rules - use simple mapping
+                    category = 'business-logic';
+                }
+                return {
+                    description: rule.description,
+                    category,
+                    confidence: rule.confidence,
+                    sourceLocation: rule.sourceLocation
+                };
+            }),
             domainAnalysis: {
-                primaryDomain: result.domainContext,
-                confidence: 0.8,
-                crossDomainDependencies: []
+                primaryDomain: result.domainContext || 'Unknown',
+                confidence: this.calculateDomainConfidence(result),
+                crossDomainDependencies: this.extractCrossDomainDependencies(result)
             },
             changeAnalysis: {
                 changeType: 'modified',
-                impactLevel: 'medium',
-                affectedComponents: []
+                impactLevel: this.calculateImpactLevel(result),
+                affectedComponents: this.extractAffectedComponents(result)
             }
         }));
+    }
+    /**
+     * Calculate domain confidence based on semantic analysis results
+     */
+    calculateDomainConfidence(result) {
+        if (result.businessConcepts.length === 0)
+            return 0.5;
+        const avgConceptConfidence = result.businessConcepts.reduce((sum, concept) => sum + concept.confidence, 0) / result.businessConcepts.length;
+        const hasBusinessRules = result.businessRules.length > 0;
+        const hasStrongDomainContext = result.domainContext !== 'Unknown';
+        let confidence = avgConceptConfidence;
+        if (hasBusinessRules)
+            confidence += 0.1;
+        if (hasStrongDomainContext)
+            confidence += 0.1;
+        return Math.min(confidence, 0.95);
+    }
+    /**
+     * Extract cross-domain dependencies from semantic analysis results
+     */
+    extractCrossDomainDependencies(result) {
+        const dependencies = new Set();
+        // Extract dependencies from business concepts
+        for (const concept of result.businessConcepts) {
+            if (concept.dependencies) {
+                concept.dependencies.forEach(dep => {
+                    const domain = this.extractDomainFromDependency(dep);
+                    if (domain && domain !== result.domainContext) {
+                        dependencies.add(domain);
+                    }
+                });
+            }
+        }
+        return Array.from(dependencies);
+    }
+    /**
+     * Calculate impact level based on semantic analysis results
+     */
+    calculateImpactLevel(result) {
+        const conceptCount = result.businessConcepts.length;
+        const ruleCount = result.businessRules.length;
+        const totalImpact = conceptCount + ruleCount;
+        if (totalImpact >= 10)
+            return 'high';
+        if (totalImpact >= 5)
+            return 'medium';
+        return 'low';
+    }
+    /**
+     * Extract affected components from semantic analysis results
+     */
+    extractAffectedComponents(result) {
+        const components = new Set();
+        // Add business concepts as affected components
+        result.businessConcepts.forEach(concept => {
+            components.add(`${concept.type}:${concept.name}`);
+        });
+        return Array.from(components);
+    }
+    /**
+     * Extract domain from dependency string
+     */
+    extractDomainFromDependency(dependency) {
+        const domainPatterns = ['Analysis', 'Data', 'Messaging', 'Trading', 'Market'];
+        for (const domain of domainPatterns) {
+            if (dependency.includes(domain)) {
+                return domain;
+            }
+        }
+        return null;
     }
     /**
      * Generate context content for all domains
@@ -373,10 +486,28 @@ export class HolisticUpdateOrchestrator {
         const allUpdates = [];
         for (const plan of plans) {
             logger.debug(`Generating context updates for domain: ${plan.domain}`);
-            const domainSemanticResults = semanticResults.filter(result => result.domainContext === plan.domain ||
-                result.businessConcepts.some(concept => concept.domain === plan.domain));
+            // Enhanced domain filtering to consolidate subdomains into parent domains
+            // E.g., Analysis.Indicator should contribute to Analysis domain context
+            const domainSemanticResults = semanticResults.filter(result => {
+                // Direct domain match
+                if (result.domainContext === plan.domain)
+                    return true;
+                // Subdomain consolidation: Analysis.Indicator -> Analysis
+                if (result.domainContext && result.domainContext.startsWith(plan.domain + '.'))
+                    return true;
+                // Business concept domain match
+                if (result.businessConcepts.some(concept => concept.domain === plan.domain))
+                    return true;
+                // Business concept subdomain consolidation
+                if (result.businessConcepts.some(concept => concept.domain && concept.domain.startsWith(plan.domain + '.')))
+                    return true;
+                return false;
+            });
             // Convert to context generator format
             const convertedResults = this.convertToContextGeneratorFormat(domainSemanticResults);
+            // Debug logging to trace business rules through the pipeline
+            logger.info(`Debug: Domain ${plan.domain} - Original semantic results have ${domainSemanticResults.reduce((sum, r) => sum + r.businessRules.length, 0)} business rules`);
+            logger.info(`Debug: Domain ${plan.domain} - Converted results have ${convertedResults.reduce((sum, r) => sum + r.businessRules.length, 0)} business rules`);
             const contextUpdates = await this.contextGenerator.generateContextFiles(convertedResults);
             // Convert ContextFileContent to file paths and create domain updates
             const domainUpdates = contextUpdates.map((contextContent, _index) => {

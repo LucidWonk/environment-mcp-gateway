@@ -62,6 +62,12 @@ export declare class HolisticUpdateOrchestrator {
      */
     private identifyCrossCuttingDomains;
     /**
+     * Consolidate subdomains into their parent domains to avoid context file fragmentation
+     * E.g., Analysis.Indicator, Analysis.Pattern -> Analysis
+     * Data.Provider, Data.Repository -> Data
+     */
+    private consolidateSubdomains;
+    /**
      * Create update plan for all affected domains
      */
     private createDomainUpdatePlan;
@@ -89,8 +95,29 @@ export declare class HolisticUpdateOrchestrator {
     private determineUpdateReason;
     /**
      * Convert semantic analysis results to context generator format
+     * Fixed: Enhanced mapping to properly handle business rules from XML documentation parser
      */
     private convertToContextGeneratorFormat;
+    /**
+     * Calculate domain confidence based on semantic analysis results
+     */
+    private calculateDomainConfidence;
+    /**
+     * Extract cross-domain dependencies from semantic analysis results
+     */
+    private extractCrossDomainDependencies;
+    /**
+     * Calculate impact level based on semantic analysis results
+     */
+    private calculateImpactLevel;
+    /**
+     * Extract affected components from semantic analysis results
+     */
+    private extractAffectedComponents;
+    /**
+     * Extract domain from dependency string
+     */
+    private extractDomainFromDependency;
     /**
      * Generate context content for all domains
      */

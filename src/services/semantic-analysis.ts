@@ -2,6 +2,7 @@ import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import { XmlDocumentationRuleParser } from './xml-documentation-rule-parser.js';
 
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
@@ -51,12 +52,17 @@ export interface SemanticAnalysisResult {
 export class SemanticAnalysisService {
     private readonly maxAnalysisTime = 15000; // 15 seconds as per requirements
     private readonly cacheDir = '.semantic-cache';
+    private readonly xmlRuleParser: XmlDocumentationRuleParser;
 
     constructor() {
         // Ensure cache directory exists
         if (!fs.existsSync(this.cacheDir)) {
             fs.mkdirSync(this.cacheDir, { recursive: true });
         }
+        
+        // Initialize enhanced XML documentation rule parser (Step 3.1 & 3.2)
+        this.xmlRuleParser = new XmlDocumentationRuleParser();
+        logger.info('SemanticAnalysisService initialized with enhanced XML documentation rule parser');
     }
 
     /**
@@ -279,12 +285,52 @@ export class SemanticAnalysisService {
     }
 
     /**
-     * Extract business rules from C# code
+     * Extract business rules from C# code using enhanced XML documentation parser
+     * Step 3.1 & 3.2: Enhanced Business Rule Mining
+     * BR-CEE-009: Extract 15+ rules from Fractal Analysis domain
+     * BR-CEE-010: Extract 10+ rules from Indicator domain  
+     * BR-CEE-011: >80% accuracy in classification
+     * BR-CEE-012: Focus on semantic value for AI development
      */
     private async extractCSharpBusinessRules(content: string, filePath: string): Promise<BusinessRule[]> {
+        try {
+            // Use enhanced XML documentation rule parser (Step 3.1 & 3.2)
+            const xmlParsingResult = await this.xmlRuleParser.parseXmlDocumentation(filePath);
+            
+            // Convert XmlDocumentationRule to BusinessRule format
+            const enhancedRules = xmlParsingResult.extractedRules.map((xmlRule, index) => ({
+                id: `XML-${filePath.replace(/[^\w]/g, '-')}-${index + 1}`,
+                description: xmlRule.description || xmlRule.rule,
+                domain: this.extractDomainFromNamespace(content),
+                sourceLocation: xmlRule.source,
+                conditions: xmlRule.constraints || [],
+                actions: [`${xmlRule.type} enforcement`],
+                confidence: xmlRule.confidence
+            }));
+
+            // Add legacy rule extraction for compatibility (with lower priority)
+            const legacyRules = await this.extractLegacyCSharpBusinessRules(content, filePath, enhancedRules.length);
+            
+            // Combine enhanced and legacy rules (enhanced rules have higher priority)
+            const allRules = [...enhancedRules, ...legacyRules];
+            
+            logger.info(`Enhanced business rule extraction: ${enhancedRules.length} from XML docs (accuracy: ${xmlParsingResult.classificationAccuracy.toFixed(2)}%), ${legacyRules.length} from legacy patterns (${filePath})`);
+            return allRules;
+            
+        } catch (error) {
+            logger.error(`Error in enhanced business rule extraction for ${filePath}: ${error}`);
+            // Fallback to legacy extraction if enhanced parser fails
+            return await this.extractLegacyCSharpBusinessRules(content, filePath, 0);
+        }
+    }
+
+    /**
+     * Legacy business rule extraction for compatibility and fallback
+     */
+    private async extractLegacyCSharpBusinessRules(content: string, filePath: string, startingRuleId: number): Promise<BusinessRule[]> {
         const rules: BusinessRule[] = [];
         
-        // Look for business rule patterns in comments and method names
+        // Look for business rule patterns in comments and method names  
         const rulePatterns = [
             // Business rule comments
             /\/\/\s*Business Rule:\s*(.+)/gi,
@@ -300,19 +346,19 @@ export class SemanticAnalysisService {
 
         // Extract rules from comments
         let match;
-        let ruleId = 1;
+        let ruleId = startingRuleId + 1;
         
         for (const pattern of rulePatterns.slice(0, 3)) {
             pattern.lastIndex = 0;
             while ((match = pattern.exec(content)) !== null) {
                 rules.push({
-                    id: `BR-${filePath.replace(/[^\w]/g, '-')}-${ruleId++}`,
+                    id: `BR-${filePath.replace(/[^\w]/g, '-')}-legacy-${ruleId++}`,
                     description: match[1].trim(),
                     domain: this.extractDomainFromNamespace(content),
                     sourceLocation: `${filePath}:${this.getLineNumber(content, match.index)}`,
                     conditions: this.extractConditions(content, match.index),
                     actions: this.extractActions(content, match.index),
-                    confidence: 0.75
+                    confidence: 0.65 // Lower confidence for legacy extraction
                 });
             }
         }
@@ -324,17 +370,17 @@ export class SemanticAnalysisService {
             const ruleDescription = this.humanizeMethodName(methodName);
             
             rules.push({
-                id: `BR-${filePath.replace(/[^\w]/g, '-')}-${ruleId++}`,
+                id: `BR-${filePath.replace(/[^\w]/g, '-')}-legacy-${ruleId++}`,
                 description: ruleDescription,
                 domain: this.extractDomainFromNamespace(content),
                 sourceLocation: `${filePath}:${this.getLineNumber(content, match.index)}`,
                 conditions: this.extractMethodConditions(content, match.index),
                 actions: ['Validation', 'Business constraint enforcement'],
-                confidence: 0.65
+                confidence: 0.55 // Lower confidence for legacy extraction
             });
         }
 
-        logger.debug(`Extracted ${rules.length} business rules from ${filePath}`);
+        logger.debug(`Extracted ${rules.length} legacy business rules from ${filePath}`);
         return rules;
     }
 
