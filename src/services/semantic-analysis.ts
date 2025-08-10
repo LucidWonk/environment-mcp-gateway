@@ -69,28 +69,56 @@ export class SemanticAnalysisService {
      * Analyze code changes for semantic meaning
      */
     public async analyzeCodeChanges(filePaths: string[]): Promise<SemanticAnalysisResult[]> {
-        logger.info(`Starting semantic analysis for ${filePaths.length} files`);
+        logger.info(`🔍 SemanticAnalysisService.analyzeCodeChanges called with ${filePaths.length} files`);
+        console.info(`🔍 SemanticAnalysisService.analyzeCodeChanges called with ${filePaths.length} files`);
+        
+        if (filePaths.length === 0) {
+            logger.warn('❌ SemanticAnalysisService: No file paths provided for analysis');
+            console.warn('❌ SemanticAnalysisService: No file paths provided for analysis');
+            return [];
+        }
+
+        // Log the file paths being analyzed
+        filePaths.forEach((filePath, index) => {
+            console.info(`📄 File ${index + 1}: ${filePath}`);
+        });
+
         const startTime = Date.now();
         const results: SemanticAnalysisResult[] = [];
 
         for (const filePath of filePaths) {
             try {
+                console.info(`🔍 Analyzing file: ${filePath}`);
+                
                 // Check if we should continue based on time constraint
                 if (Date.now() - startTime > this.maxAnalysisTime) {
                     logger.warn(`Semantic analysis timeout reached after analyzing ${results.length} files`);
+                    console.warn(`⏰ Timeout reached after analyzing ${results.length}/${filePaths.length} files`);
                     break;
                 }
 
                 const result = await this.analyzeFile(filePath);
+                console.info(`✅ Analysis completed for ${filePath}: ${result.businessConcepts.length} concepts, ${result.businessRules.length} rules, domain: ${result.domainContext}`);
                 results.push(result);
             } catch (error) {
                 logger.error(`Failed to analyze file ${filePath}:`, error);
+                console.error(`❌ Failed to analyze file ${filePath}:`, error);
                 // Continue with other files even if one fails
             }
         }
 
         const analysisTime = Date.now() - startTime;
         logger.info(`Semantic analysis completed in ${analysisTime}ms for ${results.length} files`);
+        console.info(`🎉 Semantic analysis completed in ${analysisTime}ms for ${results.length}/${filePaths.length} files`);
+        
+        if (results.length === 0) {
+            console.error('❌ CRITICAL: Semantic analysis produced 0 results! This explains why no context files are generated.');
+        } else {
+            // Log summary of results
+            const totalConcepts = results.reduce((sum, r) => sum + r.businessConcepts.length, 0);
+            const totalRules = results.reduce((sum, r) => sum + r.businessRules.length, 0);
+            console.info(`📊 Analysis summary: ${totalConcepts} total concepts, ${totalRules} total rules`);
+        }
         
         return results;
     }
@@ -101,14 +129,27 @@ export class SemanticAnalysisService {
     private async analyzeFile(filePath: string): Promise<SemanticAnalysisResult> {
         const startTime = Date.now();
         logger.debug(`Analyzing file: ${filePath}`);
+        console.info(`🔍 Analyzing file: ${filePath}`);
 
         // Check if file exists
         if (!fs.existsSync(filePath)) {
-            throw new Error(`File not found: ${filePath}`);
+            const error = `File not found: ${filePath}`;
+            console.error(`❌ ${error}`);
+            throw new Error(error);
         }
 
-        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        let fileContent: string;
+        try {
+            fileContent = fs.readFileSync(filePath, 'utf-8');
+            console.info(`📖 Successfully read file: ${filePath} (${fileContent.length} characters)`);
+        } catch (error) {
+            const errorMsg = `Failed to read file: ${filePath} - ${error instanceof Error ? error.message : 'Unknown error'}`;
+            console.error(`❌ ${errorMsg}`);
+            throw new Error(errorMsg);
+        }
+
         const language = this.detectLanguage(filePath);
+        console.info(`🔤 Detected language: ${language} for ${filePath}`);
 
         let businessConcepts: BusinessConcept[] = [];
         let businessRules: BusinessRule[] = [];

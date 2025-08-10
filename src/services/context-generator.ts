@@ -69,28 +69,59 @@ export class ContextGenerator {
     async generateContextFiles(analysisResults: SemanticAnalysisResult[]): Promise<ContextFileContent[]> {
         const startTime = Date.now();
         
+        console.info(`🎯 ContextGenerator.generateContextFiles called with ${analysisResults.length} analysis results`);
+        
+        if (analysisResults.length === 0) {
+            console.warn('❌ ContextGenerator: No analysis results provided - returning empty array');
+            return [];
+        }
+        
+        // Log details about input
+        analysisResults.forEach((result, index) => {
+            console.info(`📊 Analysis Result ${index + 1}:`);
+            console.info(`  - File: ${result.filePath}`);
+            console.info(`  - Language: ${result.language}`);
+            console.info(`  - Domain: ${result.domainAnalysis.primaryDomain} (confidence: ${result.domainAnalysis.confidence})`);
+            console.info(`  - Business Concepts: ${result.businessConcepts.length}`);
+            console.info(`  - Business Rules: ${result.businessRules.length}`);
+        });
+        
         try {
             const contextFiles: ContextFileContent[] = [];
             
             // Group analysis results by domain
+            console.info('🗂️ Grouping analysis results by domain...');
             const domainGroups = this.groupByDomain(analysisResults);
+            console.info(`✅ Grouped into ${domainGroups.size} domains: ${Array.from(domainGroups.keys()).join(', ')}`);
+            
+            if (domainGroups.size === 0) {
+                console.error('❌ CRITICAL: No domain groups created from analysis results!');
+                return [];
+            }
             
             for (const [domain, results] of domainGroups) {
+                console.info(`📝 Generating context for domain: ${domain} (${results.length} files)`);
                 const contextContent = await this.generateDomainContext(domain, results);
+                console.info(`✅ Generated context content for domain: ${domain}`);
+                console.info(`Content preview: ${contextContent.domainOverview.substring(0, 100)}...`);
                 contextFiles.push(contextContent);
             }
             
             const duration = Date.now() - startTime;
-            console.info(`Context generation completed in ${duration}ms for ${analysisResults.length} files`);
+            console.info(`🎉 Context generation completed in ${duration}ms for ${analysisResults.length} files, generated ${contextFiles.length} context files`);
             
             // Performance validation - must complete within 5 seconds
             if (duration > 5000) {
-                console.warn(`Context generation took ${duration}ms, exceeding 5s performance requirement`);
+                console.warn(`⚠️ Context generation took ${duration}ms, exceeding 5s performance requirement`);
+            }
+            
+            if (contextFiles.length === 0) {
+                console.error('❌ CRITICAL: Context generation completed but generated 0 context files!');
             }
             
             return contextFiles;
         } catch (error) {
-            console.error('Context generation failed:', error);
+            console.error('❌ Context generation failed:', error);
             throw new Error(`Context generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }

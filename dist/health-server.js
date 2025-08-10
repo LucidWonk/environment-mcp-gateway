@@ -67,9 +67,9 @@ export class HealthServer {
     start() {
         return new Promise((resolve, reject) => {
             this.server.listen(this.port, '0.0.0.0', () => {
-                console.log(`Health server listening on http://0.0.0.0:${this.port}`);
-                console.log(`Health check: http://0.0.0.0:${this.port}/health`);
-                console.log(`Status check: http://0.0.0.0:${this.port}/status`);
+                console.info(`Health server listening on http://0.0.0.0:${this.port}`);
+                console.info(`Health check: http://0.0.0.0:${this.port}/health`);
+                console.info(`Status check: http://0.0.0.0:${this.port}/status`);
                 resolve();
             });
             this.server.on('error', (error) => {

@@ -125,46 +125,75 @@ export class HolisticUpdateOrchestrator {
      * Perform semantic analysis on changed files
      */
     async performSemanticAnalysis(changedFiles) {
-        logger.debug(`Performing semantic analysis on ${changedFiles.length} files`);
+        logger.info(`🔍 Starting semantic analysis on ${changedFiles.length} files`);
         const relevantFiles = changedFiles.filter(file => {
             const ext = path.extname(file).toLowerCase();
-            return ['.cs', '.ts', '.js'].includes(ext);
+            const isRelevant = ['.cs', '.ts', '.js'].includes(ext);
+            logger.debug(`File: ${file}, Extension: ${ext}, Relevant: ${isRelevant}`);
+            return isRelevant;
         });
+        logger.info(`📊 Filtered to ${relevantFiles.length} relevant files for semantic analysis`);
         if (relevantFiles.length === 0) {
-            logger.info('No relevant files for semantic analysis');
+            logger.warn('❌ No relevant files found for semantic analysis - this may explain why no context files are generated');
             return [];
         }
-        return await this.semanticAnalysis.analyzeCodeChanges(relevantFiles);
+        logger.info(`🚀 Analyzing ${relevantFiles.length} files: ${relevantFiles.join(', ')}`);
+        const results = await this.semanticAnalysis.analyzeCodeChanges(relevantFiles);
+        logger.info(`✅ Semantic analysis completed, found ${results.length} analysis results`);
+        return results;
     }
     /**
      * Identify all domains affected by the changes
      */
     async identifyAffectedDomains(semanticResults, changedFiles) {
+        logger.info(`🎯 Identifying affected domains from ${semanticResults.length} semantic results and ${changedFiles.length} changed files`);
         const domains = new Set();
         // Extract domains from semantic analysis results
+        logger.info('🔍 Extracting domains from semantic analysis results...');
         for (const result of semanticResults) {
+            logger.debug(`Processing semantic result for file: ${result.filePath}`);
             if (result.domainContext && result.domainContext !== 'Unknown') {
+                logger.info(`✅ Found domain from semantic analysis: ${result.domainContext} for file ${result.filePath}`);
                 domains.add(result.domainContext);
+            }
+            else {
+                logger.debug(`❌ No valid domain context found in semantic result for ${result.filePath} (context: ${result.domainContext})`);
             }
             // Also check business concepts for domain information
             for (const concept of result.businessConcepts) {
                 if (concept.domain && concept.domain !== 'Unknown') {
+                    logger.info(`✅ Found domain from business concept: ${concept.domain} (concept: ${concept.name})`);
                     domains.add(concept.domain);
+                }
+                else {
+                    logger.debug(`❌ No valid domain in business concept: ${concept.name} (domain: ${concept.domain})`);
                 }
             }
         }
         // Infer domains from file paths if semantic analysis didn't identify them
+        logger.info('🗂️ Inferring domains from file paths...');
         for (const filePath of changedFiles) {
             const inferredDomain = this.inferDomainFromPath(filePath);
             if (inferredDomain) {
+                logger.info(`✅ Inferred domain from path: ${inferredDomain} for file ${filePath}`);
                 domains.add(inferredDomain);
+            }
+            else {
+                logger.debug(`❌ Could not infer domain from path: ${filePath}`);
             }
         }
         // Always include cross-cutting concerns
+        logger.info('⚡ Identifying cross-cutting domains...');
         const crossCuttingDomains = await this.identifyCrossCuttingDomains(changedFiles);
-        crossCuttingDomains.forEach(domain => domains.add(domain));
+        crossCuttingDomains.forEach(domain => {
+            logger.info(`✅ Added cross-cutting domain: ${domain}`);
+            domains.add(domain);
+        });
         const result = Array.from(domains);
-        logger.info(`Identified ${result.length} affected domains: ${result.join(', ')}`);
+        logger.info(`🎯 Final result: Identified ${result.length} affected domains: ${result.join(', ')}`);
+        if (result.length === 0) {
+            logger.error('❌ CRITICAL: No domains identified! This explains why no context files are generated.');
+        }
         return result;
     }
     /**
@@ -486,41 +515,73 @@ export class HolisticUpdateOrchestrator {
      * Generate context content for all domains
      */
     async generateAllContextUpdates(plans, semanticResults) {
+        logger.info(`🏗️ Starting context generation for ${plans.length} domain plans with ${semanticResults.length} semantic results`);
         const allUpdates = [];
+        if (plans.length === 0) {
+            logger.error('❌ CRITICAL: No domain plans provided for context generation!');
+            return allUpdates;
+        }
         for (const plan of plans) {
-            logger.debug(`Generating context updates for domain: ${plan.domain}`);
+            logger.info(`📝 Generating context updates for domain: ${plan.domain}`);
+            logger.debug(`Domain plan: contextPath=${plan.contextPath}, updateReason=${plan.updateReason}`);
             // Enhanced domain filtering to consolidate subdomains into parent domains
             // E.g., Analysis.Indicator should contribute to Analysis domain context
             const domainSemanticResults = semanticResults.filter(result => {
                 // Direct domain match
-                if (result.domainContext === plan.domain)
+                if (result.domainContext === plan.domain) {
+                    logger.debug(`✅ Direct domain match: ${result.filePath} -> ${plan.domain}`);
                     return true;
+                }
                 // Subdomain consolidation: Analysis.Indicator -> Analysis
-                if (result.domainContext && result.domainContext.startsWith(plan.domain + '.'))
+                if (result.domainContext && result.domainContext.startsWith(plan.domain + '.')) {
+                    logger.debug(`✅ Subdomain match: ${result.filePath} (${result.domainContext}) -> ${plan.domain}`);
                     return true;
+                }
                 // Business concept domain match
-                if (result.businessConcepts.some(concept => concept.domain === plan.domain))
+                if (result.businessConcepts.some(concept => concept.domain === plan.domain)) {
+                    logger.debug(`✅ Business concept domain match: ${result.filePath} -> ${plan.domain}`);
                     return true;
+                }
                 // Business concept subdomain consolidation
-                if (result.businessConcepts.some(concept => concept.domain && concept.domain.startsWith(plan.domain + '.')))
+                if (result.businessConcepts.some(concept => concept.domain && concept.domain.startsWith(plan.domain + '.'))) {
+                    logger.debug(`✅ Business concept subdomain match: ${result.filePath} -> ${plan.domain}`);
                     return true;
+                }
                 return false;
             });
+            logger.info(`📊 Found ${domainSemanticResults.length} semantic results for domain ${plan.domain}`);
             // Convert to context generator format
+            logger.debug('🔄 Converting semantic results to context generator format...');
             const convertedResults = this.convertToContextGeneratorFormat(domainSemanticResults);
+            logger.info(`✅ Converted ${convertedResults.length} results for context generation`);
+            logger.debug('🎯 Calling context generator...');
             const contextUpdates = await this.contextGenerator.generateContextFiles(convertedResults);
+            logger.info(`📄 Context generator produced ${contextUpdates.length} context updates for domain ${plan.domain}`);
+            if (contextUpdates.length === 0) {
+                logger.warn(`⚠️ Context generator returned 0 updates for domain ${plan.domain} - investigating...`);
+                logger.debug(`Input to context generator: ${JSON.stringify(convertedResults, null, 2)}`);
+            }
             // Convert ContextFileContent to file paths and create domain updates
             const domainUpdates = contextUpdates.map((contextContent, _index) => {
                 const fileName = `domain-overview-${plan.domain.toLowerCase()}.context`;
+                const filePath = path.join(plan.contextPath, fileName);
+                const content = this.serializeContextContent(contextContent);
+                logger.info(`📁 Created context file: ${filePath} (${content.length} bytes)`);
+                logger.debug(`Context content preview: ${content.substring(0, 200)}...`);
                 return {
-                    filePath: path.join(plan.contextPath, fileName),
-                    content: this.serializeContextContent(contextContent)
+                    filePath,
+                    content
                 };
             });
+            logger.info(`✅ Generated ${domainUpdates.length} domain updates for ${plan.domain}`);
             allUpdates.push(...domainUpdates);
             plan.requiredUpdates = domainUpdates;
         }
-        logger.info(`Generated ${allUpdates.length} context file updates across ${plans.length} domains`);
+        logger.info(`🎉 Context generation complete: Generated ${allUpdates.length} context file updates across ${plans.length} domains`);
+        if (allUpdates.length === 0) {
+            logger.error('❌ CRITICAL: No context updates generated! This explains the 0 context files result.');
+            logger.debug(`Debug info - Plans: ${JSON.stringify(plans.map(p => ({ domain: p.domain, contextPath: p.contextPath })), null, 2)}`);
+        }
         return allUpdates;
     }
     /**

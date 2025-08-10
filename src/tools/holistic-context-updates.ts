@@ -485,6 +485,9 @@ export async function handleExecuteFullRepositoryReindex(args: any): Promise<any
         } = args;
 
         console.info(`🔄 Starting full repository re-indexing with cleanup: ${cleanupFirst}`);
+        console.info(`📁 Project root path: ${projectRoot}`);
+        console.info(`📁 Current working directory: ${process.cwd()}`);
+        console.info(`📁 Resolved project root: ${path.resolve(projectRoot)}`);
 
         let contextFilesRemoved = 0;
         let filesDiscovered = 0;
@@ -505,10 +508,21 @@ export async function handleExecuteFullRepositoryReindex(args: any): Promise<any
 
         // Step 2: Dynamically discover all source files
         try {
+            console.info(`🔍 Starting file discovery with extensions: ${fileExtensions.join(', ')} and exclude patterns: ${excludePatterns.join(', ')}`);
             const discoveredPaths = await discoverSourceFiles(fileExtensions, excludePatterns);
             discoveredFiles.push(...discoveredPaths);
             filesDiscovered = discoveredFiles.length;
             console.info(`📁 Discovered ${filesDiscovered} source files for analysis`);
+            
+            if (filesDiscovered === 0) {
+                errors.push('File discovery found 0 files - this may be due to overly restrictive exclusion patterns or missing files');
+                console.error('❌ CRITICAL: File discovery returned 0 files!');
+                console.info(`Debug: Project root = ${projectRoot}`);
+                console.info(`Debug: Extensions = ${JSON.stringify(fileExtensions)}`);
+                console.info(`Debug: Exclude patterns = ${JSON.stringify(excludePatterns)}`);
+            } else {
+                console.info(`📋 Sample discovered files: ${discoveredFiles.slice(0, 10).join(', ')}${discoveredFiles.length > 10 ? '...' : ''}`);
+            }
         } catch (error) {
             errors.push(`File discovery failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             return createFailureResponse(updateId, startTime, errors);
@@ -591,37 +605,71 @@ async function discoverSourceFiles(extensions: string[], excludePatterns: string
     const path = await import('path');
     
     const files: string[] = [];
+    let directoriesScanned = 0;
+    let filesScanned = 0;
+    let filesExcluded = 0;
+    let directoriesExcluded = 0;
+    
+    console.info(`🚀 Starting file discovery in project root: ${projectRoot}`);
     
     async function scanDirectory(dir: string): Promise<void> {
         try {
+            directoriesScanned++;
             const entries = await fs.readdir(dir, { withFileTypes: true });
+            console.info(`📂 Scanning directory: ${dir} (${entries.length} entries)`);
             
             for (const entry of entries) {
                 const fullPath = path.join(dir, entry.name);
                 const relativePath = path.relative(projectRoot, fullPath);
                 
                 // Skip excluded patterns
-                if (excludePatterns.some(pattern => relativePath.includes(pattern) || entry.name === pattern)) {
+                const isExcluded = excludePatterns.some(pattern => 
+                    relativePath.includes(pattern) || 
+                    entry.name === pattern ||
+                    relativePath.startsWith(pattern)
+                );
+                
+                if (isExcluded) {
+                    if (entry.isDirectory()) {
+                        directoriesExcluded++;
+                        console.info(`❌ Excluded directory: ${relativePath}`);
+                    } else {
+                        filesExcluded++;
+                        console.info(`❌ Excluded file: ${relativePath}`);
+                    }
                     continue;
                 }
                 
                 if (entry.isDirectory()) {
                     await scanDirectory(fullPath);
                 } else if (entry.isFile()) {
+                    filesScanned++;
                     // Check if file has one of the target extensions
                     const ext = path.extname(entry.name);
                     if (extensions.includes(ext)) {
-                        files.push(relativePath);
+                        // Store absolute path for proper file reading
+                        files.push(fullPath);
+                        console.info(`✅ Included file: ${relativePath} -> ${fullPath}`);
+                    } else {
+                        console.info(`⏩ Skipped file (wrong extension): ${relativePath} (${ext})`);
                     }
                 }
             }
         } catch (error) {
             // Skip directories we can't read
-            console.warn(`Skipping directory ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            console.warn(`⚠️ Skipping directory ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     
     await scanDirectory(projectRoot);
+    
+    console.info('📊 File discovery complete:');
+    console.info(`  - Directories scanned: ${directoriesScanned}`);
+    console.info(`  - Directories excluded: ${directoriesExcluded}`);
+    console.info(`  - Files scanned: ${filesScanned}`);
+    console.info(`  - Files excluded: ${filesExcluded}`);
+    console.info(`  - Files matched: ${files.length}`);
+    
     return files;
 }
 
