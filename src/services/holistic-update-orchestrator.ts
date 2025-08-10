@@ -5,17 +5,34 @@ import { AtomicFileManager, FileOperation } from './atomic-file-manager.js';
 import { RollbackManager, HolisticRollbackData } from './rollback-manager.js';
 import { SemanticAnalysisService, SemanticAnalysisResult } from './semantic-analysis.js';
 import { ContextGenerator, ContextFileContent, SemanticAnalysisResult as ContextGeneratorSemanticResult } from './context-generator.js';
+import { PathUtilities } from './path-utilities.js';
+import { TimeoutManager } from './timeout-manager.js';
 
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),
-        winston.format.json()
+        winston.format.json(),
+        winston.format.printf(({ timestamp, level, message, ...meta }) => {
+            let logString = `${timestamp} [${level.toUpperCase()}]: ${message}`;
+            if (Object.keys(meta).length > 0) {
+                logString += ` ${JSON.stringify(meta, null, 2)}`;
+            }
+            return logString;
+        })
     ),
     transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'holistic-update-orchestrator.log' })
+        new winston.transports.Console({
+            format: winston.format.combine(
+                winston.format.colorize(),
+                winston.format.simple()
+            )
+        }),
+        new winston.transports.File({ 
+            filename: 'holistic-update-orchestrator.log',
+            format: winston.format.json()
+        })
     ]
 });
 
@@ -59,24 +76,64 @@ export class HolisticUpdateOrchestrator {
     private readonly rollbackManager: RollbackManager;
     private readonly semanticAnalysis: SemanticAnalysisService;
     private readonly contextGenerator: ContextGenerator;
-    private readonly projectRoot: string;
+    private readonly timeoutManager: TimeoutManager;
+    private projectRoot: string;
 
-    constructor(projectRoot: string = '.') {
-        this.projectRoot = path.resolve(projectRoot);
+    constructor(projectRoot?: string) {
+        // Initialize project root asynchronously in a separate method
+        this.projectRoot = projectRoot ? path.resolve(projectRoot) : process.cwd();
+        this.initializeAsync();
         
         // Use environment-specific paths for data directories in containerized environments
-        const atomicOpsDir = process.env.ATOMIC_OPS_DIR || path.join(projectRoot, '.atomic-ops');
-        const rollbackDir = process.env.HOLISTIC_ROLLBACK_DIR || path.join(projectRoot, '.holistic-rollback');
+        const atomicOpsDir = process.env.ATOMIC_OPS_DIR || path.join(this.projectRoot, '.atomic-ops');
+        const rollbackDir = process.env.HOLISTIC_ROLLBACK_DIR || path.join(this.projectRoot, '.holistic-rollback');
+        const holisticOpsDir = process.env.HOLISTIC_OPS_DIR || path.join(this.projectRoot, '.holistic-ops');
+        
+        // Enhanced rollback configuration for automatic cleanup
+        const rollbackConfig = {
+            maxAge: 24, // Clean up after 24 hours
+            maxCount: 10, // Keep max 10 rollbacks
+            cleanupTriggers: ['full-reindex', 'startup', 'holistic-update-failure'],
+            aggressiveCleanup: false
+        };
         
         this.atomicFileManager = new AtomicFileManager(atomicOpsDir);
-        this.rollbackManager = new RollbackManager(rollbackDir);
+        this.rollbackManager = new RollbackManager(rollbackDir, rollbackConfig);
         this.semanticAnalysis = new SemanticAnalysisService();
         this.contextGenerator = new ContextGenerator();
         
-        // Ensure .holistic-ops directory exists for operational metadata
-        const _holisticOpsDir = path.join(projectRoot, '.holistic-ops');
+        // Ensure holistic operations directory exists for coordination files
+        if (!fs.existsSync(holisticOpsDir)) {
+            fs.mkdirSync(holisticOpsDir, { recursive: true });
+        }
+        
+        // Initialize timeout manager with environment-specific configuration
+        const timeoutConfig = {
+            semanticAnalysis: parseInt(process.env.SEMANTIC_ANALYSIS_TIMEOUT || '60000'),
+            domainAnalysis: parseInt(process.env.DOMAIN_ANALYSIS_TIMEOUT || '30000'),
+            contextGeneration: parseInt(process.env.CONTEXT_GENERATION_TIMEOUT || '45000'),
+            fileOperations: parseInt(process.env.FILE_OPERATIONS_TIMEOUT || '30000'),
+            fullReindex: parseInt(process.env.FULL_REINDEX_TIMEOUT || '300000'),
+            singleFileAnalysis: parseInt(process.env.SINGLE_FILE_TIMEOUT || '10000')
+        };
+        this.timeoutManager = new TimeoutManager(timeoutConfig);
         
         logger.info(`Holistic Update Orchestrator initialized for project: ${this.projectRoot}`);
+    }
+
+    /**
+     * Initialize project root with proper path resolution
+     */
+    private async initializeAsync(): Promise<void> {
+        try {
+            const resolvedRoot = await PathUtilities.getProjectRoot();
+            if (resolvedRoot !== this.projectRoot) {
+                logger.info(`Project root updated from ${this.projectRoot} to ${resolvedRoot}`);
+                this.projectRoot = resolvedRoot;
+            }
+        } catch (error) {
+            logger.warn(`Could not resolve project root, using: ${this.projectRoot}`, error);
+        }
     }
 
     /**
@@ -99,22 +156,35 @@ export class HolisticUpdateOrchestrator {
         try {
             // Phase 1: Semantic Analysis of Changed Files
             const semanticStartTime = Date.now();
-            const semanticResults = await this.performSemanticAnalysis(request.changedFiles);
+            const semanticResults = await this.timeoutManager.executeWithTimeout(
+                this.performSemanticAnalysis(request.changedFiles),
+                'semanticAnalysis',
+                { 
+                    fileCount: request.changedFiles.length, 
+                    updateId,
+                    triggerType: request.triggerType 
+                }
+            );
             metrics.semanticAnalysisTime = Date.now() - semanticStartTime;
-
-            if (Date.now() - startTime > performanceTimeout) {
-                throw new Error(`Performance timeout exceeded during semantic analysis (>${request.performanceTimeout ?? 15}s)`);
-            }
 
             // Phase 2: Domain Impact Analysis
             const domainStartTime = Date.now();
-            const affectedDomains = await this.identifyAffectedDomains(semanticResults, request.changedFiles);
-            const updatePlan = await this.createDomainUpdatePlan(affectedDomains, semanticResults);
-            metrics.domainAnalysisTime = Date.now() - domainStartTime;
+            const domainAnalysisOperation = async () => {
+                const affectedDomains = await this.identifyAffectedDomains(semanticResults, request.changedFiles);
+                const updatePlan = await this.createDomainUpdatePlan(affectedDomains, semanticResults);
+                return { affectedDomains, updatePlan };
+            };
 
-            if (Date.now() - startTime > performanceTimeout) {
-                throw new Error(`Performance timeout exceeded during domain analysis (>${request.performanceTimeout ?? 15}s)`);
-            }
+            const { affectedDomains, updatePlan } = await this.timeoutManager.executeWithTimeout(
+                domainAnalysisOperation(),
+                'domainAnalysis',
+                { 
+                    semanticResultsCount: semanticResults.length,
+                    changedFilesCount: request.changedFiles.length,
+                    updateId 
+                }
+            );
+            metrics.domainAnalysisTime = Date.now() - domainStartTime;
 
             // Phase 3: Create Rollback Snapshot
             const rollbackData = await this.rollbackManager.createHolisticSnapshot(
@@ -157,24 +227,45 @@ export class HolisticUpdateOrchestrator {
             };
 
         } catch (error) {
-            logger.error(`Holistic update ${updateId} failed:`, error);
+            const totalTime = Date.now() - startTime;
+            const errorDetails = {
+                updateId,
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                executionTime: totalTime,
+                request: {
+                    changedFiles: request.changedFiles,
+                    gitCommitHash: request.gitCommitHash,
+                    triggerType: request.triggerType,
+                    performanceTimeout: request.performanceTimeout
+                },
+                performanceMetrics: metrics,
+                phase: this.determineFailurePhase(metrics, totalTime),
+                projectRoot: this.projectRoot,
+                timestamp: new Date().toISOString()
+            };
+
+            logger.error(`❌ Holistic update ${updateId} failed`, errorDetails);
             
-            // Attempt rollback
+            // Mark rollback as failed with comprehensive context
             try {
-                const rollbackSuccess = await this.rollbackManager.executeHolisticRollback(updateId);
-                if (rollbackSuccess) {
-                    logger.info(`Successfully rolled back failed holistic update ${updateId}`);
-                } else {
-                    logger.error(`Failed to rollback holistic update ${updateId}`);
-                }
-            } catch (rollbackError) {
-                logger.error(`Rollback failed for holistic update ${updateId}:`, rollbackError);
+                await this.rollbackManager.markRollbackFailed(updateId, error as Error, errorDetails);
+                // Note: For manual rollback recovery, use executeHolisticRollback(updateId)
+            } catch (markError) {
+                logger.error(`Failed to mark rollback as failed for update ${updateId}:`, markError);
+            }
+
+            // Trigger cleanup after failure
+            try {
+                await this.rollbackManager.triggerCleanup('holistic-update-failure');
+            } catch (cleanupError) {
+                logger.warn(`Cleanup after failure could not be triggered:`, cleanupError);
             }
 
             return {
                 success: false,
                 updateId,
-                executionTime: Date.now() - startTime,
+                executionTime: totalTime,
                 affectedDomains: [],
                 updatedFiles: [],
                 performanceMetrics: metrics,
@@ -812,6 +903,68 @@ ${contextContent.recentChanges}
     }
 
     /**
+     * Determine which phase the failure occurred in based on metrics
+     */
+    private determineFailurePhase(metrics: any, totalTime: number): string {
+        if (metrics.semanticAnalysisTime > 0 && metrics.domainAnalysisTime === 0) {
+            return 'semantic-analysis';
+        } else if (metrics.domainAnalysisTime > 0 && metrics.contextGenerationTime === 0) {
+            return 'domain-analysis';
+        } else if (metrics.contextGenerationTime > 0 && metrics.fileOperationTime === 0) {
+            return 'context-generation';
+        } else if (metrics.fileOperationTime > 0) {
+            return 'file-operations';
+        } else if (totalTime < 1000) {
+            return 'initialization';
+        } else {
+            return 'unknown';
+        }
+    }
+
+    /**
+     * Create timeout wrapper for operations with detailed timeout context
+     */
+    private async withTimeout<T>(
+        operation: Promise<T>,
+        timeoutMs: number,
+        operationName: string,
+        context?: Record<string, any>
+    ): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            const timer = setTimeout(() => {
+                const timeoutError = new Error(
+                    `⏰ ${operationName} timed out after ${timeoutMs}ms`
+                );
+                
+                logger.error(`Timeout in ${operationName}`, {
+                    timeoutMs,
+                    operationName,
+                    context: context || {},
+                    timestamp: new Date().toISOString()
+                });
+                
+                reject(timeoutError);
+            }, timeoutMs);
+
+            operation
+                .then((result) => {
+                    clearTimeout(timer);
+                    resolve(result);
+                })
+                .catch((error) => {
+                    clearTimeout(timer);
+                    logger.error(`Error in ${operationName}`, {
+                        error: error instanceof Error ? error.message : String(error),
+                        stack: error instanceof Error ? error.stack : undefined,
+                        context: context || {},
+                        timestamp: new Date().toISOString()
+                    });
+                    reject(error);
+                });
+        });
+    }
+
+    /**
      * Cleanup old update data
      */
     async performMaintenance(): Promise<void> {
@@ -823,6 +976,9 @@ ${contextContent.recentChanges}
             
             // Cleanup old atomic operation data (older than 1 day)
             await this.atomicFileManager.cleanupOldTransactions(24);
+            
+            // Trigger automatic rollback cleanup
+            await this.rollbackManager.triggerCleanup('maintenance');
             
             logger.info('Maintenance completed successfully');
         } catch (error) {

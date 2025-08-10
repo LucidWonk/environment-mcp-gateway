@@ -23,6 +23,18 @@ services:
       - DB_PASSWORD=password
       - GIT_USER_NAME=Environment MCP Gateway
       - GIT_USER_EMAIL=noreply@lucidwonks.com
+      # Enhanced timeout configurations (in milliseconds)
+      - SEMANTIC_ANALYSIS_TIMEOUT=90000
+      - DOMAIN_ANALYSIS_TIMEOUT=60000
+      - CONTEXT_GENERATION_TIMEOUT=75000
+      - FILE_OPERATIONS_TIMEOUT=45000
+      - FULL_REINDEX_TIMEOUT=600000
+      - SINGLE_FILE_TIMEOUT=15000
+      # Rollback cleanup configuration
+      - ROLLBACK_MAX_AGE_HOURS=24
+      - ROLLBACK_MAX_COUNT=10
+      # Path resolution debugging
+      - PATH_RESOLUTION_DEBUG=true
     env_file:
       - ../.env.development
     volumes:

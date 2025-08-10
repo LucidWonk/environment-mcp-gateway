@@ -23,6 +23,22 @@ export interface RollbackState {
     status: 'pending' | 'completed' | 'failed';
     contextUpdateId?: string;
     affectedDomains: string[];
+    failureReason?: string;
+    cleanupEligible: boolean;
+}
+
+export interface RollbackCleanupConfig {
+    maxAge: number;           // Auto-cleanup after hours (default 24)
+    maxCount: number;         // Keep max rollbacks (default 10)
+    cleanupTriggers: string[]; // Triggers for cleanup: ['full-reindex', 'manual-cleanup', 'startup']
+    aggressiveCleanup: boolean; // Clean up on any new operation
+}
+
+export interface RollbackCleanupResult {
+    removedCount: number;
+    errors: string[];
+    cleanupTrigger: string;
+    executionTime: number;
 }
 
 export interface ContextSnapshot {
@@ -47,12 +63,30 @@ export class RollbackManager {
     private readonly stateDir: string;
     private readonly snapshotDir: string;
     private readonly atomicFileManager: AtomicFileManager;
+    private readonly cleanupConfig: RollbackCleanupConfig;
 
-    constructor(baseDir: string = '.rollback-state') {
+    constructor(baseDir: string = '.rollback-state', cleanupConfig?: Partial<RollbackCleanupConfig>) {
         this.stateDir = path.join(baseDir, 'state');
         this.snapshotDir = path.join(baseDir, 'snapshots');
         this.atomicFileManager = new AtomicFileManager(path.join(baseDir, 'atomic'));
+        
+        // Default cleanup configuration
+        this.cleanupConfig = {
+            maxAge: 24,  // 24 hours
+            maxCount: 10, // Keep max 10 rollbacks
+            cleanupTriggers: ['full-reindex', 'startup'],
+            aggressiveCleanup: false,
+            ...cleanupConfig
+        };
+        
         this.ensureDirectories();
+        
+        // Auto-cleanup on startup if configured
+        if (this.cleanupConfig.cleanupTriggers.includes('startup')) {
+            this.performAutomaticCleanup('startup').catch(error => {
+                logger.warn('Startup cleanup failed:', error);
+            });
+        }
     }
 
     /**
@@ -317,7 +351,9 @@ export class RollbackManager {
                             operations: [], // Loaded on demand
                             status: stateInfo.status,
                             contextUpdateId: stateInfo.updateId,
-                            affectedDomains: stateInfo.affectedDomains
+                            affectedDomains: stateInfo.affectedDomains,
+                            failureReason: stateInfo.failureReason,
+                            cleanupEligible: stateInfo.cleanupEligible || false
                         });
                     }
                 } catch (error) {
@@ -383,6 +419,238 @@ export class RollbackManager {
     }
 
     /**
+     * Perform automatic cleanup based on trigger
+     */
+    async performAutomaticCleanup(trigger: string): Promise<RollbackCleanupResult> {
+        const startTime = Date.now();
+        logger.info(`Performing automatic rollback cleanup triggered by: ${trigger}`);
+        
+        let removedCount = 0;
+        const errors: string[] = [];
+
+        try {
+            // Age-based cleanup
+            const ageCleanupResult = await this.cleanupByAge(this.cleanupConfig.maxAge);
+            removedCount += ageCleanupResult.removedCount;
+            errors.push(...ageCleanupResult.errors);
+
+            // Count-based cleanup (keep only the most recent maxCount)
+            const countCleanupResult = await this.cleanupByCount(this.cleanupConfig.maxCount);
+            removedCount += countCleanupResult.removedCount;
+            errors.push(...countCleanupResult.errors);
+
+            // Cleanup failed rollbacks older than 1 hour
+            const failedCleanupResult = await this.cleanupFailedRollbacks(1);
+            removedCount += failedCleanupResult.removedCount;
+            errors.push(...failedCleanupResult.errors);
+
+            const executionTime = Date.now() - startTime;
+            logger.info(`Automatic cleanup completed: ${removedCount} rollbacks removed in ${executionTime}ms`);
+
+            return {
+                removedCount,
+                errors,
+                cleanupTrigger: trigger,
+                executionTime
+            };
+
+        } catch (error) {
+            const executionTime = Date.now() - startTime;
+            logger.error(`Automatic cleanup failed:`, error);
+            errors.push(`Cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
+            
+            return {
+                removedCount,
+                errors,
+                cleanupTrigger: trigger,
+                executionTime
+            };
+        }
+    }
+
+    /**
+     * Clean up rollbacks older than specified hours
+     */
+    async cleanupByAge(olderThanHours: number): Promise<RollbackCleanupResult> {
+        const cutoffTime = Date.now() - (olderThanHours * 60 * 60 * 1000);
+        let removedCount = 0;
+        const errors: string[] = [];
+
+        if (!fs.existsSync(this.stateDir)) {
+            return { removedCount: 0, errors: [], cleanupTrigger: 'age-based', executionTime: 0 };
+        }
+
+        const stateFiles = await fs.promises.readdir(this.stateDir);
+        
+        for (const stateFile of stateFiles) {
+            if (stateFile.endsWith('.rollback.json')) {
+                try {
+                    const stateFilePath = path.join(this.stateDir, stateFile);
+                    const content = await fs.promises.readFile(stateFilePath, 'utf8');
+                    const stateInfo = JSON.parse(content);
+                    
+                    const rollbackTime = new Date(stateInfo.timestamp).getTime();
+                    
+                    if (rollbackTime < cutoffTime) {
+                        await this.removeRollbackData(stateInfo.updateId);
+                        removedCount++;
+                        logger.debug(`Cleaned up aged rollback: ${stateInfo.updateId}`);
+                    }
+                } catch (error) {
+                    const errorMsg = `Failed to cleanup aged rollback ${stateFile}: ${error instanceof Error ? error.message : String(error)}`;
+                    errors.push(errorMsg);
+                    logger.warn(errorMsg);
+                }
+            }
+        }
+
+        return { removedCount, errors, cleanupTrigger: 'age-based', executionTime: 0 };
+    }
+
+    /**
+     * Clean up excess rollbacks, keeping only the most recent count
+     */
+    async cleanupByCount(maxCount: number): Promise<RollbackCleanupResult> {
+        let removedCount = 0;
+        const errors: string[] = [];
+
+        try {
+            const rollbacks = await this.getPendingRollbacks();
+            
+            if (rollbacks.length <= maxCount) {
+                return { removedCount: 0, errors: [], cleanupTrigger: 'count-based', executionTime: 0 };
+            }
+
+            // Sort by timestamp (oldest first)
+            const sortedRollbacks = rollbacks.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+            
+            // Remove oldest rollbacks to keep only maxCount
+            const toRemove = sortedRollbacks.slice(0, rollbacks.length - maxCount);
+            
+            for (const rollback of toRemove) {
+                try {
+                    await this.removeRollbackData(rollback.transactionId);
+                    removedCount++;
+                    logger.debug(`Cleaned up excess rollback: ${rollback.transactionId}`);
+                } catch (error) {
+                    const errorMsg = `Failed to remove rollback ${rollback.transactionId}: ${error instanceof Error ? error.message : String(error)}`;
+                    errors.push(errorMsg);
+                    logger.warn(errorMsg);
+                }
+            }
+
+        } catch (error) {
+            const errorMsg = `Count-based cleanup failed: ${error instanceof Error ? error.message : String(error)}`;
+            errors.push(errorMsg);
+            logger.error(errorMsg);
+        }
+
+        return { removedCount, errors, cleanupTrigger: 'count-based', executionTime: 0 };
+    }
+
+    /**
+     * Clean up failed rollbacks older than specified hours
+     */
+    async cleanupFailedRollbacks(olderThanHours: number): Promise<RollbackCleanupResult> {
+        const cutoffTime = Date.now() - (olderThanHours * 60 * 60 * 1000);
+        let removedCount = 0;
+        const errors: string[] = [];
+
+        if (!fs.existsSync(this.stateDir)) {
+            return { removedCount: 0, errors: [], cleanupTrigger: 'failed-rollback', executionTime: 0 };
+        }
+
+        const stateFiles = await fs.promises.readdir(this.stateDir);
+        
+        for (const stateFile of stateFiles) {
+            if (stateFile.endsWith('.rollback.json')) {
+                try {
+                    const stateFilePath = path.join(this.stateDir, stateFile);
+                    const content = await fs.promises.readFile(stateFilePath, 'utf8');
+                    const stateInfo = JSON.parse(content);
+                    
+                    const rollbackTime = new Date(stateInfo.timestamp).getTime();
+                    
+                    if (stateInfo.status === 'failed' && rollbackTime < cutoffTime) {
+                        await this.removeRollbackData(stateInfo.updateId);
+                        removedCount++;
+                        logger.debug(`Cleaned up failed rollback: ${stateInfo.updateId}`);
+                    }
+                } catch (error) {
+                    const errorMsg = `Failed to cleanup failed rollback ${stateFile}: ${error instanceof Error ? error.message : String(error)}`;
+                    errors.push(errorMsg);
+                    logger.warn(errorMsg);
+                }
+            }
+        }
+
+        return { removedCount, errors, cleanupTrigger: 'failed-rollback', executionTime: 0 };
+    }
+
+    /**
+     * Remove rollback data completely
+     */
+    async removeRollbackData(updateId: string): Promise<void> {
+        const stateFilePath = path.join(this.stateDir, `${updateId}.rollback.json`);
+        const snapshotFilePath = path.join(this.snapshotDir, `${updateId}.snapshot.json`);
+
+        // Remove state file
+        if (fs.existsSync(stateFilePath)) {
+            await fs.promises.unlink(stateFilePath);
+        }
+
+        // Remove snapshot file
+        if (fs.existsSync(snapshotFilePath)) {
+            await fs.promises.unlink(snapshotFilePath);
+        }
+
+        logger.debug(`Removed rollback data for update ${updateId}`);
+    }
+
+    /**
+     * Mark rollback as failed with detailed error information
+     */
+    async markRollbackFailed(updateId: string, error: Error | string, contextDetails?: Record<string, any>): Promise<void> {
+        const stateFilePath = path.join(this.stateDir, `${updateId}.rollback.json`);
+        
+        if (fs.existsSync(stateFilePath)) {
+            const content = await fs.promises.readFile(stateFilePath, 'utf8');
+            const stateInfo = JSON.parse(content);
+            
+            stateInfo.status = 'failed';
+            stateInfo.failedAt = new Date().toISOString();
+            stateInfo.failureReason = error instanceof Error ? error.message : String(error);
+            stateInfo.errorStack = error instanceof Error ? error.stack : undefined;
+            stateInfo.contextDetails = contextDetails;
+            stateInfo.cleanupEligible = true;
+            
+            await fs.promises.writeFile(stateFilePath, JSON.stringify(stateInfo, null, 2));
+            
+            logger.error(`Marked rollback ${updateId} as failed:`, {
+                error: stateInfo.failureReason,
+                context: contextDetails
+            });
+        }
+    }
+
+    /**
+     * Trigger cleanup based on event
+     */
+    async triggerCleanup(trigger: string): Promise<RollbackCleanupResult> {
+        if (this.cleanupConfig.cleanupTriggers.includes(trigger) || trigger === 'manual-cleanup') {
+            return await this.performAutomaticCleanup(trigger);
+        }
+        
+        logger.debug(`Cleanup trigger '${trigger}' not configured - skipping cleanup`);
+        return {
+            removedCount: 0,
+            errors: [],
+            cleanupTrigger: trigger,
+            executionTime: 0
+        };
+    }
+
+    /**
      * Validate rollback data integrity
      */
     async validateRollbackData(updateId: string): Promise<boolean> {
@@ -404,5 +672,26 @@ export class RollbackManager {
 
         logger.debug(`Rollback data validation passed for update ${updateId}`);
         return true;
+    }
+
+    /**
+     * Get cleanup statistics
+     */
+    async getCleanupStatistics(): Promise<Record<string, any>> {
+        const pendingRollbacks = await this.getPendingRollbacks();
+        const oldestRollback = pendingRollbacks.length > 0 
+            ? new Date(Math.min(...pendingRollbacks.map(r => r.timestamp.getTime())))
+            : null;
+        
+        return {
+            totalPendingRollbacks: pendingRollbacks.length,
+            oldestRollbackAge: oldestRollback ? Date.now() - oldestRollback.getTime() : 0,
+            cleanupConfig: this.cleanupConfig,
+            rollbacksByAge: {
+                lessThan1Hour: pendingRollbacks.filter(r => Date.now() - r.timestamp.getTime() < 3600000).length,
+                lessThan24Hours: pendingRollbacks.filter(r => Date.now() - r.timestamp.getTime() < 86400000).length,
+                moreThan24Hours: pendingRollbacks.filter(r => Date.now() - r.timestamp.getTime() >= 86400000).length
+            }
+        };
     }
 }

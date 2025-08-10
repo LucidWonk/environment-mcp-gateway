@@ -6,6 +6,20 @@ export interface RollbackState {
     status: 'pending' | 'completed' | 'failed';
     contextUpdateId?: string;
     affectedDomains: string[];
+    failureReason?: string;
+    cleanupEligible: boolean;
+}
+export interface RollbackCleanupConfig {
+    maxAge: number;
+    maxCount: number;
+    cleanupTriggers: string[];
+    aggressiveCleanup: boolean;
+}
+export interface RollbackCleanupResult {
+    removedCount: number;
+    errors: string[];
+    cleanupTrigger: string;
+    executionTime: number;
 }
 export interface ContextSnapshot {
     domainPath: string;
@@ -29,7 +43,8 @@ export declare class RollbackManager {
     private readonly stateDir;
     private readonly snapshotDir;
     private readonly atomicFileManager;
-    constructor(baseDir?: string);
+    private readonly cleanupConfig;
+    constructor(baseDir?: string, cleanupConfig?: Partial<RollbackCleanupConfig>);
     /**
      * Create a comprehensive snapshot before holistic update
      */
@@ -71,8 +86,40 @@ export declare class RollbackManager {
      */
     private ensureDirectories;
     /**
+     * Perform automatic cleanup based on trigger
+     */
+    performAutomaticCleanup(trigger: string): Promise<RollbackCleanupResult>;
+    /**
+     * Clean up rollbacks older than specified hours
+     */
+    cleanupByAge(olderThanHours: number): Promise<RollbackCleanupResult>;
+    /**
+     * Clean up excess rollbacks, keeping only the most recent count
+     */
+    cleanupByCount(maxCount: number): Promise<RollbackCleanupResult>;
+    /**
+     * Clean up failed rollbacks older than specified hours
+     */
+    cleanupFailedRollbacks(olderThanHours: number): Promise<RollbackCleanupResult>;
+    /**
+     * Remove rollback data completely
+     */
+    removeRollbackData(updateId: string): Promise<void>;
+    /**
+     * Mark rollback as failed with detailed error information
+     */
+    markRollbackFailed(updateId: string, error: Error | string, contextDetails?: Record<string, any>): Promise<void>;
+    /**
+     * Trigger cleanup based on event
+     */
+    triggerCleanup(trigger: string): Promise<RollbackCleanupResult>;
+    /**
      * Validate rollback data integrity
      */
     validateRollbackData(updateId: string): Promise<boolean>;
+    /**
+     * Get cleanup statistics
+     */
+    getCleanupStatistics(): Promise<Record<string, any>>;
 }
 //# sourceMappingURL=rollback-manager.d.ts.map

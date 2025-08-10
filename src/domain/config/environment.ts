@@ -22,7 +22,10 @@ export class Environment {
     public static get username(): string { return process.env.TIMESCALE_USERNAME ?? 'postgres'; }
     
     // Git configuration for development workflow
-    public static get gitRepoPath(): string { return process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks'; }
+    public static get gitRepoPath(): string { 
+        // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
+        return process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks'; 
+    }
     public static get gitUserName(): string | undefined { return process.env.GIT_USER_NAME; }
     public static get gitUserEmail(): string | undefined { return process.env.GIT_USER_EMAIL; }
     
@@ -31,11 +34,17 @@ export class Environment {
     public static get mcpLogLevel(): string { return process.env.MCP_LOG_LEVEL ?? 'info'; }
     
     // Solution and project paths
-    public static get solutionPath(): string { return join(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'Lucidwonks.sln'); }
-    public static get projectRoot(): string { return process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks'; }
+    public static get solutionPath(): string { return join(this.projectRoot, 'Lucidwonks.sln'); }
+    public static get projectRoot(): string { 
+        // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
+        const root = process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks';
+        // Validate the path exists and log for debugging
+        console.log(`Project root resolved to: ${root}`);
+        return root;
+    }
     
     // Docker configuration
-    public static get dockerComposeFile(): string { return join(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'docker-compose.yml'); }
+    public static get dockerComposeFile(): string { return join(this.projectRoot, 'docker-compose.yml'); }
     
     // Azure DevOps configuration
     public static get azureDevOpsOrganization(): string | undefined { return process.env.AZURE_DEVOPS_ORGANIZATION; }

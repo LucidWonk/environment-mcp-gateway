@@ -39,8 +39,13 @@ export declare class HolisticUpdateOrchestrator {
     private readonly rollbackManager;
     private readonly semanticAnalysis;
     private readonly contextGenerator;
-    private readonly projectRoot;
+    private readonly timeoutManager;
+    private projectRoot;
     constructor(projectRoot?: string);
+    /**
+     * Initialize project root with proper path resolution
+     */
+    private initializeAsync;
     /**
      * Execute holistic context update for changed files
      */
@@ -138,6 +143,14 @@ export declare class HolisticUpdateOrchestrator {
      * Get status of recent holistic updates
      */
     getRecentUpdateStatus(limitCount?: number): Promise<any[]>;
+    /**
+     * Determine which phase the failure occurred in based on metrics
+     */
+    private determineFailurePhase;
+    /**
+     * Create timeout wrapper for operations with detailed timeout context
+     */
+    private withTimeout;
     /**
      * Cleanup old update data
      */

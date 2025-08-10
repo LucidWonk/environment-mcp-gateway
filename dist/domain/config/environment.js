@@ -18,17 +18,26 @@ export class Environment {
     static get database() { return process.env.TIMESCALE_DATABASE ?? 'pricehistorydb'; }
     static get username() { return process.env.TIMESCALE_USERNAME ?? 'postgres'; }
     // Git configuration for development workflow
-    static get gitRepoPath() { return process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks'; }
+    static get gitRepoPath() {
+        // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
+        return process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks';
+    }
     static get gitUserName() { return process.env.GIT_USER_NAME; }
     static get gitUserEmail() { return process.env.GIT_USER_EMAIL; }
     // MCP server configuration
     static get mcpServerPort() { return parseInt(process.env.MCP_SERVER_PORT ?? '3001'); }
     static get mcpLogLevel() { return process.env.MCP_LOG_LEVEL ?? 'info'; }
     // Solution and project paths
-    static get solutionPath() { return join(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'Lucidwonks.sln'); }
-    static get projectRoot() { return process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks'; }
+    static get solutionPath() { return join(this.projectRoot, 'Lucidwonks.sln'); }
+    static get projectRoot() {
+        // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
+        const root = process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks';
+        // Validate the path exists and log for debugging
+        console.log(`Project root resolved to: ${root}`);
+        return root;
+    }
     // Docker configuration
-    static get dockerComposeFile() { return join(process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks', 'docker-compose.yml'); }
+    static get dockerComposeFile() { return join(this.projectRoot, 'docker-compose.yml'); }
     // Azure DevOps configuration
     static get azureDevOpsOrganization() { return process.env.AZURE_DEVOPS_ORGANIZATION; }
     static get azureDevOpsProject() { return process.env.AZURE_DEVOPS_PROJECT ?? 'Lucidwonks'; }
