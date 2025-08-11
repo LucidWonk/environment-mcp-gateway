@@ -18,6 +18,7 @@ services:
       # Set data directories to mounted volumes
       - ATOMIC_OPS_DIR=/app/.atomic-ops
       - HOLISTIC_ROLLBACK_DIR=/app/.holistic-rollback
+      - HOLISTIC_OPS_DIR=/app/.holistic-ops
       - SEMANTIC_CACHE_DIR=/app/.semantic-cache
       # Required environment variables
       - DB_PASSWORD=password
@@ -44,6 +45,7 @@ services:
       - mcp_cache:/app/.semantic-cache
       - mcp_rollback:/app/.holistic-rollback  
       - mcp_atomic:/app/.atomic-ops
+      - mcp_holistic_ops:/app/.holistic-ops
     restart: unless-stopped
     networks:
       - environment-mcp-network
@@ -59,6 +61,8 @@ volumes:
   mcp_rollback:
     driver: local
   mcp_atomic:
+    driver: local
+  mcp_holistic_ops:
     driver: local
 
 networks:

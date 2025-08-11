@@ -33,7 +33,7 @@ export class Environment {
         // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
         const root = process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks';
         // Validate the path exists and log for debugging
-        console.log(`Project root resolved to: ${root}`);
+        console.info(`Project root resolved to: ${root}`);
         return root;
     }
     // Docker configuration

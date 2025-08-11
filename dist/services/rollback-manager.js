@@ -347,7 +347,7 @@ export class RollbackManager {
         }
         catch (error) {
             const executionTime = Date.now() - startTime;
-            logger.error(`Automatic cleanup failed:`, error);
+            logger.error('Automatic cleanup failed:', error);
             errors.push(`Cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
             return {
                 removedCount,

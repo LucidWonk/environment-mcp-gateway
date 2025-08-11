@@ -1,8 +1,9 @@
 import { HolisticUpdateOrchestrator } from '../services/holistic-update-orchestrator.js';
 import { RollbackManager } from '../services/rollback-manager.js';
+import { jobManager } from '../services/job-manager.js';
 import path from 'path';
-// Initialize orchestrator with project root
-const projectRoot = path.resolve(process.cwd(), '..');
+// Initialize orchestrator with project root - use environment variable in Docker
+const projectRoot = process.env.PROJECT_ROOT || path.resolve(process.cwd(), '..');
 const orchestrator = new HolisticUpdateOrchestrator(projectRoot);
 // Use environment-specific path for rollback directory in containerized environments
 const rollbackDir = process.env.HOLISTIC_ROLLBACK_DIR || path.join(projectRoot, '.holistic-rollback');
@@ -151,6 +152,44 @@ export const validateHolisticUpdateConfigTool = {
                 default: true
             }
         }
+    }
+};
+/**
+ * MCP Tool: Get job status
+ */
+export const getJobStatusTool = {
+    name: 'get-job-status',
+    description: 'Get status of a running or completed job (full re-indexing, holistic updates, etc.)',
+    inputSchema: {
+        type: 'object',
+        properties: {
+            jobId: {
+                type: 'string',
+                description: 'Job ID to get status for (optional - if not provided, returns all active jobs)'
+            },
+            includeHistory: {
+                type: 'boolean',
+                description: 'Include recent job history',
+                default: false
+            }
+        }
+    }
+};
+/**
+ * MCP Tool: Cancel job
+ */
+export const cancelJobTool = {
+    name: 'cancel-job',
+    description: 'Cancel a running job',
+    inputSchema: {
+        type: 'object',
+        properties: {
+            jobId: {
+                type: 'string',
+                description: 'Job ID to cancel'
+            }
+        },
+        required: ['jobId']
     }
 };
 /**
@@ -323,6 +362,69 @@ export async function handleValidateHolisticUpdateConfig(args) {
         };
     }
 }
+export async function handleGetJobStatus(args) {
+    try {
+        const { jobId, includeHistory = false } = args;
+        if (jobId) {
+            // Get specific job status
+            const job = jobManager.getJobStatus(jobId);
+            if (!job) {
+                return {
+                    success: false,
+                    error: `Job ${jobId} not found`,
+                    summary: `❌ Job ${jobId} not found`
+                };
+            }
+            return {
+                success: true,
+                job,
+                summary: `📊 Job ${jobId} status: ${job.status} (${job.progress.current}% complete)`,
+                isComplete: job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled',
+                progressMessage: job.progress.message
+            };
+        }
+        else {
+            // Get all active jobs or recent history
+            const activeJobs = jobManager.getActiveJobs();
+            const recentJobs = includeHistory ? jobManager.getRecentJobs(20) : [];
+            return {
+                success: true,
+                activeJobs,
+                recentJobs: includeHistory ? recentJobs : undefined,
+                summary: `📊 Found ${activeJobs.length} active jobs${includeHistory ? ` and ${recentJobs.length} recent jobs` : ''}`,
+                totalActiveJobs: activeJobs.length,
+                totalRecentJobs: recentJobs.length
+            };
+        }
+    }
+    catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred',
+            summary: `❌ Failed to get job status: ${error instanceof Error ? error.message : 'Unknown error'}`
+        };
+    }
+}
+export async function handleCancelJob(args) {
+    try {
+        const { jobId } = args;
+        const cancelled = await jobManager.cancelJob(jobId);
+        return {
+            success: cancelled,
+            jobId,
+            summary: cancelled
+                ? `✅ Job ${jobId} cancelled successfully`
+                : `❌ Failed to cancel job ${jobId} (may not exist or already completed)`
+        };
+    }
+    catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred',
+            summary: `❌ Failed to cancel job: ${error instanceof Error ? error.message : 'Unknown error'}`
+        };
+    }
+}
 export async function handlePerformHolisticUpdateMaintenance(args) {
     try {
         const { cleanupOlderThanHours = 168, dryRun = false } = args;
@@ -442,9 +544,38 @@ async function _validateDomainStructure() {
     return { success, details };
 }
 /**
- * Handler for full repository re-indexing with cleanup
+ * Handler for full repository re-indexing (now async with job system)
  */
 export async function handleExecuteFullRepositoryReindex(args) {
+    try {
+        console.info('🚀 ASYNC: Starting async full repository re-index handler');
+        // Start async job and return immediately
+        const jobRequest = {
+            type: 'full-repository-reindex',
+            parameters: args,
+            requestedBy: 'mcp-client'
+        };
+        console.info('🚀 ASYNC: Calling jobManager.startJob()');
+        const { jobId, started } = await jobManager.startJob(jobRequest);
+        console.info(`🚀 ASYNC: Job started with ID: ${jobId}, started: ${started}`);
+        return {
+            success: started,
+            jobId,
+            message: 'Full repository re-indexing job started',
+            summary: `🚀 Full repository re-indexing job ${jobId} started. Use get-job-status to monitor progress.`,
+            statusCommand: `Use 'get-job-status' with jobId '${jobId}' to monitor progress`
+        };
+    }
+    catch (error) {
+        console.error('❌ ASYNC: Error in async handler, falling back to sync:', error);
+        // Fallback to sync version if job system fails
+        return await handleExecuteFullRepositoryReindexSync(args);
+    }
+}
+/**
+ * Original synchronous handler (renamed for internal use by job manager)
+ */
+export async function handleExecuteFullRepositoryReindexSync(args) {
     const startTime = Date.now();
     const updateId = `full_reindex_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     try {

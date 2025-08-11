@@ -6,7 +6,7 @@ import { BusinessConceptExtractor } from '../services/business-concept-extractor
 import { CSharpParser } from '../services/csharp-parser.js';
 import { ContextGenerator } from '../services/context-generator.js';
 import { contextGenerationTools, contextGenerationHandlers } from '../tools/context-generation.js';
-import { executeHolisticContextUpdateTool, executeFullRepositoryReindexTool, getHolisticUpdateStatusTool, rollbackHolisticUpdateTool, validateHolisticUpdateConfigTool, performHolisticUpdateMaintenanceTool, handleExecuteHolisticContextUpdate, handleExecuteFullRepositoryReindex, handleGetHolisticUpdateStatus, handleRollbackHolisticUpdate, handleValidateHolisticUpdateConfig, handlePerformHolisticUpdateMaintenance } from '../tools/holistic-context-updates.js';
+import { executeHolisticContextUpdateTool, executeFullRepositoryReindexTool, getHolisticUpdateStatusTool, rollbackHolisticUpdateTool, validateHolisticUpdateConfigTool, performHolisticUpdateMaintenanceTool, getJobStatusTool, cancelJobTool, handleExecuteHolisticContextUpdate, handleExecuteFullRepositoryReindex, handleGetHolisticUpdateStatus, handleRollbackHolisticUpdate, handleValidateHolisticUpdateConfig, handlePerformHolisticUpdateMaintenance, handleGetJobStatus, handleCancelJob } from '../tools/holistic-context-updates.js';
 import { getCrossDomainImpactAnalysisTools, getCrossDomainImpactAnalysisHandlers } from '../tools/cross-domain-impact-analysis.js';
 import { getUpdateIntegrationTools, getUpdateIntegrationHandlers } from '../tools/update-integration.js';
 import { documentLifecycleTools, documentLifecycleHandlers } from '../tools/document-lifecycle.js';
@@ -990,7 +990,9 @@ export class ToolRegistry {
             getHolisticUpdateStatusTool,
             rollbackHolisticUpdateTool,
             validateHolisticUpdateConfigTool,
-            performHolisticUpdateMaintenanceTool
+            performHolisticUpdateMaintenanceTool,
+            getJobStatusTool,
+            cancelJobTool
         ];
         return holisticTools.map(tool => ({
             name: tool.name,
@@ -1016,6 +1018,12 @@ export class ToolRegistry {
                         break;
                     case 'perform-holistic-update-maintenance':
                         result = await handlePerformHolisticUpdateMaintenance(args);
+                        break;
+                    case 'get-job-status':
+                        result = await handleGetJobStatus(args);
+                        break;
+                    case 'cancel-job':
+                        result = await handleCancelJob(args);
                         break;
                     default:
                         throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);

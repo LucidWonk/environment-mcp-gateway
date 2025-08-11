@@ -153,7 +153,7 @@ export class TimeoutManager {
         scaleFactor = Math.min(scaleFactor, 3);
         const scaledTimeout = Math.round(baseTimeout * scaleFactor);
         if (scaleFactor > 1) {
-            logger.debug(`Applied timeout scaling`, {
+            logger.debug('Applied timeout scaling', {
                 operationType,
                 baseTimeout,
                 scaleFactor,

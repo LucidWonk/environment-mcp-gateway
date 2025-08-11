@@ -84,7 +84,7 @@ export class TimeoutManager {
         });
 
         return new Promise<T>((resolve, reject) => {
-            let timer: NodeJS.Timeout;
+            let timer: ReturnType<typeof setTimeout>;
             let operationCompleted = false;
 
             // Create timeout with progressive warnings
@@ -216,7 +216,7 @@ export class TimeoutManager {
         const scaledTimeout = Math.round(baseTimeout * scaleFactor);
         
         if (scaleFactor > 1) {
-            logger.debug(`Applied timeout scaling`, {
+            logger.debug('Applied timeout scaling', {
                 operationType,
                 baseTimeout,
                 scaleFactor,

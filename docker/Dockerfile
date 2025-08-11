@@ -16,7 +16,7 @@ COPY docker/health-check.js ./health-check.js
 # Create non-root user and directories with proper permissions
 RUN addgroup -g 1001 -S mcpuser && \
     adduser -S mcpuser -u 1001 -G mcpuser && \
-    mkdir -p /app/.semantic-cache /app/.holistic-rollback /app/.atomic-ops && \
+    mkdir -p /app/.semantic-cache /app/.holistic-rollback /app/.atomic-ops /app/.holistic-ops && \
     chmod +x /app/health-check.js && \
     chown -R mcpuser:mcpuser /app
 

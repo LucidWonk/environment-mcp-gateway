@@ -184,7 +184,7 @@ export class HolisticUpdateOrchestrator {
                 await this.rollbackManager.triggerCleanup('holistic-update-failure');
             }
             catch (cleanupError) {
-                logger.warn(`Cleanup after failure could not be triggered:`, cleanupError);
+                logger.warn('Cleanup after failure could not be triggered:', cleanupError);
             }
             return {
                 success: false,

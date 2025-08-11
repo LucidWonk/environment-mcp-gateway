@@ -13,12 +13,16 @@ import {
     rollbackHolisticUpdateTool,
     validateHolisticUpdateConfigTool,
     performHolisticUpdateMaintenanceTool,
+    getJobStatusTool,
+    cancelJobTool,
     handleExecuteHolisticContextUpdate,
     handleExecuteFullRepositoryReindex,
     handleGetHolisticUpdateStatus,
     handleRollbackHolisticUpdate,
     handleValidateHolisticUpdateConfig,
-    handlePerformHolisticUpdateMaintenance
+    handlePerformHolisticUpdateMaintenance,
+    handleGetJobStatus,
+    handleCancelJob
 } from '../tools/holistic-context-updates.js';
 import {
     getCrossDomainImpactAnalysisTools,
@@ -1132,7 +1136,9 @@ export class ToolRegistry {
             getHolisticUpdateStatusTool,
             rollbackHolisticUpdateTool,
             validateHolisticUpdateConfigTool,
-            performHolisticUpdateMaintenanceTool
+            performHolisticUpdateMaintenanceTool,
+            getJobStatusTool,
+            cancelJobTool
         ];
 
         return holisticTools.map(tool => ({
@@ -1160,6 +1166,12 @@ export class ToolRegistry {
                     break;
                 case 'perform-holistic-update-maintenance':
                     result = await handlePerformHolisticUpdateMaintenance(args);
+                    break;
+                case 'get-job-status':
+                    result = await handleGetJobStatus(args);
+                    break;
+                case 'cancel-job':
+                    result = await handleCancelJob(args);
                     break;
                 default:
                     throw new McpError(ErrorCode.MethodNotFound, `Handler not found for tool: ${tool.name}`);
