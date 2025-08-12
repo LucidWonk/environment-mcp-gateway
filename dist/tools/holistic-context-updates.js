@@ -778,8 +778,21 @@ async function cleanupContextFiles() {
             }
         }
         catch (error) {
-            // Skip directories we can't access
-            console.warn(`Skipping cleanup in directory ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            // Handle specific filesystem errors more gracefully
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            if (errorMessage.includes('EROFS') || errorMessage.includes('read-only')) {
+                console.warn(`⚠️ Read-only filesystem detected - skipping cleanup in directory ${dir}. This is expected for containerized environments with read-only mounts.`);
+            }
+            else if (errorMessage.includes('ENOENT')) {
+                // Directory doesn't exist, which is fine
+                console.debug(`Directory ${dir} does not exist, skipping cleanup`);
+            }
+            else if (errorMessage.includes('EACCES')) {
+                console.warn(`⚠️ Permission denied - skipping cleanup in directory ${dir}: ${errorMessage}`);
+            }
+            else {
+                console.warn(`Skipping cleanup in directory ${dir}: ${errorMessage}`);
+            }
         }
     }
     await cleanDirectory(projectRoot);

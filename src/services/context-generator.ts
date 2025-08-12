@@ -72,7 +72,9 @@ export class ContextGenerator {
         console.info(`🎯 ContextGenerator.generateContextFiles called with ${analysisResults.length} analysis results`);
         
         if (analysisResults.length === 0) {
-            console.warn('❌ ContextGenerator: No analysis results provided - returning empty array');
+            console.warn('❌ ContextGenerator: No analysis results provided - this indicates that semantic analysis failed for all files.');
+            console.warn('💡 Possible causes: read-only filesystem, file access permissions, timeout issues, or semantic analysis service failures.');
+            console.warn('📋 Recommendation: Check that the workspace mount is read-write and semantic analysis service is working properly.');
             return [];
         }
         

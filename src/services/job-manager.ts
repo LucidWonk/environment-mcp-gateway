@@ -184,7 +184,7 @@ class JobManager {
         
         // Override the implementation to provide progress updates
         const originalConsoleInfo = console.info;
-        const progressRegex = /Processing batch (\d+)\/(\d+)/;
+        const progressRegex = /📊 Processing batch (\d+)\/(\d+)/;
         
         console.info = (message: string, ...args: any[]) => {
             originalConsoleInfo(message, ...args);

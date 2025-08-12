@@ -40,7 +40,7 @@ services:
       - ../.env.development
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${GIT_REPO_PATH:-M:/Projects/Lucidwonks}:/workspace:ro
+      - ${GIT_REPO_PATH:-M:/Projects/Lucidwonks}:/workspace
       # Persistent storage for MCP server data
       - mcp_cache:/app/.semantic-cache
       - mcp_rollback:/app/.holistic-rollback  

@@ -142,7 +142,7 @@ class JobManager {
         const { handleExecuteFullRepositoryReindexSync } = await import('../tools/holistic-context-updates.js');
         // Override the implementation to provide progress updates
         const originalConsoleInfo = console.info;
-        const progressRegex = /Processing batch (\d+)\/(\d+)/;
+        const progressRegex = /📊 Processing batch (\d+)\/(\d+)/;
         console.info = (message, ...args) => {
             originalConsoleInfo(message, ...args);
             // Parse progress from log messages
