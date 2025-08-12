@@ -657,7 +657,42 @@ export async function handleExecuteFullRepositoryReindexSync(args) {
         }
         filesAnalyzed = analyzedFiles.length;
         const executionTime = Date.now() - startTime;
-        const success = errors.length === 0 && filesAnalyzed > 0;
+        // ✅ COMPREHENSIVE SUCCESS CRITERIA VALIDATION
+        console.info('🔍 Validating comprehensive success criteria...');
+        const codeDirectories = await findCodeDirectories();
+        const existingContextDirs = await findExistingContextDirectories();
+        // Map .context directories back to their parent directories
+        const contextParentDirs = existingContextDirs.map(contextDir => path.dirname(contextDir)).sort();
+        // Find directories that should have .context but don't
+        const missingContextDirs = codeDirectories.filter(codeDir => !contextParentDirs.includes(codeDir));
+        // Validate quality of existing context files
+        const qualityIssues = await validateContextQuality(existingContextDirs);
+        const basicSuccess = errors.length === 0 && filesAnalyzed > 0;
+        const contextCoverageSuccess = missingContextDirs.length === 0;
+        const contextQualitySuccess = qualityIssues.length === 0;
+        const success = basicSuccess && contextCoverageSuccess && contextQualitySuccess;
+        // Log detailed success analysis
+        if (missingContextDirs.length > 0) {
+            console.error(`❌ COVERAGE FAILED: ${missingContextDirs.length} code directories missing .context folders:`);
+            missingContextDirs.forEach(dir => {
+                console.error(`   📁 Missing .context: ${path.relative(projectRoot, dir)}`);
+            });
+        }
+        if (qualityIssues.length > 0) {
+            console.error(`❌ QUALITY FAILED: ${qualityIssues.length} context quality issues found:`);
+            qualityIssues.forEach(issue => {
+                console.error(`   ⚠️ Quality issue: ${issue}`);
+            });
+        }
+        if (success) {
+            console.info(`✅ SUCCESS CRITERIA MET: All ${codeDirectories.length} code directories have high-quality .context folders`);
+        }
+        console.info('📊 Context Analysis:');
+        console.info(`   - Code directories found: ${codeDirectories.length}`);
+        console.info(`   - Context directories found: ${existingContextDirs.length}`);
+        console.info(`   - Coverage: ${contextParentDirs.length}/${codeDirectories.length} (${Math.round(contextParentDirs.length / codeDirectories.length * 100)}%)`);
+        console.info(`   - Missing .context folders: ${missingContextDirs.length}`);
+        console.info(`   - Quality issues: ${qualityIssues.length}`);
         return {
             success,
             updateId,
@@ -667,6 +702,14 @@ export async function handleExecuteFullRepositoryReindexSync(args) {
             contextFilesRemoved,
             contextFilesGenerated,
             errors: errors.length > 0 ? errors : undefined,
+            missingContextDirectories: missingContextDirs.length > 0 ? missingContextDirs.map(dir => path.relative(projectRoot, dir)) : undefined,
+            qualityIssues: qualityIssues.length > 0 ? qualityIssues : undefined,
+            contextCoverage: {
+                total: codeDirectories.length,
+                covered: contextParentDirs.length,
+                missing: missingContextDirs.length,
+                percentage: Math.round(contextParentDirs.length / codeDirectories.length * 100)
+            },
             performanceMetrics: {
                 discoveryTime: 0, // Would need to track this separately
                 analysisTime: executionTime - (contextFilesRemoved > 0 ? 1000 : 0), // Rough estimate
@@ -674,8 +717,14 @@ export async function handleExecuteFullRepositoryReindexSync(args) {
                 totalTime: executionTime
             },
             summary: success
-                ? `✅ Full repository re-indexing completed: ${filesAnalyzed}/${filesDiscovered} files processed, ${contextFilesGenerated} context files generated${cleanupFirst ? `, ${contextFilesRemoved} old files cleaned` : ''}`
-                : `❌ Full repository re-indexing failed: ${errors.length} errors occurred during processing`
+                ? `✅ Full repository re-indexing completed: ${filesAnalyzed}/${filesDiscovered} files processed, ${contextFilesGenerated} context files generated, ${contextParentDirs.length}/${codeDirectories.length} high-quality .context folders${cleanupFirst ? `, ${contextFilesRemoved} old files cleaned` : ''}`
+                : !contextCoverageSuccess && !contextQualitySuccess
+                    ? `⚠️ Partial success: Processing completed but ${missingContextDirs.length} directories missing .context folders and ${qualityIssues.length} quality issues found`
+                    : !contextCoverageSuccess
+                        ? `⚠️ Partial success: Processing completed but ${missingContextDirs.length} code directories missing .context folders`
+                        : !contextQualitySuccess
+                            ? `⚠️ Partial success: Processing completed but ${qualityIssues.length} context quality issues found`
+                            : `❌ Full repository re-indexing failed: ${errors.length} errors occurred during processing`
         };
     }
     catch (error) {
@@ -683,6 +732,84 @@ export async function handleExecuteFullRepositoryReindexSync(args) {
             `Full repository re-indexing failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         ]);
     }
+}
+/**
+ * Find all directories that contain code files and should have .context directories
+ */
+async function findCodeDirectories() {
+    const fs = await import('fs/promises');
+    const codeDirectories = [];
+    console.info('🔍 Scanning for directories containing code files...');
+    async function scanDirectory(dir) {
+        try {
+            const entries = await fs.readdir(dir, { withFileTypes: true });
+            let hasCodeFiles = false;
+            // Check if current directory has code files
+            for (const entry of entries) {
+                if (entry.isFile()) {
+                    const ext = path.extname(entry.name).toLowerCase();
+                    if (['.cs', '.ts', '.js'].includes(ext)) {
+                        hasCodeFiles = true;
+                        break;
+                    }
+                }
+            }
+            if (hasCodeFiles) {
+                codeDirectories.push(dir);
+            }
+            // Recursively scan subdirectories (but skip excluded ones)
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    const subDir = path.join(dir, entry.name);
+                    // Skip excluded directories
+                    if (entry.name === 'bin' || entry.name === 'obj' ||
+                        entry.name === 'node_modules' || entry.name === '.git' ||
+                        entry.name === 'TestResults' || entry.name === 'Properties' ||
+                        entry.name === '.context') {
+                        continue;
+                    }
+                    await scanDirectory(subDir);
+                }
+            }
+        }
+        catch (error) {
+            console.warn(`⚠️ Could not scan directory ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+    await scanDirectory(projectRoot);
+    console.info(`📊 Found ${codeDirectories.length} directories containing code files`);
+    return codeDirectories.sort();
+}
+/**
+ * Find all existing .context directories
+ */
+async function findExistingContextDirectories() {
+    const fs = await import('fs/promises');
+    const contextDirectories = [];
+    async function scanForContextDirs(dir) {
+        try {
+            const entries = await fs.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    const fullPath = path.join(dir, entry.name);
+                    if (entry.name === '.context') {
+                        contextDirectories.push(fullPath);
+                    }
+                    else if (!entry.name.startsWith('.') &&
+                        entry.name !== 'bin' && entry.name !== 'obj' &&
+                        entry.name !== 'node_modules' && entry.name !== 'TestResults') {
+                        await scanForContextDirs(fullPath);
+                    }
+                }
+            }
+        }
+        catch (error) {
+            console.warn(`⚠️ Could not scan for context dirs in ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+    await scanForContextDirs(projectRoot);
+    console.info(`📊 Found ${contextDirectories.length} existing .context directories`);
+    return contextDirectories.sort();
 }
 /**
  * Discover source files dynamically based on extensions and exclusion patterns
@@ -785,7 +912,7 @@ async function cleanupContextFiles() {
             }
             else if (errorMessage.includes('ENOENT')) {
                 // Directory doesn't exist, which is fine
-                console.debug(`Directory ${dir} does not exist, skipping cleanup`);
+                console.info(`Directory ${dir} does not exist, skipping cleanup`);
             }
             else if (errorMessage.includes('EACCES')) {
                 console.warn(`⚠️ Permission denied - skipping cleanup in directory ${dir}: ${errorMessage}`);
@@ -797,6 +924,70 @@ async function cleanupContextFiles() {
     }
     await cleanDirectory(projectRoot);
     return removedCount;
+}
+/**
+ * Validate the quality of existing context files
+ */
+async function validateContextQuality(contextDirectories) {
+    const fs = await import('fs/promises');
+    const qualityIssues = [];
+    console.info(`🔍 Validating quality of ${contextDirectories.length} context directories...`);
+    for (const contextDir of contextDirectories) {
+        try {
+            const contextFiles = await fs.readdir(contextDir);
+            const parentDir = path.dirname(contextDir);
+            const relativePath = path.relative(projectRoot, parentDir);
+            // Check if context directory has any files
+            if (contextFiles.length === 0) {
+                qualityIssues.push(`Empty .context directory: ${relativePath}`);
+                continue;
+            }
+            // Check for expected context file types
+            const hasOverview = contextFiles.some(file => file.includes('overview') || file.includes('domain'));
+            if (!hasOverview) {
+                qualityIssues.push(`Missing overview/domain file in: ${relativePath}/.context`);
+            }
+            // Validate content quality for each context file
+            for (const file of contextFiles) {
+                if (!file.endsWith('.context'))
+                    continue;
+                const filePath = path.join(contextDir, file);
+                try {
+                    const content = await fs.readFile(filePath, 'utf-8');
+                    // Check minimum content length (too short = likely poor quality)
+                    if (content.length < 100) {
+                        qualityIssues.push(`Context file too short: ${relativePath}/.context/${file} (${content.length} chars)`);
+                        continue;
+                    }
+                    // Check for placeholder or template content
+                    if (content.includes('TODO') || content.includes('placeholder') ||
+                        content.includes('Generated from semantic analysis of 0 files')) {
+                        qualityIssues.push(`Contains placeholder content: ${relativePath}/.context/${file}`);
+                    }
+                    // Check for business concepts (key indicator of quality)
+                    if (!content.includes('Business Concepts') && !content.includes('Entities') &&
+                        !content.includes('Services') && !content.includes('Domain') &&
+                        content.length < 500) {
+                        qualityIssues.push(`Lacks business domain content: ${relativePath}/.context/${file}`);
+                    }
+                    // Check for recent updates (context should be current)
+                    const stats = await fs.stat(filePath);
+                    const daysSinceModified = (Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60 * 24);
+                    if (daysSinceModified > 30) {
+                        qualityIssues.push(`Context file outdated (${Math.round(daysSinceModified)} days): ${relativePath}/.context/${file}`);
+                    }
+                }
+                catch (error) {
+                    qualityIssues.push(`Cannot read context file: ${relativePath}/.context/${file} - ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            }
+        }
+        catch (error) {
+            qualityIssues.push(`Cannot access context directory: ${path.relative(projectRoot, contextDir)} - ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+    console.info(`📊 Context quality validation completed: ${qualityIssues.length} issues found`);
+    return qualityIssues;
 }
 /**
  * Create failure response for full repository re-indexing

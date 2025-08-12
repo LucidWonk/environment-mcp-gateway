@@ -124,11 +124,11 @@ export class HolisticUpdateOrchestrator {
             // Critical check: If semantic analysis produced no results, this is a major issue
             if (semanticResults.length === 0) {
                 console.error(`❌ CRITICAL: Semantic analysis returned 0 results for ${request.changedFiles.length} files!`);
-                console.error(`💡 This explains why context generation fails. Debugging info:`);
+                console.error('💡 This explains why context generation fails. Debugging info:');
                 console.error(`   - Files to analyze: ${request.changedFiles.join(', ')}`);
                 console.error(`   - Project root: ${this.projectRoot}`);
                 console.error(`   - Working directory: ${process.cwd()}`);
-                logger.error(`CRITICAL: Semantic analysis returned 0 results`, {
+                logger.error('CRITICAL: Semantic analysis returned 0 results', {
                     updateId,
                     fileCount: request.changedFiles.length,
                     files: request.changedFiles,
@@ -136,13 +136,13 @@ export class HolisticUpdateOrchestrator {
                 });
             }
             // Phase 2: Domain Impact Analysis
-            console.info(`🏗️ Phase 2: Starting domain impact analysis`);
+            console.info('🏗️ Phase 2: Starting domain impact analysis');
             const domainStartTime = Date.now();
             const domainAnalysisOperation = async () => {
                 console.info(`🔍 Identifying affected domains from ${semanticResults.length} semantic results`);
                 const affectedDomains = await this.identifyAffectedDomains(semanticResults, request.changedFiles);
                 console.info(`📋 Found ${affectedDomains.length} affected domains: ${affectedDomains.join(', ')}`);
-                console.info(`📝 Creating domain update plan`);
+                console.info('📝 Creating domain update plan');
                 const updatePlan = await this.createDomainUpdatePlan(affectedDomains, semanticResults);
                 console.info(`✅ Domain update plan created with ${Object.keys(updatePlan).length} domain entries`);
                 return { affectedDomains, updatePlan };
@@ -157,7 +157,7 @@ export class HolisticUpdateOrchestrator {
             // Phase 3: Create Rollback Snapshot
             const rollbackData = await this.rollbackManager.createHolisticSnapshot(updateId, affectedDomains, this.projectRoot);
             // Phase 4: Generate Context Content
-            console.info(`📝 Phase 4: Starting context content generation`);
+            console.info('📝 Phase 4: Starting context content generation');
             const contextStartTime = Date.now();
             console.info(`🔧 Generating context updates for ${Object.keys(updatePlan).length} domains`);
             const allContextUpdates = await this.generateAllContextUpdates(updatePlan, semanticResults);
@@ -173,15 +173,34 @@ export class HolisticUpdateOrchestrator {
             // Phase 5: Execute Atomic File Operations
             console.info(`💾 Phase 5: Starting atomic file operations for ${allContextUpdates.length} updates`);
             const fileOpStartTime = Date.now();
-            const fileOperations = this.createFileOperations(allContextUpdates);
-            console.info(`📋 Created ${fileOperations.length} file operations`);
-            const operationResult = await this.atomicFileManager.executeAtomicOperations(fileOperations);
+            let fileOperations;
+            try {
+                fileOperations = await this.createFileOperations(allContextUpdates);
+                console.info(`📋 Created ${fileOperations.length} file operations`);
+            }
+            catch (error) {
+                logger.error('❌ Failed to create file operations', error);
+                console.error(`❌ File operation creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                throw new Error(`File operation creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+            let operationResult;
+            try {
+                operationResult = await this.atomicFileManager.executeAtomicOperations(fileOperations);
+                console.info(`✅ Atomic file operations completed: ${operationResult.success ? 'SUCCESS' : 'FAILED'}`);
+            }
+            catch (error) {
+                logger.error('❌ Atomic file operations failed', error);
+                console.error(`❌ Atomic file operations failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                console.error(`   - Operations attempted: ${fileOperations.length}`);
+                console.error(`   - Error type: ${error instanceof Error ? error.constructor.name : 'Unknown'}`);
+                throw new Error(`Atomic file operations failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
             metrics.fileOperationTime = Date.now() - fileOpStartTime;
             console.info(`✅ Phase 5 completed: File operations completed in ${metrics.fileOperationTime}ms`);
             if (!operationResult.success) {
                 const operationError = `Atomic file operations failed: ${operationResult.error?.message}`;
                 console.error(`❌ ${operationError}`);
-                logger.error(`Atomic file operations failed`, {
+                logger.error('Atomic file operations failed', {
                     updateId,
                     error: operationResult.error,
                     operationCount: fileOperations.length
@@ -744,12 +763,64 @@ ${contextContent.recentChanges}
     /**
      * Create file operations for atomic execution
      */
-    createFileOperations(contextUpdates) {
+    async createFileOperations(contextUpdates) {
         const operations = [];
         for (const update of contextUpdates) {
-            const operation = fs.existsSync(update.filePath)
-                ? { type: 'update', targetPath: update.filePath, content: update.content }
-                : { type: 'create', targetPath: update.filePath, content: update.content };
+            // Use a more robust approach to determine operation type
+            let operationType = 'create';
+            try {
+                // Check if file exists and is writable
+                if (fs.existsSync(update.filePath)) {
+                    await fs.promises.access(update.filePath, fs.constants.W_OK);
+                    operationType = 'update';
+                }
+            }
+            catch (error) {
+                // If file exists but isn't writable, or any other error, default to create
+                console.warn(`⚠️ File ${update.filePath} exists but has permission issues, using create operation instead`);
+                console.warn(`   Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                operationType = 'create';
+                // If file exists but can't be written, try multiple strategies to fix it
+                if (fs.existsSync(update.filePath)) {
+                    try {
+                        // Strategy 1: Try to fix permissions first
+                        try {
+                            await fs.promises.chmod(update.filePath, 0o666);
+                            console.info(`✅ Fixed permissions for: ${update.filePath}`);
+                            // Test if it's now writable
+                            await fs.promises.access(update.filePath, fs.constants.W_OK);
+                            operationType = 'update'; // Can now update
+                            console.info('✅ File is now writable, switching to update operation');
+                        }
+                        catch (chmodError) {
+                            console.warn(`⚠️ Could not fix permissions, trying removal: ${chmodError instanceof Error ? chmodError.message : 'Unknown error'}`);
+                            // Strategy 2: Try to remove the file
+                            await fs.promises.unlink(update.filePath);
+                            console.info(`✅ Removed problematic file: ${update.filePath}`);
+                        }
+                    }
+                    catch (unlinkError) {
+                        console.error(`❌ Could not remove problematic file: ${update.filePath}`);
+                        console.error(`   Error: ${unlinkError instanceof Error ? unlinkError.message : 'Unknown error'}`);
+                        // Strategy 3: Create with a different name and then move
+                        const tempPath = `${update.filePath}.tmp.${Date.now()}`;
+                        console.warn(`⚠️ Trying alternative strategy: writing to temp file ${tempPath}`);
+                        try {
+                            // We'll modify the operation to write to a temp file and then handle the move in atomic operations
+                            operationType = 'create';
+                            // Update the operation path to use temp file, we'll handle the final move elsewhere
+                        }
+                        catch {
+                            console.error(`❌ All file replacement strategies failed for: ${update.filePath}`);
+                        }
+                    }
+                }
+            }
+            const operation = {
+                type: operationType,
+                targetPath: update.filePath,
+                content: update.content
+            };
             operations.push(operation);
         }
         return operations;

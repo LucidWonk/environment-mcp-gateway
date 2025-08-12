@@ -41,6 +41,9 @@ export class SemanticAnalysisService {
         });
         const startTime = Date.now();
         const results = [];
+        let successfulAnalyses = 0;
+        let failedAnalyses = 0;
+        let skippedDueToTimeout = 0;
         for (const filePath of filePaths) {
             try {
                 console.info(`🔍 Analyzing file: ${filePath}`);
@@ -48,18 +51,46 @@ export class SemanticAnalysisService {
                 if (Date.now() - startTime > this.maxAnalysisTime) {
                     logger.warn(`Semantic analysis timeout reached after analyzing ${results.length} files`);
                     console.warn(`⏰ Timeout reached after analyzing ${results.length}/${filePaths.length} files`);
+                    skippedDueToTimeout++;
                     break;
                 }
                 const result = await this.analyzeFile(filePath);
                 console.info(`✅ Analysis completed for ${filePath}: ${result.businessConcepts.length} concepts, ${result.businessRules.length} rules, domain: ${result.domainContext}`);
+                // Validate that the result has meaningful content
+                if (result.businessConcepts.length === 0 && result.businessRules.length === 0) {
+                    console.warn(`⚠️ Analysis for ${filePath} produced 0 concepts and 0 rules - this may indicate a parsing issue`);
+                }
                 results.push(result);
+                successfulAnalyses++;
             }
             catch (error) {
+                failedAnalyses++;
                 logger.error(`Failed to analyze file ${filePath}:`, error);
-                console.error(`❌ Failed to analyze file ${filePath}:`, error);
+                console.error(`❌ Failed to analyze file ${filePath}:`, error instanceof Error ? error.message : String(error));
+                // Log the specific error type for debugging
+                if (error instanceof Error) {
+                    if (error.message.includes('File not found')) {
+                        console.error(`   📁 File system issue: File does not exist at ${filePath}`);
+                    }
+                    else if (error.message.includes('EACCES')) {
+                        console.error(`   🔒 Permission issue: Cannot read file ${filePath}`);
+                    }
+                    else if (error.message.includes('timeout')) {
+                        console.error(`   ⏰ Timeout issue: Analysis took too long for ${filePath}`);
+                    }
+                    else {
+                        console.error(`   🔧 Parsing issue: ${error.message.substring(0, 100)}${error.message.length > 100 ? '...' : ''}`);
+                    }
+                }
                 // Continue with other files even if one fails
             }
         }
+        console.info('📊 Semantic analysis batch summary:');
+        console.info(`   - Total files provided: ${filePaths.length}`);
+        console.info(`   - Successfully analyzed: ${successfulAnalyses}`);
+        console.info(`   - Failed analyses: ${failedAnalyses}`);
+        console.info(`   - Skipped due to timeout: ${skippedDueToTimeout}`);
+        console.info(`   - Results produced: ${results.length}`);
         const analysisTime = Date.now() - startTime;
         logger.info(`Semantic analysis completed in ${analysisTime}ms for ${results.length} files`);
         console.info(`🎉 Semantic analysis completed in ${analysisTime}ms for ${results.length}/${filePaths.length} files`);

@@ -12,7 +12,7 @@ class JobManager {
      */
     async startJob(request) {
         const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        console.info(`🚀 JobManager: Starting new job`, {
+        console.info('🚀 JobManager: Starting new job', {
             jobId,
             type: request.type,
             requestedBy: request.requestedBy || 'unknown',
@@ -40,7 +40,7 @@ class JobManager {
             metadata: request.parameters
         };
         this.jobs.set(jobId, job);
-        console.debug(`📋 JobManager: Job entry created`, { jobId, status: 'queued' });
+        console.info('📋 JobManager: Job entry created', { jobId, status: 'queued' });
         // Start job execution asynchronously (don't await)
         this.executeJob(jobId).catch(error => {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -157,18 +157,18 @@ class JobManager {
             console.info(`🔧 JobManager: Executing job type: ${job.type}`, { jobId, type: job.type });
             switch (job.type) {
                 case 'full-repository-reindex':
-                    console.info(`📁 JobManager: Starting full repository re-index execution`, { jobId });
+                    console.info('📁 JobManager: Starting full repository re-index execution', { jobId });
                     result = await this.executeFullRepositoryReindex(jobId, job.metadata);
                     break;
                 case 'holistic-update':
-                    console.info(`🔄 JobManager: Starting holistic update execution`, { jobId });
+                    console.info('🔄 JobManager: Starting holistic update execution', { jobId });
                     result = await this.executeHolisticUpdate(jobId, job.metadata);
                     break;
                 case 'cross-domain-analysis':
-                    console.info(`🔍 JobManager: Starting cross-domain analysis execution`, { jobId });
+                    console.info('🔍 JobManager: Starting cross-domain analysis execution', { jobId });
                     result = await this.executeCrossDomainAnalysis(jobId, job.metadata);
                     break;
-                default:
+                default: {
                     const errorMsg = `Unknown job type: ${job.type}`;
                     console.error(`❌ JobManager: ${errorMsg}`, {
                         jobId,
@@ -176,6 +176,7 @@ class JobManager {
                         supportedTypes: ['full-repository-reindex', 'holistic-update', 'cross-domain-analysis']
                     });
                     throw new Error(errorMsg);
+                }
             }
             const executionTime = Date.now() - jobStartTime;
             console.info(`✅ JobManager: Job ${jobId} completed successfully`, {
