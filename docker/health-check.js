@@ -96,7 +96,7 @@ async function performHealthCheck() {
 async function checkHttpEndpoint() {
     return new Promise((resolve) => {
         const req = http.request({
-            hostname: 'localhost',
+            hostname: '127.0.0.1',
             port: MCP_SERVER_PORT,
             path: '/health',
             method: 'GET',
