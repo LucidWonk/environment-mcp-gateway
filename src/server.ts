@@ -43,21 +43,49 @@ class EnvironmentMCPGateway {
     private toolRegistry: ToolRegistry;
     
     constructor() {
-        this.server = new Server(
-            {
-                name: 'lucidwonks-environment-mcp-gateway',
-                version: '1.0.0'
-            },
-            {
-                capabilities: {
-                    tools: {}
-                }
-            }
-        );
+        logger.info('🔧 Initializing EnvironmentMCPGateway components');
         
-        this.adapterManager = AdapterManager.getInstance();
-        this.toolRegistry = new ToolRegistry();
-        this.setupHandlers();
+        try {
+            // Initialize MCP Server
+            logger.debug('Creating MCP Server instance');
+            this.server = new Server(
+                {
+                    name: 'lucidwonks-environment-mcp-gateway',
+                    version: '1.0.0'
+                },
+                {
+                    capabilities: {
+                        tools: {}
+                    }
+                }
+            );
+            logger.debug('✅ MCP Server instance created');
+            
+            // Initialize Adapter Manager
+            logger.debug('Getting AdapterManager singleton instance');
+            this.adapterManager = AdapterManager.getInstance();
+            logger.debug('✅ AdapterManager initialized');
+            
+            // Initialize Tool Registry
+            logger.debug('Creating ToolRegistry instance');
+            this.toolRegistry = new ToolRegistry();
+            logger.debug('✅ ToolRegistry created');
+            
+            // Setup request handlers
+            logger.debug('Setting up MCP request handlers');
+            this.setupHandlers();
+            logger.info('✅ EnvironmentMCPGateway components initialized successfully');
+            
+        } catch (error) {
+            logger.error('❌ Failed to initialize EnvironmentMCPGateway components', {
+                error: error instanceof Error ? {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                } : error
+            });
+            throw error;
+        }
     }
     
     private setupHandlers(): void {
@@ -261,55 +289,113 @@ class EnvironmentMCPGateway {
         
         this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
             const { name, arguments: args } = request.params;
+            const startTime = Date.now();
+            
+            logger.info(`🔧 Tool execution started: ${name}`, { 
+                tool: name, 
+                args: Object.keys(args || {}),
+                timestamp: new Date().toISOString()
+            });
             
             try {
                 // Check if it's a tool from the tool registry (Git or Azure DevOps)
                 const allTools = this.toolRegistry.getAllTools();
                 const registryTool = allTools.find(tool => tool.name === name);
                 if (registryTool) {
-                    return await registryTool.handler(args);
+                    logger.debug(`📋 Executing registry tool: ${name}`);
+                    const result = await registryTool.handler(args);
+                    const duration = Date.now() - startTime;
+                    logger.info(`✅ Registry tool completed: ${name}`, { duration, success: true });
+                    return result;
                 }
                 
                 // Handle existing infrastructure tools
+                logger.debug(`🏗️ Executing infrastructure tool: ${name}`);
+                let result;
                 switch (name) {
                 case 'analyze-solution-structure':
-                    return await this.analyzeSolutionStructure(args);
+                    result = await this.analyzeSolutionStructure(args);
+                    break;
                 case 'get-development-environment-status':
-                    return await this.getDevelopmentEnvironmentStatus(args);
+                    result = await this.getDevelopmentEnvironmentStatus(args);
+                    break;
                 case 'validate-build-configuration':
-                    return await this.validateBuildConfiguration(args);
+                    result = await this.validateBuildConfiguration(args);
+                    break;
                 case 'get-project-dependencies':
-                    return await this.getProjectDependencies(args);
+                    result = await this.getProjectDependencies(args);
+                    break;
                 case 'list-development-containers':
-                    return await this.listDevelopmentContainers(args);
+                    result = await this.listDevelopmentContainers(args);
+                    break;
                 case 'get-container-health':
-                    return await this.getContainerHealth(args);
+                    result = await this.getContainerHealth(args);
+                    break;
                 case 'get-container-logs':
-                    return await this.getContainerLogs(args);
+                    result = await this.getContainerLogs(args);
+                    break;
                 case 'restart-development-service':
-                    return await this.restartDevelopmentService(args);
+                    result = await this.restartDevelopmentService(args);
+                    break;
                 case 'analyze-development-infrastructure':
-                    return await this.analyzeDevelopmentInfrastructure(args);
+                    result = await this.analyzeDevelopmentInfrastructure(args);
+                    break;
                 case 'check-timescaledb-health':
-                    return await this.checkTimescaleDBHealth(args);
+                    result = await this.checkTimescaleDBHealth(args);
+                    break;
                 case 'check-redpanda-health':
-                    return await this.checkRedPandaHealth(args);
+                    result = await this.checkRedPandaHealth(args);
+                    break;
                 case 'validate-development-stack':
-                    return await this.validateDevelopmentStack(args);
+                    result = await this.validateDevelopmentStack(args);
+                    break;
                 case 'reload-configuration':
-                    return await this.reloadConfiguration(args);
+                    result = await this.reloadConfiguration(args);
+                    break;
                 case 'get-configuration-status':
-                    return await this.getConfigurationStatus(args);
+                    result = await this.getConfigurationStatus(args);
+                    break;
                 case 'test-adapter-configuration':
-                    return await this.testAdapterConfiguration(args);
+                    result = await this.testAdapterConfiguration(args);
+                    break;
                 default:
+                    logger.error(`❌ Unknown tool requested: ${name}`, { 
+                        tool: name, 
+                        availableTools: allTools.map(t => t.name),
+                        infrastructureTools: [
+                            'analyze-solution-structure', 'get-development-environment-status',
+                            'validate-build-configuration', 'get-project-dependencies',
+                            'list-development-containers', 'get-container-health',
+                            'get-container-logs', 'restart-development-service',
+                            'analyze-development-infrastructure', 'check-timescaledb-health',
+                            'check-redpanda-health', 'validate-development-stack',
+                            'reload-configuration', 'get-configuration-status',
+                            'test-adapter-configuration'
+                        ]
+                    });
                     throw new McpError(
                         ErrorCode.MethodNotFound,
                         `Unknown tool: ${name}`
                     );
                 }
+                
+                const duration = Date.now() - startTime;
+                logger.info(`✅ Infrastructure tool completed: ${name}`, { duration, success: true });
+                return result;
+                
             } catch (error) {
-                logger.error('Tool execution failed', { tool: name, error });
+                const duration = Date.now() - startTime;
+                logger.error(`❌ Tool execution failed: ${name}`, { 
+                    tool: name, 
+                    duration,
+                    args: Object.keys(args || {}),
+                    error: error instanceof Error ? {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    } : error,
+                    timestamp: new Date().toISOString()
+                });
                 throw error;
             }
         });
@@ -909,24 +995,54 @@ class EnvironmentMCPGateway {
     }
 }
 
-// Start the server with health check
+/**
+ * Start the Environment MCP Gateway server with comprehensive initialization logging
+ * Handles both health server (for Docker) and main MCP server startup
+ */
 async function startServer() {
+    logger.info('🚀 Starting Environment MCP Gateway server initialization', {
+        nodeEnv: process.env.NODE_ENV,
+        mcpPort: process.env.MCP_SERVER_PORT || '3001',
+        projectRoot: process.env.PROJECT_ROOT,
+        healthServerEnabled: process.env.NODE_ENV === 'production' || process.env.ENABLE_HEALTH_SERVER === 'true'
+    });
+
     try {
         // Start health server for Docker health checks
         if (process.env.NODE_ENV === 'production' || process.env.ENABLE_HEALTH_SERVER === 'true') {
-            const healthServer = new HealthServer(parseInt(process.env.MCP_SERVER_PORT || '3001'));
+            logger.info('🏥 Initializing health server for Docker health checks');
+            const healthPort = parseInt(process.env.MCP_SERVER_PORT || '3001');
+            const healthServer = new HealthServer(healthPort);
+            
             await healthServer.start();
-            logger.info('Health server started for Docker health checks');
+            logger.info('✅ Health server started successfully', { port: healthPort });
+        } else {
+            logger.info('⏭️ Health server disabled - running in development mode');
         }
 
         // Start MCP server
+        logger.info('🔧 Initializing MCP server components');
         const server = new EnvironmentMCPGateway();
-        await server.run();
         
-        logger.info('Environment MCP Gateway started successfully');
+        await server.run();
+        logger.info('✅ Environment MCP Gateway started successfully', {
+            status: 'ready',
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
-        logger.error('Server failed to start:', error);
-        process.exit(1);
+        logger.error('❌ Server failed to start - critical error during initialization', {
+            error: error instanceof Error ? {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            } : error,
+            timestamp: new Date().toISOString(),
+            nodeEnv: process.env.NODE_ENV,
+            projectRoot: process.env.PROJECT_ROOT
+        });
+        
+        // Give logs time to flush before exiting
+        setTimeout(() => process.exit(1), 100);
     }
 }
 

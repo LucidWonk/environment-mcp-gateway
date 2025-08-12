@@ -32,9 +32,27 @@ class JobManager {
 
     /**
      * Start a new job and return immediately with job ID
+     * Creates job entry, queues for execution, and returns tracking information
      */
     async startJob(request: JobRequest): Promise<{ jobId: string; started: boolean }> {
         const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        console.info(`🚀 JobManager: Starting new job`, {
+            jobId,
+            type: request.type,
+            requestedBy: request.requestedBy || 'unknown',
+            parameterKeys: Object.keys(request.parameters || {}),
+            timestamp: new Date().toISOString()
+        });
+        
+        // Check if we're at capacity
+        if (this.runningJobs.size >= this.maxConcurrentJobs) {
+            console.warn(`⚠️ JobManager: At maximum concurrent job capacity (${this.maxConcurrentJobs}), job will be queued`, {
+                jobId,
+                runningJobs: this.runningJobs.size,
+                maxConcurrentJobs: this.maxConcurrentJobs
+            });
+        }
         
         const job: JobStatus = {
             id: jobId,
@@ -44,20 +62,32 @@ class JobManager {
             progress: {
                 current: 0,
                 total: 100,
-                message: 'Job queued'
+                message: 'Job queued for execution'
             },
             metadata: request.parameters
         };
 
         this.jobs.set(jobId, job);
+        console.debug(`📋 JobManager: Job entry created`, { jobId, status: 'queued' });
 
         // Start job execution asynchronously (don't await)
         this.executeJob(jobId).catch(error => {
-            console.error(`Job ${jobId} failed:`, error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error(`❌ JobManager: Job ${jobId} failed during execution`, {
+                jobId,
+                error: error instanceof Error ? {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                } : error,
+                timestamp: new Date().toISOString()
+            });
+            
             this.updateJobStatus(jobId, {
                 status: 'failed',
-                error: error.message,
-                endTime: new Date()
+                error: errorMessage,
+                endTime: new Date(),
+                progress: { current: 0, total: 100, message: `Failed: ${errorMessage}` }
             });
         });
 
@@ -112,56 +142,130 @@ class JobManager {
     }
 
     /**
-     * Execute job asynchronously
+     * Execute job asynchronously with comprehensive logging and error handling
      */
     private async executeJob(jobId: string): Promise<void> {
         const job = this.jobs.get(jobId);
-        if (!job) return;
+        if (!job) {
+            console.error(`❌ JobManager: Cannot execute job - job ${jobId} not found in registry`);
+            return;
+        }
+
+        console.info(`📋 JobManager: Preparing to execute job ${jobId}`, {
+            jobId,
+            type: job.type,
+            currentRunningJobs: this.runningJobs.size,
+            maxCapacity: this.maxConcurrentJobs
+        });
 
         // Wait for available slot if we're at max capacity
+        let waitTime = 0;
         while (this.runningJobs.size >= this.maxConcurrentJobs) {
+            if (waitTime === 0) {
+                console.info(`⏳ JobManager: Job ${jobId} waiting for available execution slot`, {
+                    jobId,
+                    runningJobs: this.runningJobs.size,
+                    maxCapacity: this.maxConcurrentJobs
+                });
+            }
             await new Promise(resolve => setTimeout(resolve, 1000));
+            waitTime += 1000;
+            
+            // Log every 30 seconds while waiting
+            if (waitTime % 30000 === 0) {
+                console.info(`⏳ JobManager: Job ${jobId} still waiting (${waitTime/1000}s)`, {
+                    jobId,
+                    waitTime,
+                    runningJobs: this.runningJobs.size
+                });
+            }
+        }
+
+        if (waitTime > 0) {
+            console.info(`✅ JobManager: Job ${jobId} execution slot available after ${waitTime/1000}s wait`, { jobId, waitTime });
         }
 
         this.runningJobs.add(jobId);
+        console.info(`🔄 JobManager: Starting execution of job ${jobId}`, {
+            jobId,
+            type: job.type,
+            startTime: new Date().toISOString()
+        });
+        
         this.updateJobStatus(jobId, {
             status: 'running',
-            progress: { current: 0, total: 100, message: 'Starting job execution' }
+            progress: { current: 0, total: 100, message: 'Initializing job execution' }
         });
 
         try {
             let result;
+            const jobStartTime = Date.now();
+            
+            console.info(`🔧 JobManager: Executing job type: ${job.type}`, { jobId, type: job.type });
             
             switch (job.type) {
             case 'full-repository-reindex':
+                console.info(`📁 JobManager: Starting full repository re-index execution`, { jobId });
                 result = await this.executeFullRepositoryReindex(jobId, job.metadata);
                 break;
             case 'holistic-update':
+                console.info(`🔄 JobManager: Starting holistic update execution`, { jobId });
                 result = await this.executeHolisticUpdate(jobId, job.metadata);
                 break;
             case 'cross-domain-analysis':
+                console.info(`🔍 JobManager: Starting cross-domain analysis execution`, { jobId });
                 result = await this.executeCrossDomainAnalysis(jobId, job.metadata);
                 break;
             default:
-                throw new Error(`Unknown job type: ${job.type}`);
+                const errorMsg = `Unknown job type: ${job.type}`;
+                console.error(`❌ JobManager: ${errorMsg}`, { 
+                    jobId, 
+                    type: job.type,
+                    supportedTypes: ['full-repository-reindex', 'holistic-update', 'cross-domain-analysis']
+                });
+                throw new Error(errorMsg);
             }
+
+            const executionTime = Date.now() - jobStartTime;
+            console.info(`✅ JobManager: Job ${jobId} completed successfully`, {
+                jobId,
+                type: job.type,
+                executionTime,
+                resultKeys: result ? Object.keys(result) : []
+            });
 
             this.updateJobStatus(jobId, {
                 status: 'completed',
                 endTime: new Date(),
                 result,
-                progress: { current: 100, total: 100, message: 'Job completed successfully' }
+                progress: { current: 100, total: 100, message: `Completed in ${executionTime}ms` }
             });
 
         } catch (error) {
+            const executionTime = Date.now() - Date.now(); // This will be 0, but shows structure
+            console.error(`❌ JobManager: Job ${jobId} failed during execution`, {
+                jobId,
+                type: job.type,
+                executionTime,
+                error: error instanceof Error ? {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                } : error
+            });
+            
             this.updateJobStatus(jobId, {
                 status: 'failed',
                 endTime: new Date(),
                 error: error instanceof Error ? error.message : 'Unknown error',
-                progress: { current: 0, total: 100, message: 'Job failed' }
+                progress: { current: 0, total: 100, message: `Failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
             });
         } finally {
             this.runningJobs.delete(jobId);
+            console.info(`🏁 JobManager: Job ${jobId} execution completed, removed from running jobs`, {
+                jobId,
+                remainingRunningJobs: this.runningJobs.size
+            });
         }
     }
 

@@ -47,11 +47,22 @@ export declare class HolisticUpdateOrchestrator {
      */
     private initializeAsync;
     /**
-     * Execute holistic context update for changed files
+     * Execute holistic context update for changed files with comprehensive logging
      */
     executeHolisticUpdate(request: HolisticUpdateRequest): Promise<HolisticUpdateResult>;
     /**
-     * Perform semantic analysis on changed files
+     * Perform semantic analysis on changed files to extract business concepts and rules
+     *
+     * This method filters files to only those with relevant extensions (.cs, .ts, .js),
+     * then calls the SemanticAnalysisService to extract:
+     * - Business concepts (classes, interfaces, key abstractions)
+     * - Business rules (validation logic, constraints, workflows)
+     * - Domain context (which domain the file belongs to)
+     *
+     * @param changedFiles Array of file paths that have been modified
+     * @returns Array of semantic analysis results, one per successfully analyzed file
+     *
+     * Critical: If this returns an empty array, no context files will be generated!
      */
     private performSemanticAnalysis;
     /**

@@ -28,6 +28,7 @@ declare class JobManager {
     private maxConcurrentJobs;
     /**
      * Start a new job and return immediately with job ID
+     * Creates job entry, queues for execution, and returns tracking information
      */
     startJob(request: JobRequest): Promise<{
         jobId: string;
@@ -50,7 +51,7 @@ declare class JobManager {
      */
     cancelJob(jobId: string): Promise<boolean>;
     /**
-     * Execute job asynchronously
+     * Execute job asynchronously with comprehensive logging and error handling
      */
     private executeJob;
     /**

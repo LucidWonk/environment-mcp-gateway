@@ -103,14 +103,37 @@ export class SemanticAnalysisService {
         let businessRules = [];
         let domainContext = '';
         if (language === 'C#') {
-            businessConcepts = await this.extractCSharpBusinessConcepts(fileContent, filePath);
-            businessRules = await this.extractCSharpBusinessRules(fileContent, filePath);
-            domainContext = this.determineDomainContext(filePath, businessConcepts);
+            console.info(`🔍 Extracting C# business concepts and rules from ${filePath}`);
+            try {
+                businessConcepts = await this.extractCSharpBusinessConcepts(fileContent, filePath);
+                console.info(`✅ Extracted ${businessConcepts.length} C# business concepts`);
+                businessRules = await this.extractCSharpBusinessRules(fileContent, filePath);
+                console.info(`✅ Extracted ${businessRules.length} C# business rules`);
+                domainContext = this.determineDomainContext(filePath, businessConcepts);
+                console.info(`🏗️ Determined domain context: ${domainContext}`);
+            }
+            catch (error) {
+                console.error(`❌ Failed to extract C# concepts/rules from ${filePath}:`, error);
+                throw error;
+            }
         }
         else if (language === 'TypeScript' || language === 'JavaScript') {
-            businessConcepts = await this.extractTypeScriptBusinessConcepts(fileContent, filePath);
-            businessRules = await this.extractTypeScriptBusinessRules(fileContent, filePath);
-            domainContext = this.determineDomainContext(filePath, businessConcepts);
+            console.info(`🔍 Extracting ${language} business concepts and rules from ${filePath}`);
+            try {
+                businessConcepts = await this.extractTypeScriptBusinessConcepts(fileContent, filePath);
+                console.info(`✅ Extracted ${businessConcepts.length} ${language} business concepts`);
+                businessRules = await this.extractTypeScriptBusinessRules(fileContent, filePath);
+                console.info(`✅ Extracted ${businessRules.length} ${language} business rules`);
+                domainContext = this.determineDomainContext(filePath, businessConcepts);
+                console.info(`🏗️ Determined domain context: ${domainContext}`);
+            }
+            catch (error) {
+                console.error(`❌ Failed to extract ${language} concepts/rules from ${filePath}:`, error);
+                throw error;
+            }
+        }
+        else {
+            console.warn(`⚠️ Unsupported language ${language} for file ${filePath} - skipping concept extraction`);
         }
         const analysisTime = Date.now() - startTime;
         return {

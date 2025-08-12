@@ -88,13 +88,22 @@ export class HolisticUpdateOrchestrator {
         }
     }
     /**
-     * Execute holistic context update for changed files
+     * Execute holistic context update for changed files with comprehensive logging
      */
     async executeHolisticUpdate(request) {
         const updateId = this.generateUpdateId();
         const startTime = Date.now();
         const performanceTimeout = (request.performanceTimeout ?? 15) * 1000; // Convert to milliseconds
-        logger.info(`Starting holistic update ${updateId} for ${request.changedFiles.length} files`);
+        logger.info(`🚀 HolisticUpdateOrchestrator: Starting holistic update ${updateId}`, {
+            updateId,
+            fileCount: request.changedFiles.length,
+            performanceTimeout,
+            triggerType: request.triggerType,
+            gitCommitHash: request.gitCommitHash,
+            timestamp: new Date().toISOString()
+        });
+        console.info(`🚀 Starting holistic update ${updateId} for ${request.changedFiles.length} files`);
+        console.info(`📁 Files to process: ${request.changedFiles.slice(0, 5).join(', ')}${request.changedFiles.length > 5 ? '...' : ''}`);
         const metrics = {
             semanticAnalysisTime: 0,
             domainAnalysisTime: 0,
@@ -103,6 +112,7 @@ export class HolisticUpdateOrchestrator {
         };
         try {
             // Phase 1: Semantic Analysis of Changed Files
+            console.info(`🔍 Phase 1: Starting semantic analysis for ${request.changedFiles.length} files`);
             const semanticStartTime = Date.now();
             const semanticResults = await this.timeoutManager.executeWithTimeout(this.performSemanticAnalysis(request.changedFiles), 'semanticAnalysis', {
                 fileCount: request.changedFiles.length,
@@ -110,11 +120,31 @@ export class HolisticUpdateOrchestrator {
                 triggerType: request.triggerType
             });
             metrics.semanticAnalysisTime = Date.now() - semanticStartTime;
+            console.info(`✅ Phase 1 completed: Semantic analysis produced ${semanticResults.length} results in ${metrics.semanticAnalysisTime}ms`);
+            // Critical check: If semantic analysis produced no results, this is a major issue
+            if (semanticResults.length === 0) {
+                console.error(`❌ CRITICAL: Semantic analysis returned 0 results for ${request.changedFiles.length} files!`);
+                console.error(`💡 This explains why context generation fails. Debugging info:`);
+                console.error(`   - Files to analyze: ${request.changedFiles.join(', ')}`);
+                console.error(`   - Project root: ${this.projectRoot}`);
+                console.error(`   - Working directory: ${process.cwd()}`);
+                logger.error(`CRITICAL: Semantic analysis returned 0 results`, {
+                    updateId,
+                    fileCount: request.changedFiles.length,
+                    files: request.changedFiles,
+                    projectRoot: this.projectRoot
+                });
+            }
             // Phase 2: Domain Impact Analysis
+            console.info(`🏗️ Phase 2: Starting domain impact analysis`);
             const domainStartTime = Date.now();
             const domainAnalysisOperation = async () => {
+                console.info(`🔍 Identifying affected domains from ${semanticResults.length} semantic results`);
                 const affectedDomains = await this.identifyAffectedDomains(semanticResults, request.changedFiles);
+                console.info(`📋 Found ${affectedDomains.length} affected domains: ${affectedDomains.join(', ')}`);
+                console.info(`📝 Creating domain update plan`);
                 const updatePlan = await this.createDomainUpdatePlan(affectedDomains, semanticResults);
+                console.info(`✅ Domain update plan created with ${Object.keys(updatePlan).length} domain entries`);
                 return { affectedDomains, updatePlan };
             };
             const { affectedDomains, updatePlan } = await this.timeoutManager.executeWithTimeout(domainAnalysisOperation(), 'domainAnalysis', {
@@ -123,22 +153,40 @@ export class HolisticUpdateOrchestrator {
                 updateId
             });
             metrics.domainAnalysisTime = Date.now() - domainStartTime;
+            console.info(`✅ Phase 2 completed: Domain analysis completed in ${metrics.domainAnalysisTime}ms`);
             // Phase 3: Create Rollback Snapshot
             const rollbackData = await this.rollbackManager.createHolisticSnapshot(updateId, affectedDomains, this.projectRoot);
             // Phase 4: Generate Context Content
+            console.info(`📝 Phase 4: Starting context content generation`);
             const contextStartTime = Date.now();
+            console.info(`🔧 Generating context updates for ${Object.keys(updatePlan).length} domains`);
             const allContextUpdates = await this.generateAllContextUpdates(updatePlan, semanticResults);
             metrics.contextGenerationTime = Date.now() - contextStartTime;
+            console.info(`✅ Phase 4 completed: Generated ${allContextUpdates.length} context updates in ${metrics.contextGenerationTime}ms`);
+            // Performance timeout check - ensure we don't exceed the specified timeout
             if (Date.now() - startTime > performanceTimeout) {
-                throw new Error(`Performance timeout exceeded during context generation (>${request.performanceTimeout ?? 15}s)`);
+                const elapsedTime = Date.now() - startTime;
+                const timeoutError = `Performance timeout exceeded during context generation (${elapsedTime}ms > ${performanceTimeout}ms)`;
+                console.error(`⏰ ${timeoutError}`);
+                throw new Error(timeoutError);
             }
             // Phase 5: Execute Atomic File Operations
+            console.info(`💾 Phase 5: Starting atomic file operations for ${allContextUpdates.length} updates`);
             const fileOpStartTime = Date.now();
             const fileOperations = this.createFileOperations(allContextUpdates);
+            console.info(`📋 Created ${fileOperations.length} file operations`);
             const operationResult = await this.atomicFileManager.executeAtomicOperations(fileOperations);
             metrics.fileOperationTime = Date.now() - fileOpStartTime;
+            console.info(`✅ Phase 5 completed: File operations completed in ${metrics.fileOperationTime}ms`);
             if (!operationResult.success) {
-                throw new Error(`Atomic file operations failed: ${operationResult.error?.message}`);
+                const operationError = `Atomic file operations failed: ${operationResult.error?.message}`;
+                console.error(`❌ ${operationError}`);
+                logger.error(`Atomic file operations failed`, {
+                    updateId,
+                    error: operationResult.error,
+                    operationCount: fileOperations.length
+                });
+                throw new Error(operationError);
             }
             const totalTime = Date.now() - startTime;
             logger.info(`Holistic update ${updateId} completed successfully in ${totalTime}ms`);
@@ -198,7 +246,18 @@ export class HolisticUpdateOrchestrator {
         }
     }
     /**
-     * Perform semantic analysis on changed files
+     * Perform semantic analysis on changed files to extract business concepts and rules
+     *
+     * This method filters files to only those with relevant extensions (.cs, .ts, .js),
+     * then calls the SemanticAnalysisService to extract:
+     * - Business concepts (classes, interfaces, key abstractions)
+     * - Business rules (validation logic, constraints, workflows)
+     * - Domain context (which domain the file belongs to)
+     *
+     * @param changedFiles Array of file paths that have been modified
+     * @returns Array of semantic analysis results, one per successfully analyzed file
+     *
+     * Critical: If this returns an empty array, no context files will be generated!
      */
     async performSemanticAnalysis(changedFiles) {
         logger.info(`🔍 Starting semantic analysis on ${changedFiles.length} files`);
