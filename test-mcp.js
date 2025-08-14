@@ -1,4 +1,4 @@
-#\!/usr/bin/env node
+#!/usr/bin/env node
 
 import { spawn } from 'child_process';
 
@@ -46,7 +46,7 @@ async function testMCPServer() {
                 console.log('❌ Server initialization failed');
             }
             
-            if (\!errorOutput.includes('Error') && \!errorOutput.includes('ENOENT')) {
+            if (!errorOutput.includes('Error') && !errorOutput.includes('ENOENT')) {
                 console.log('✅ No critical errors detected');
             } else {
                 console.log('⚠️  Some errors detected - check output');
@@ -60,4 +60,3 @@ async function testMCPServer() {
 }
 
 testMCPServer();
-EOF < /dev/null

@@ -7,7 +7,7 @@ try {
     console.log('Testing EnvironmentMCPGateway components...\n');
     
     // Test environment configuration
-    const { Environment } = await import('./dist/config/environment.js');
+    const { Environment } = await import('./dist/domain/config/environment.js');
     console.log('✅ Environment configuration loaded successfully');
     console.log('   - Solution path:', Environment.solutionPath);
     console.log('   - Git repo path:', Environment.gitRepoPath);
