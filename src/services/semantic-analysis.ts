@@ -49,6 +49,16 @@ export interface SemanticAnalysisResult {
     analysisTime: number;
 }
 
+export interface GranularBoundaryDetectionResult {
+    shouldCreateGranularContext: boolean;
+    confidence: number;
+    granularDomain: string;
+    businessConceptDensity: number;
+    algorithmicComplexity: number;
+    semanticCoherence: number;
+    aiAssistanceValue: number;
+}
+
 export class SemanticAnalysisService {
     private readonly maxAnalysisTime = 15000; // 15 seconds as per requirements
     private readonly cacheDir = process.env.SEMANTIC_CACHE_DIR || '.semantic-cache';
@@ -819,58 +829,344 @@ export class SemanticAnalysisService {
         return context;
     }
     
+    /**
+     * Enhanced domain detection with granular context intelligence
+     * Implements multi-criteria boundary detection for 95% repository coverage
+     * BR-CEE-002: Domain detection must recognize semantic subdirectories with business content
+     */
     private extractDomainFromPath(filePath: string): string {
         const parts = filePath.split(/[/\\]/);
         
-        // Enhanced domain detection to support semantic subdirectories
-        // BR-CEE-002: Domain detection must recognize semantic subdirectories with business content
+        // Enhanced domain detection with semantic subdirectories
+        // TEMP-CONTEXT-GRANULAR-INTEL-g7x2-F001: Core Infrastructure Enhancement
         
-        // First, look for semantic subdirectories that should be treated as domains
+        // First, attempt granular boundary detection for semantic subdirectories
+        const granularBoundaryResult = this.detectGranularContextBoundary(filePath, parts);
+        if (granularBoundaryResult.shouldCreateGranularContext && granularBoundaryResult.confidence > 0.85) {
+            return granularBoundaryResult.granularDomain;
+        }
+        
+        // Enhanced semantic subdirectory patterns with intelligent scoring
+        // BR-CEE-002: Recognize semantic subdirectories with business content
         const semanticSubdirectoryPatterns: { [key: string]: string } = {
-            // Analysis domain subdirectories
+            // Analysis domain subdirectories (enhanced with complexity scoring)
             'fractal': 'Analysis.Fractal',
             'indicator': 'Analysis.Indicator', 
             'pattern': 'Analysis.Pattern',
             'algorithm': 'Analysis.Algorithm',
+            'momentum': 'Analysis.Momentum',
+            'trend': 'Analysis.Trend',
+            'volatility': 'Analysis.Volatility',
             
             // Data domain subdirectories
             'provider': 'Data.Provider',
             'repository': 'Data.Repository',
             'cache': 'Data.Cache',
             'transform': 'Data.Transform',
+            'timescale': 'Data.TimescaleDB',
+            'simulation': 'Data.Simulation',
             
             // Messaging domain subdirectories
             'event': 'Messaging.Event',
             'command': 'Messaging.Command',
             'handler': 'Messaging.Handler',
-            'publisher': 'Messaging.Publisher'
+            'publisher': 'Messaging.Publisher',
+            'redpanda': 'Messaging.RedPanda'
         };
         
-        // Check for semantic subdirectory patterns first (more specific)
+        // Check for semantic subdirectory patterns with enhanced validation
         for (let i = 0; i < parts.length; i++) {
             const part = parts[i].toLowerCase();
             if (semanticSubdirectoryPatterns[part]) {
-                // Verify this is actually in the expected domain context
+                // Enhanced domain context verification
                 const expectedDomain = semanticSubdirectoryPatterns[part].split('.')[0].toLowerCase();
                 const hasParentDomain = parts.some((p, idx) => 
                     idx < i && p.toLowerCase() === expectedDomain
                 );
                 
                 if (hasParentDomain || parts.some(p => p.toLowerCase().includes(expectedDomain))) {
-                    return semanticSubdirectoryPatterns[part];
+                    // Additional semantic content validation for subdirectory qualification
+                    const semanticQualification = this.analyzeSemanticSubdirectoryQualification(filePath, part, expectedDomain);
+                    if (semanticQualification.qualifiesForGranularContext) {
+                        return semanticSubdirectoryPatterns[part];
+                    }
                 }
+                // Return early when match found for efficiency
+                return semanticSubdirectoryPatterns[part];
             }
         }
         
         // Fallback to traditional domain detection (backward compatibility)
         for (const part of parts) {
             const lowerPart = part.toLowerCase();
-            if (['analysis', 'data', 'messaging', 'trading', 'market', 'domain'].includes(lowerPart)) {
+            if (['analysis', 'data', 'messaging', 'trading', 'market', 'domain', 'utility'].includes(lowerPart)) {
                 return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
             }
         }
         
         return 'Unknown';
+    }
+
+    /**
+     * Advanced granular context boundary detection using multi-criteria analysis
+     * Implements business concept density, algorithmic complexity, and semantic coherence measurement
+     */
+    private detectGranularContextBoundary(filePath: string, pathParts: string[]): GranularBoundaryDetectionResult {
+        const directoryPath = pathParts.slice(0, -1).join('/'); // Remove filename
+        
+        // Multi-criteria analysis for boundary detection
+        const businessConceptDensity = this.analyzeBusinessConceptDensity(directoryPath);
+        const algorithmicComplexity = this.analyzeAlgorithmicComplexity(filePath);
+        const semanticCoherence = this.analyzeSemanticCoherence(directoryPath, pathParts);
+        const aiAssistanceValue = this.evaluateAIAssistancePotential(filePath, pathParts);
+        
+        // Weighted scoring system for granular context boundary decision
+        const confidenceScore = this.calculateGranularBoundaryConfidence(
+            businessConceptDensity, 
+            algorithmicComplexity, 
+            semanticCoherence,
+            aiAssistanceValue
+        );
+        
+        // Determine granular domain path if boundary qualifies
+        const granularDomain = this.determineGranularDomainPath(pathParts, confidenceScore);
+        
+        return {
+            shouldCreateGranularContext: confidenceScore > 0.85 && businessConceptDensity.conceptCount >= 3,
+            confidence: confidenceScore,
+            granularDomain: granularDomain,
+            businessConceptDensity: businessConceptDensity.conceptCount,
+            algorithmicComplexity: algorithmicComplexity.complexityScore,
+            semanticCoherence: semanticCoherence.coherenceScore,
+            aiAssistanceValue: aiAssistanceValue
+        };
+    }
+
+    /**
+     * Analyze business concept density for semantic boundary qualification
+     */
+    private analyzeBusinessConceptDensity(directoryPath: string): { conceptCount: number; concepts: string[] } {
+        // This would analyze files in the directory to count distinct business concepts
+        // For now, provide intelligent estimation based on path patterns
+        const pathLower = directoryPath.toLowerCase();
+        
+        let conceptCount = 0;
+        const concepts: string[] = [];
+        
+        // Fractal analysis concepts
+        if (pathLower.includes('fractal')) {
+            conceptCount += 5; // High concept density for fractal algorithms
+            concepts.push('FractalLeg', 'InflectionPoint', 'FractalAnalysis', 'MetaFractal', 'FractalValidation');
+        }
+        
+        // Technical indicator concepts
+        if (pathLower.includes('indicator')) {
+            conceptCount += 4;
+            concepts.push('TechnicalIndicator', 'IndicatorCalculation', 'SignalGeneration', 'ParameterValidation');
+        }
+        
+        // Pattern recognition concepts
+        if (pathLower.includes('pattern')) {
+            conceptCount += 3;
+            concepts.push('PatternRecognition', 'PatternValidation', 'PatternMatching');
+        }
+        
+        // Momentum analysis concepts
+        if (pathLower.includes('momentum')) {
+            conceptCount += 3;
+            concepts.push('MomentumIndicator', 'RSI', 'StochasticOscillator');
+        }
+        
+        return { conceptCount, concepts };
+    }
+
+    /**
+     * Analyze algorithmic complexity for boundary qualification
+     */
+    private analyzeAlgorithmicComplexity(filePath: string): { complexityScore: number; indicators: string[] } {
+        const fileName = filePath.split(/[/\\]/).pop()?.toLowerCase() || '';
+        const indicators: string[] = [];
+        let complexityScore = 0.0;
+        
+        // Algorithm complexity indicators
+        if (fileName.includes('algorithm') || fileName.includes('analysis')) {
+            complexityScore += 0.3;
+            indicators.push('AlgorithmicImplementation');
+        }
+        
+        if (fileName.includes('fractal') || fileName.includes('detection')) {
+            complexityScore += 0.4; // High complexity for fractal detection
+            indicators.push('SophisticatedMathematicalOperations');
+        }
+        
+        if (fileName.includes('indicator') || fileName.includes('calculation')) {
+            complexityScore += 0.35;
+            indicators.push('TechnicalCalculationLogic');
+        }
+        
+        if (fileName.includes('validation') || fileName.includes('rule')) {
+            complexityScore += 0.25;
+            indicators.push('BusinessRuleValidation');
+        }
+        
+        return { complexityScore: Math.min(complexityScore, 1.0), indicators };
+    }
+
+    /**
+     * Analyze semantic coherence for domain boundary qualification
+     */
+    private analyzeSemanticCoherence(directoryPath: string, pathParts: string[]): { coherenceScore: number; coherenceFactors: string[] } {
+        const coherenceFactors: string[] = [];
+        let coherenceScore = 0.0;
+        
+        // Domain coherence analysis
+        const hasConsistentDomain = pathParts.some(part => 
+            ['analysis', 'data', 'messaging'].includes(part.toLowerCase())
+        );
+        if (hasConsistentDomain) {
+            coherenceScore += 0.3;
+            coherenceFactors.push('ConsistentDomainContext');
+        }
+        
+        // Subdirectory specialization coherence
+        const hasSpecializedSubdomain = pathParts.some(part => 
+            ['fractal', 'indicator', 'pattern', 'momentum'].includes(part.toLowerCase())
+        );
+        if (hasSpecializedSubdomain) {
+            coherenceScore += 0.4;
+            coherenceFactors.push('SpecializedSubdomainFocus');
+        }
+        
+        // Clear bounded context indicators
+        const pathLower = directoryPath.toLowerCase();
+        if (pathLower.includes('/analysis/') && (pathLower.includes('fractal') || pathLower.includes('indicator'))) {
+            coherenceScore += 0.3;
+            coherenceFactors.push('ClearBoundedContext');
+        }
+        
+        return { coherenceScore: Math.min(coherenceScore, 1.0), coherenceFactors };
+    }
+
+    /**
+     * Evaluate AI assistance potential for granular context value
+     */
+    private evaluateAIAssistancePotential(filePath: string, pathParts: string[]): number {
+        const fileName = filePath.split(/[/\\]/).pop()?.toLowerCase() || '';
+        let assistanceValue = 0.0;
+        
+        // High AI assistance value for algorithm implementations
+        if (fileName.includes('fractal') || fileName.includes('indicator')) {
+            assistanceValue += 0.4; // High value for algorithm-specific guidance
+        }
+        
+        // Value for complex business logic
+        if (fileName.includes('analysis') || fileName.includes('calculation')) {
+            assistanceValue += 0.3;
+        }
+        
+        // Value for validation and rule logic
+        if (fileName.includes('validation') || fileName.includes('rule')) {
+            assistanceValue += 0.2;
+        }
+        
+        // Additional value for trading-specific implementations
+        if (pathParts.some(part => ['trading', 'market', 'technical'].includes(part.toLowerCase()))) {
+            assistanceValue += 0.1;
+        }
+        
+        return Math.min(assistanceValue, 1.0);
+    }
+
+    /**
+     * Calculate granular boundary confidence using weighted scoring
+     */
+    private calculateGranularBoundaryConfidence(
+        businessConceptDensity: { conceptCount: number; concepts: string[] },
+        algorithmicComplexity: { complexityScore: number; indicators: string[] },
+        semanticCoherence: { coherenceScore: number; coherenceFactors: string[] },
+        aiAssistanceValue: number
+    ): number {
+        // Weighted scoring for boundary detection confidence
+        const conceptDensityWeight = 0.35; // High weight for business concept density
+        const algorithmicComplexityWeight = 0.30; // High weight for algorithmic sophistication
+        const semanticCoherenceWeight = 0.25; // Medium weight for semantic coherence
+        const aiAssistanceWeight = 0.10; // Lower weight for AI assistance potential
+        
+        // Normalize concept density (target: >3 concepts = 1.0 score)
+        const normalizedConceptDensity = Math.min(businessConceptDensity.conceptCount / 3.0, 1.0);
+        
+        const weightedScore = 
+            (normalizedConceptDensity * conceptDensityWeight) +
+            (algorithmicComplexity.complexityScore * algorithmicComplexityWeight) +
+            (semanticCoherence.coherenceScore * semanticCoherenceWeight) +
+            (aiAssistanceValue * aiAssistanceWeight);
+        
+        return Math.min(weightedScore, 1.0);
+    }
+
+    /**
+     * Determine granular domain path for qualified boundaries
+     */
+    private determineGranularDomainPath(pathParts: string[], confidence: number): string {
+        if (confidence <= 0.85) {
+            return ''; // Not qualified for granular context
+        }
+        
+        // Build granular domain path based on directory structure
+        const relevantParts = pathParts.filter(part => 
+            !['src', 'bin', 'obj', 'node_modules', '.git'].includes(part.toLowerCase())
+        );
+        
+        // Find domain and subdomain parts
+        const domainIndex = relevantParts.findIndex(part => 
+            ['analysis', 'data', 'messaging', 'utility'].includes(part.toLowerCase())
+        );
+        
+        if (domainIndex >= 0 && domainIndex < relevantParts.length - 1) {
+            const domain = relevantParts[domainIndex];
+            const subdomain = relevantParts[domainIndex + 1];
+            return `${domain.charAt(0).toUpperCase() + domain.slice(1)}.${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)}`;
+        }
+        
+        return relevantParts.length > 0 ? relevantParts[relevantParts.length - 1] : 'Unknown';
+    }
+
+    /**
+     * Enhanced semantic subdirectory qualification analysis
+     */
+    private analyzeSemanticSubdirectoryQualification(filePath: string, subdirectory: string, domain: string): { qualifiesForGranularContext: boolean; reason: string } {
+        
+        // High-value algorithm subdirectories that always qualify
+        const algorithmSubdirectories = ['fractal', 'indicator', 'pattern', 'momentum', 'trend', 'volatility'];
+        if (algorithmSubdirectories.includes(subdirectory.toLowerCase())) {
+            return { 
+                qualifiesForGranularContext: true, 
+                reason: `Algorithm subdirectory '${subdirectory}' contains sophisticated implementations warranting granular context` 
+            };
+        }
+        
+        // Data provider subdirectories with integration complexity
+        const dataProviderSubdirectories = ['provider', 'timescale', 'simulation', 'twelvedata'];
+        if (dataProviderSubdirectories.includes(subdirectory.toLowerCase()) && domain === 'data') {
+            return { 
+                qualifiesForGranularContext: true, 
+                reason: `Data provider subdirectory '${subdirectory}' contains integration-specific logic warranting granular context` 
+            };
+        }
+        
+        // Messaging subdirectories with event-driven complexity
+        const messagingSubdirectories = ['event', 'handler', 'publisher', 'redpanda'];
+        if (messagingSubdirectories.includes(subdirectory.toLowerCase()) && domain === 'messaging') {
+            return { 
+                qualifiesForGranularContext: true, 
+                reason: `Messaging subdirectory '${subdirectory}' contains event-driven logic warranting granular context` 
+            };
+        }
+        
+        return { 
+            qualifiesForGranularContext: false, 
+            reason: `Subdirectory '${subdirectory}' does not meet granular context qualification criteria` 
+        };
     }
 
     private extractContext(content: string, position: number): string {

@@ -33,6 +33,15 @@ export interface SemanticAnalysisResult {
     domainContext: string;
     analysisTime: number;
 }
+export interface GranularBoundaryDetectionResult {
+    shouldCreateGranularContext: boolean;
+    confidence: number;
+    granularDomain: string;
+    businessConceptDensity: number;
+    algorithmicComplexity: number;
+    semanticCoherence: number;
+    aiAssistanceValue: number;
+}
 export declare class SemanticAnalysisService {
     private readonly maxAnalysisTime;
     private readonly cacheDir;
@@ -97,7 +106,45 @@ export declare class SemanticAnalysisService {
      * Generate rich context description for business concept
      */
     private generateContext;
+    /**
+     * Enhanced domain detection with granular context intelligence
+     * Implements multi-criteria boundary detection for 95% repository coverage
+     * BR-CEE-002: Domain detection must recognize semantic subdirectories with business content
+     */
     private extractDomainFromPath;
+    /**
+     * Advanced granular context boundary detection using multi-criteria analysis
+     * Implements business concept density, algorithmic complexity, and semantic coherence measurement
+     */
+    private detectGranularContextBoundary;
+    /**
+     * Analyze business concept density for semantic boundary qualification
+     */
+    private analyzeBusinessConceptDensity;
+    /**
+     * Analyze algorithmic complexity for boundary qualification
+     */
+    private analyzeAlgorithmicComplexity;
+    /**
+     * Analyze semantic coherence for domain boundary qualification
+     */
+    private analyzeSemanticCoherence;
+    /**
+     * Evaluate AI assistance potential for granular context value
+     */
+    private evaluateAIAssistancePotential;
+    /**
+     * Calculate granular boundary confidence using weighted scoring
+     */
+    private calculateGranularBoundaryConfidence;
+    /**
+     * Determine granular domain path for qualified boundaries
+     */
+    private determineGranularDomainPath;
+    /**
+     * Enhanced semantic subdirectory qualification analysis
+     */
+    private analyzeSemanticSubdirectoryQualification;
     private extractContext;
     private getLineNumber;
     private extractConditions;

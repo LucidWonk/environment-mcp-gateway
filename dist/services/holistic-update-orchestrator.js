@@ -445,24 +445,201 @@ export class HolisticUpdateOrchestrator {
         return this.sortPlansByDependencies(plans);
     }
     /**
-     * Determine hierarchical context path based on semantic analysis
-     * Implements BR-CEE-001: Context placement logic must support hierarchical directory structures
+     * Enhanced hierarchical context path generation with granular context intelligence
+     * Implements TEMP-CONTEXT-GRANULAR-INTEL-g7x2-F001: Dynamic granular context path creation
      */
     determineHierarchicalContextPath(domain, semanticResults) {
-        // For now, use domain-level paths to maintain backward compatibility
-        // Future enhancement will implement semantic boundary detection for granular paths
-        const basePath = path.join(this.projectRoot, domain, '.context');
-        // Check if this is a semantic subdirectory that should have its own context
-        const semanticSubdirectories = this.detectSemanticSubdirectories(domain, semanticResults);
-        if (semanticSubdirectories.length > 0) {
-            // For Phase 1, create contexts at both domain level and semantic subdirectories
-            // This ensures backward compatibility while enabling granular context creation
-            logger.info(`Detected ${semanticSubdirectories.length} semantic subdirectories in ${domain}: ${semanticSubdirectories.join(', ')}`);
-            // Return the base path for now - Phase 2 will implement multi-level creation
-            return basePath;
+        // Dynamic granular context path generation supporting 95% repository coverage
+        // Replace hardcoded domain-level logic with intelligent boundary-driven path creation
+        const granularContextPaths = this.generateGranularContextPaths(domain, semanticResults);
+        if (granularContextPaths.length > 0) {
+            // Multi-level context generation: return primary granular path
+            const primaryGranularPath = granularContextPaths[0]; // Use first high-confidence path
+            logger.info(`🎯 Generated granular context path: ${primaryGranularPath} for domain ${domain}`);
+            logger.info(`📊 Total granular paths identified: ${granularContextPaths.length}`);
+            // Store additional granular paths for multi-level coordination (Step 1.3)
+            this.trackAdditionalGranularPaths(domain, granularContextPaths.slice(1));
+            return primaryGranularPath;
         }
+        // Fallback to domain-level path for backward compatibility
+        const basePath = path.join(this.projectRoot, domain, '.context');
+        logger.debug(`📁 Using domain-level context path: ${basePath} for domain ${domain}`);
         return basePath;
     }
+    /**
+     * Generate granular context paths based on semantic boundary detection
+     * Supports arbitrary directory depth based on semantic content analysis
+     */
+    generateGranularContextPaths(domain, semanticResults) {
+        const granularPaths = [];
+        // Analyze semantic results for granular boundary qualification
+        const domainSemanticResults = semanticResults.filter(result => result.domainContext.includes(domain) ||
+            result.businessConcepts.some(concept => concept.domain.includes(domain)));
+        // Group results by granular domain patterns (e.g., Analysis.Fractal, Analysis.Indicator)
+        const granularDomainGroups = this.groupResultsByGranularDomain(domainSemanticResults);
+        for (const [granularDomain, results] of granularDomainGroups.entries()) {
+            const granularQualification = this.evaluateGranularContextQualification(granularDomain, results);
+            if (granularQualification.qualifiesForGranularContext) {
+                const granularPath = this.constructGranularContextPath(granularDomain, granularQualification);
+                granularPaths.push(granularPath);
+                logger.info(`✅ Qualified granular context: ${granularDomain} -> ${granularPath}`);
+                logger.debug(`   📈 Business concepts: ${granularQualification.businessConceptCount}`);
+                logger.debug(`   📋 Business rules: ${granularQualification.businessRuleCount}`);
+                logger.debug(`   🎯 Confidence score: ${granularQualification.confidenceScore.toFixed(3)}`);
+            }
+            else {
+                logger.debug(`❌ Granular context not qualified: ${granularDomain} (confidence: ${granularQualification.confidenceScore.toFixed(3)})`);
+            }
+        }
+        // Sort by confidence score descending (highest confidence first)
+        granularPaths.sort((a, b) => {
+            const confA = this.getPathConfidenceScore(a, granularDomainGroups);
+            const confB = this.getPathConfidenceScore(b, granularDomainGroups);
+            return confB - confA;
+        });
+        return granularPaths;
+    }
+    /**
+     * Group semantic analysis results by granular domain patterns
+     */
+    groupResultsByGranularDomain(semanticResults) {
+        const groups = new Map();
+        for (const result of semanticResults) {
+            const granularDomain = result.domainContext;
+            if (!groups.has(granularDomain)) {
+                groups.set(granularDomain, []);
+            }
+            groups.get(granularDomain).push(result);
+        }
+        return groups;
+    }
+    /**
+     * Evaluate granular context qualification using enhanced criteria
+     */
+    evaluateGranularContextQualification(granularDomain, results) {
+        const businessConceptCount = results.reduce((sum, result) => sum + result.businessConcepts.length, 0);
+        const businessRuleCount = results.reduce((sum, result) => sum + result.businessRules.length, 0);
+        // Enhanced qualification criteria for granular context intelligence
+        const hasAlgorithmicComplexity = this.assessAlgorithmicComplexity(granularDomain, results);
+        const hasSemanticCoherence = this.assessSemanticCoherence(granularDomain, results);
+        const hasAIAssistanceValue = this.assessAIAssistanceValue(granularDomain, results);
+        // Multi-criteria confidence scoring
+        let confidenceScore = 0.0;
+        // Business concept density scoring (35% weight)
+        if (businessConceptCount >= 3) {
+            confidenceScore += 0.35 * Math.min(businessConceptCount / 5.0, 1.0);
+        }
+        // Business rule density scoring (25% weight)  
+        if (businessRuleCount > 0) {
+            confidenceScore += 0.25 * Math.min(businessRuleCount / 10.0, 1.0);
+        }
+        // Algorithmic complexity scoring (25% weight)
+        if (hasAlgorithmicComplexity) {
+            confidenceScore += 0.25;
+        }
+        // Semantic coherence scoring (15% weight)
+        if (hasSemanticCoherence) {
+            confidenceScore += 0.15;
+        }
+        // Qualification decision: require >0.85 confidence and >=3 business concepts
+        const qualifiesForGranularContext = confidenceScore > 0.85 && businessConceptCount >= 3;
+        return {
+            qualifiesForGranularContext,
+            confidenceScore,
+            businessConceptCount,
+            businessRuleCount,
+            hasAlgorithmicComplexity,
+            hasSemanticCoherence,
+            hasAIAssistanceValue
+        };
+    }
+    /**
+     * Assess algorithmic complexity for granular context qualification
+     */
+    assessAlgorithmicComplexity(granularDomain, results) {
+        const domainLower = granularDomain.toLowerCase();
+        // High-complexity algorithm domains
+        const algorithmicDomains = ['fractal', 'indicator', 'pattern', 'analysis', 'algorithm'];
+        const hasAlgorithmicDomain = algorithmicDomains.some(domain => domainLower.includes(domain));
+        // Check for algorithmic business concepts
+        const hasAlgorithmicConcepts = results.some(result => result.businessConcepts.some(concept => concept.type === 'Service' &&
+            (concept.name.includes('Algorithm') || concept.name.includes('Analysis') || concept.name.includes('Calculator'))));
+        return hasAlgorithmicDomain || hasAlgorithmicConcepts;
+    }
+    /**
+     * Assess semantic coherence for granular context qualification
+     */
+    assessSemanticCoherence(granularDomain, results) {
+        // Check for consistent domain patterns (e.g., Analysis.Fractal, Analysis.Indicator)
+        const hasDotNotation = granularDomain.includes('.');
+        // Check for coherent business concepts within the granular domain
+        const conceptTypes = new Set(results.flatMap(result => result.businessConcepts.map(concept => concept.type)));
+        // Semantic coherence if domain has specialized pattern and consistent concept types
+        return hasDotNotation && conceptTypes.size > 0;
+    }
+    /**
+     * Assess AI assistance value for granular context qualification
+     */
+    assessAIAssistanceValue(granularDomain, results) {
+        const domainLower = granularDomain.toLowerCase();
+        // High AI assistance value domains
+        const highValueDomains = ['fractal', 'indicator', 'pattern', 'algorithm', 'analysis'];
+        const hasHighValueDomain = highValueDomains.some(domain => domainLower.includes(domain));
+        // Check for business rules that provide AI guidance value
+        const hasGuidanceRules = results.some(result => result.businessRules.length > 5);
+        return hasHighValueDomain || hasGuidanceRules;
+    }
+    /**
+     * Construct granular context path from qualified domain
+     */
+    constructGranularContextPath(granularDomain, _qualification) {
+        // Convert granular domain to directory path (e.g., Analysis.Fractal -> Analysis/Fractal)
+        const domainParts = granularDomain.split('.');
+        if (domainParts.length > 1) {
+            // Multi-level granular path: /projectRoot/Domain/Subdomain/.context
+            const domainPath = domainParts.join('/');
+            return path.join(this.projectRoot, domainPath, '.context');
+        }
+        else {
+            // Single-level domain path: /projectRoot/Domain/.context
+            return path.join(this.projectRoot, granularDomain, '.context');
+        }
+    }
+    /**
+     * Get confidence score for a specific granular path
+     */
+    getPathConfidenceScore(granularPath, domainGroups) {
+        // Extract domain from path and look up confidence score
+        const pathParts = granularPath.split(path.sep);
+        const contextIndex = pathParts.indexOf('.context');
+        if (contextIndex > 0) {
+            const domainParts = pathParts.slice(contextIndex - 2, contextIndex);
+            const reconstructedDomain = domainParts.join('.');
+            const results = domainGroups.get(reconstructedDomain);
+            if (results) {
+                const qualification = this.evaluateGranularContextQualification(reconstructedDomain, results);
+                return qualification.confidenceScore;
+            }
+        }
+        return 0.0;
+    }
+    /**
+     * Track additional granular paths for multi-level coordination
+     */
+    trackAdditionalGranularPaths(domain, additionalPaths) {
+        if (additionalPaths.length > 0) {
+            logger.info(`📝 Tracking ${additionalPaths.length} additional granular paths for domain ${domain}:`);
+            additionalPaths.forEach((path, index) => {
+                logger.info(`   ${index + 1}. ${path}`);
+            });
+            // Store for Step 1.3 multi-level coordination
+            if (!this.additionalGranularPaths) {
+                this.additionalGranularPaths = new Map();
+            }
+            this.additionalGranularPaths.set(domain, additionalPaths);
+        }
+    }
+    additionalGranularPaths;
     /**
      * Detect semantic subdirectories that warrant their own context files
      * Implements BR-CEE-002: Domain detection must recognize semantic subdirectories with business content

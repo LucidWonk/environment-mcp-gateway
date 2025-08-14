@@ -30,6 +30,15 @@ export interface HolisticUpdateResult {
     error?: Error;
     rollbackData?: HolisticRollbackData;
 }
+export interface GranularContextQualification {
+    qualifiesForGranularContext: boolean;
+    confidenceScore: number;
+    businessConceptCount: number;
+    businessRuleCount: number;
+    hasAlgorithmicComplexity: boolean;
+    hasSemanticCoherence: boolean;
+    hasAIAssistanceValue: boolean;
+}
 /**
  * Orchestrates holistic context updates across all affected domains
  * Ensures atomic, consistent updates with full rollback capability
@@ -88,10 +97,48 @@ export declare class HolisticUpdateOrchestrator {
      */
     private createDomainUpdatePlan;
     /**
-     * Determine hierarchical context path based on semantic analysis
-     * Implements BR-CEE-001: Context placement logic must support hierarchical directory structures
+     * Enhanced hierarchical context path generation with granular context intelligence
+     * Implements TEMP-CONTEXT-GRANULAR-INTEL-g7x2-F001: Dynamic granular context path creation
      */
     private determineHierarchicalContextPath;
+    /**
+     * Generate granular context paths based on semantic boundary detection
+     * Supports arbitrary directory depth based on semantic content analysis
+     */
+    private generateGranularContextPaths;
+    /**
+     * Group semantic analysis results by granular domain patterns
+     */
+    private groupResultsByGranularDomain;
+    /**
+     * Evaluate granular context qualification using enhanced criteria
+     */
+    private evaluateGranularContextQualification;
+    /**
+     * Assess algorithmic complexity for granular context qualification
+     */
+    private assessAlgorithmicComplexity;
+    /**
+     * Assess semantic coherence for granular context qualification
+     */
+    private assessSemanticCoherence;
+    /**
+     * Assess AI assistance value for granular context qualification
+     */
+    private assessAIAssistanceValue;
+    /**
+     * Construct granular context path from qualified domain
+     */
+    private constructGranularContextPath;
+    /**
+     * Get confidence score for a specific granular path
+     */
+    private getPathConfidenceScore;
+    /**
+     * Track additional granular paths for multi-level coordination
+     */
+    private trackAdditionalGranularPaths;
+    private additionalGranularPaths?;
     /**
      * Detect semantic subdirectories that warrant their own context files
      * Implements BR-CEE-002: Domain detection must recognize semantic subdirectories with business content
