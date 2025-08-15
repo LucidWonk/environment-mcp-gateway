@@ -77,6 +77,74 @@ export interface GranularContextQualification {
     hasAIAssistanceValue: boolean;
 }
 
+export interface MultiLevelContextCoordination {
+    parentContexts: ContextHierarchyEntry[];
+    childContexts: ContextHierarchyEntry[];
+    relationships: ParentChildRelationship[];
+    contentDistribution: Map<string, ContentDistributionStrategy>;
+    consistencyValidation: ConsistencyValidationResult;
+}
+
+export interface ContextHierarchyEntry {
+    contextPath: string;
+    domain: string;
+    hierarchyLevel: 'parent' | 'child';
+    content: string;
+    businessConceptCount: number;
+    businessRuleCount: number;
+    specialization: string;
+    parentReference?: string;
+}
+
+export interface ParentChildRelationship {
+    parentPath: string;
+    childPath: string;
+    contentSpecialization: ContentSpecialization;
+    crossReferences: CrossContextReferences;
+}
+
+export interface ContentSpecialization {
+    parentFocus: string;
+    childFocus: string;
+    contentDistribution: {
+        parent: string[];
+        child: string[];
+    };
+    duplicationAvoidance: {
+        preventDuplication: boolean;
+        specializedContent: boolean;
+        crossReferencesEnabled: boolean;
+    };
+}
+
+export interface CrossContextReferences {
+    parentToChild: {
+        reference: string;
+        navigationHint: string;
+    };
+    childToParent: {
+        reference: string;
+        navigationHint: string;
+    };
+}
+
+export interface HierarchyPlanGroups {
+    parentPlans: DomainUpdatePlan[];
+    childPlans: DomainUpdatePlan[];
+}
+
+export interface ContentDistributionStrategy {
+    parentContent: string[];
+    childContent: string[];
+    sharedContent: string[];
+    exclusiveContent: Map<string, string[]>;
+}
+
+export interface ConsistencyValidationResult {
+    valid: boolean;
+    issues: string[];
+}
+
 /**
  * Orchestrates holistic context updates across all affected domains
  * Ensures atomic, consistent updates with full rollback capability
@@ -836,6 +904,409 @@ export class HolisticUpdateOrchestrator {
     }
 
     private additionalGranularPaths?: Map<string, string[]>;
+
+    /**
+     * Multi-Level Context Generation Coordination Infrastructure
+     * Implements TEMP-CONTEXT-GRANULAR-INTEL-g7x2-F001: Parent-child context coordination
+     */
+    
+    /**
+     * Coordinate multi-level context generation ensuring parent-child consistency
+     */
+    private async coordinateMultiLevelContextGeneration(
+        updatePlans: DomainUpdatePlan[],
+        semanticResults: SemanticAnalysisResult[]
+    ): Promise<MultiLevelContextCoordination> {
+        logger.info('🔗 Starting multi-level context coordination for parent-child relationships');
+        
+        const coordination: MultiLevelContextCoordination = {
+            parentContexts: [],
+            childContexts: [],
+            relationships: [],
+            contentDistribution: new Map(),
+            consistencyValidation: { valid: true, issues: [] }
+        };
+        
+        // Group plans by hierarchy level  
+        const hierarchyGroups = this.groupPlansByHierarchyLevel(updatePlans);
+        
+        // Process parent contexts first (domain-level)
+        for (const parentPlan of hierarchyGroups.parentPlans) {
+            const parentContext = await this.generateParentContextWithDistribution(parentPlan, semanticResults);
+            coordination.parentContexts.push(parentContext);
+            
+            // Find child contexts for this parent
+            const childPlans = this.findChildPlansForParent(parentPlan, hierarchyGroups.childPlans);
+            
+            for (const childPlan of childPlans) {
+                const childContext = await this.generateChildContextWithSpecialization(childPlan, parentContext, semanticResults);
+                coordination.childContexts.push(childContext);
+                
+                // Create parent-child relationship
+                const relationship: ParentChildRelationship = {
+                    parentPath: parentContext.contextPath,
+                    childPath: childContext.contextPath,
+                    contentSpecialization: this.defineContentSpecialization(parentContext, childContext),
+                    crossReferences: this.generateCrossReferences(parentContext, childContext)
+                };
+                coordination.relationships.push(relationship);
+            }
+        }
+        
+        // Validate consistency across hierarchy
+        coordination.consistencyValidation = this.validateHierarchyConsistency(coordination);
+        
+        logger.info(`✅ Multi-level coordination complete: ${coordination.parentContexts.length} parent, ${coordination.childContexts.length} child contexts`);
+        return coordination;
+    }
+
+    /**
+     * Group update plans by hierarchy level (parent vs child)
+     */
+    private groupPlansByHierarchyLevel(updatePlans: DomainUpdatePlan[]): HierarchyPlanGroups {
+        const parentPlans: DomainUpdatePlan[] = [];
+        const childPlans: DomainUpdatePlan[] = [];
+        
+        for (const plan of updatePlans) {
+            if (this.isDomainLevelPlan(plan)) {
+                parentPlans.push(plan);
+            } else if (this.isGranularSubdomainPlan(plan)) {
+                childPlans.push(plan);
+            }
+        }
+        
+        return { parentPlans, childPlans };
+    }
+
+    /**
+     * Check if plan is domain-level (parent) context
+     */
+    private isDomainLevelPlan(plan: DomainUpdatePlan): boolean {
+        const domain = plan.domain;
+        const domainLevelDomains = ['Analysis', 'Data', 'Messaging', 'Utility'];
+        return domainLevelDomains.includes(domain) && !domain.includes('.');
+    }
+
+    /**
+     * Check if plan is granular subdomain (child) context
+     */
+    private isGranularSubdomainPlan(plan: DomainUpdatePlan): boolean {
+        return plan.domain.includes('.'); // e.g., Analysis.Indicator, Data.Provider
+    }
+
+    /**
+     * Find child plans that belong to a specific parent
+     */
+    private findChildPlansForParent(parentPlan: DomainUpdatePlan, childPlans: DomainUpdatePlan[]): DomainUpdatePlan[] {
+        const parentDomain = parentPlan.domain;
+        return childPlans.filter(child => child.domain.startsWith(`${parentDomain}.`));
+    }
+
+    /**
+     * Generate parent context with content distribution strategy
+     */
+    private async generateParentContextWithDistribution(
+        parentPlan: DomainUpdatePlan,
+        semanticResults: SemanticAnalysisResult[]
+    ): Promise<ContextHierarchyEntry> {
+        logger.debug(`🔼 Generating parent context for domain: ${parentPlan.domain}`);
+        
+        // Filter semantic results for broad domain understanding
+        const domainResults = semanticResults.filter(result => 
+            result.domainContext.startsWith(parentPlan.domain) ||
+            result.businessConcepts.some(concept => concept.domain.startsWith(parentPlan.domain))
+        );
+        
+        // Content strategy: Focus on cross-subdomain integration and architectural overview
+        const parentContent = this.generateParentContextContent(parentPlan.domain, domainResults);
+        
+        return {
+            contextPath: parentPlan.contextPath,
+            domain: parentPlan.domain,
+            hierarchyLevel: 'parent',
+            content: parentContent,
+            businessConceptCount: domainResults.reduce((sum, result) => sum + result.businessConcepts.length, 0),
+            businessRuleCount: domainResults.reduce((sum, result) => sum + result.businessRules.length, 0),
+            specialization: 'architectural-overview'
+        };
+    }
+
+    /**
+     * Generate child context with specialization for specific algorithms
+     */
+    private async generateChildContextWithSpecialization(
+        childPlan: DomainUpdatePlan,
+        parentContext: ContextHierarchyEntry,
+        semanticResults: SemanticAnalysisResult[]
+    ): Promise<ContextHierarchyEntry> {
+        logger.debug(`🔽 Generating child context for domain: ${childPlan.domain}`);
+        
+        // Filter semantic results for specific subdomain
+        const subdomainResults = semanticResults.filter(result => 
+            result.domainContext === childPlan.domain ||
+            result.businessConcepts.some(concept => concept.domain === childPlan.domain)
+        );
+        
+        // Content strategy: Focus on algorithm-specific implementation details
+        const childContent = this.generateChildContextContent(childPlan.domain, subdomainResults, parentContext);
+        
+        return {
+            contextPath: childPlan.contextPath,
+            domain: childPlan.domain,
+            hierarchyLevel: 'child',
+            content: childContent,
+            businessConceptCount: subdomainResults.reduce((sum, result) => sum + result.businessConcepts.length, 0),
+            businessRuleCount: subdomainResults.reduce((sum, result) => sum + result.businessRules.length, 0),
+            specialization: 'algorithm-implementation',
+            parentReference: parentContext.contextPath
+        };
+    }
+
+    /**
+     * Generate parent context content focusing on broad domain understanding
+     */
+    private generateParentContextContent(domain: string, domainResults: SemanticAnalysisResult[]): string {
+        const subddomains = this.extractSubdomains(domainResults);
+        const crossSubdomainIntegration = this.identifyCrossSubdomainPatterns(domainResults);
+        
+        return `# ${domain} Domain Overview - Parent Context
+
+## Architectural Overview
+This parent context provides broad domain understanding for the ${domain} domain, covering cross-subdomain integration patterns and architectural guidance.
+
+### Subdomains in ${domain}
+${subddomains.map(sub => `- **${sub}**: Specialized context available at ./${sub}/.context/`).join('\n')}
+
+### Cross-Subdomain Integration Patterns
+${crossSubdomainIntegration.join('\n')}
+
+### Domain-Level Business Concepts
+Total concepts across all subdomains: ${domainResults.reduce((sum, result) => sum + result.businessConcepts.length, 0)}
+
+### Domain-Level Business Rules  
+Total rules across all subdomains: ${domainResults.reduce((sum, result) => sum + result.businessRules.length, 0)}
+
+### Navigation
+- For algorithm-specific details, see subdomain contexts
+- This context provides architectural guidance and integration patterns
+- Generated with granular context intelligence for enhanced AI assistance
+`;
+    }
+
+    /**
+     * Generate child context content focusing on algorithm-specific details
+     */
+    private generateChildContextContent(
+        subdomainName: string, 
+        subdomainResults: SemanticAnalysisResult[],
+        parentContext: ContextHierarchyEntry
+    ): string {
+        const algorithmSpecificConcepts = this.extractAlgorithmSpecificConcepts(subdomainResults);
+        const implementationDetails = this.extractImplementationDetails(subdomainResults);
+        
+        return `# ${subdomainName} Subdomain - Child Context
+
+## Algorithm-Specific Implementation Details
+This child context focuses on specific implementation details for ${subdomainName} algorithms, complementing the parent domain context.
+
+### Parent Context Reference
+- **Domain Overview**: ${parentContext.contextPath}
+- **Architectural Patterns**: See parent context for cross-subdomain integration
+
+### Algorithm-Specific Business Concepts
+${algorithmSpecificConcepts.map(concept => `- **${concept.name}** (${concept.type}): ${concept.context}`).join('\n')}
+
+### Implementation-Specific Business Rules
+${subdomainResults.flatMap(result => result.businessRules)
+        .map(rule => `- **${rule.id}**: ${rule.description}`)
+        .join('\n')}
+
+### Implementation Details
+${implementationDetails.join('\n')}
+
+### AI Development Assistance
+This granular context provides algorithm-specific guidance for:
+- Implementation patterns specific to ${subdomainName}
+- Debugging approaches for ${subdomainName} algorithms  
+- Extension points for ${subdomainName} enhancements
+- Validation rules specific to ${subdomainName} logic
+
+### Navigation
+- **Parent Context**: ${parentContext.contextPath} (architectural overview)
+- **Related Subdomains**: See parent context for integration patterns
+- Generated with granular context intelligence for enhanced AI assistance
+`;
+    }
+
+    /**
+     * Extract subdomains from semantic results
+     */
+    private extractSubdomains(domainResults: SemanticAnalysisResult[]): string[] {
+        const subdomains = new Set<string>();
+        
+        for (const result of domainResults) {
+            const domain = result.domainContext;
+            if (domain.includes('.')) {
+                const subdomain = domain.split('.')[1];
+                subdomains.add(subdomain);
+            }
+        }
+        
+        return Array.from(subdomains);
+    }
+
+    /**
+     * Identify cross-subdomain integration patterns
+     */
+    private identifyCrossSubdomainPatterns(domainResults: SemanticAnalysisResult[]): string[] {
+        const patterns: string[] = [];
+        
+        // Analyze for common integration patterns
+        const hasEventPatterns = domainResults.some(result => 
+            result.businessConcepts.some(concept => concept.type === 'Event')
+        );
+        
+        if (hasEventPatterns) {
+            patterns.push('- **Event-Driven Integration**: Cross-subdomain communication through domain events');
+        }
+        
+        const hasRepositoryPatterns = domainResults.some(result => 
+            result.businessConcepts.some(concept => concept.type === 'Repository')
+        );
+        
+        if (hasRepositoryPatterns) {
+            patterns.push('- **Data Access Integration**: Shared repository patterns across subdomains');
+        }
+        
+        return patterns;
+    }
+
+    /**
+     * Extract algorithm-specific concepts for child contexts
+     */
+    private extractAlgorithmSpecificConcepts(subdomainResults: SemanticAnalysisResult[]): any[] {
+        const algorithmConcepts: any[] = [];
+        
+        for (const result of subdomainResults) {
+            for (const concept of result.businessConcepts) {
+                if (this.isAlgorithmSpecificConcept(concept)) {
+                    algorithmConcepts.push(concept);
+                }
+            }
+        }
+        
+        return algorithmConcepts;
+    }
+
+    /**
+     * Check if concept is algorithm-specific
+     */
+    private isAlgorithmSpecificConcept(concept: any): boolean {
+        const algorithmTypes = ['Algorithm', 'Analysis', 'Calculator', 'Indicator', 'Detector'];
+        return algorithmTypes.some(type => concept.name.includes(type)) || concept.type === 'Service';
+    }
+
+    /**
+     * Extract implementation details for child contexts
+     */
+    private extractImplementationDetails(subdomainResults: SemanticAnalysisResult[]): string[] {
+        const details: string[] = [];
+        
+        for (const result of subdomainResults) {
+            if (result.businessRules.length > 0) {
+                details.push(`- **${result.filePath.split('/').pop()}**: ${result.businessRules.length} business rules for implementation guidance`);
+            }
+        }
+        
+        return details;
+    }
+
+    /**
+     * Define content specialization between parent and child
+     */
+    private defineContentSpecialization(_parentContext: ContextHierarchyEntry, _childContext: ContextHierarchyEntry): ContentSpecialization {
+        return {
+            parentFocus: 'architectural-overview',
+            childFocus: 'algorithm-implementation',
+            contentDistribution: {
+                parent: ['cross-subdomain-integration', 'architectural-patterns', 'domain-overview'],
+                child: ['algorithm-specific-logic', 'implementation-details', 'validation-rules']
+            },
+            duplicationAvoidance: {
+                preventDuplication: true,
+                specializedContent: true,
+                crossReferencesEnabled: true
+            }
+        };
+    }
+
+    /**
+     * Generate cross-references between parent and child contexts
+     */
+    private generateCrossReferences(parentContext: ContextHierarchyEntry, childContext: ContextHierarchyEntry): CrossContextReferences {
+        return {
+            parentToChild: {
+                reference: `For ${childContext.domain.split('.')[1]} implementation details, see: ${childContext.contextPath}`,
+                navigationHint: 'algorithm-specific-guidance'
+            },
+            childToParent: {
+                reference: `For architectural overview and integration patterns, see: ${parentContext.contextPath}`,
+                navigationHint: 'domain-architecture'
+            }
+        };
+    }
+
+    /**
+     * Validate consistency across context hierarchy
+     */
+    private validateHierarchyConsistency(coordination: MultiLevelContextCoordination): ConsistencyValidationResult {
+        const issues: string[] = [];
+        
+        // Check for orphaned child contexts
+        for (const child of coordination.childContexts) {
+            const hasParent = coordination.parentContexts.some(parent => 
+                child.domain.startsWith(parent.domain + '.')
+            );
+            if (!hasParent) {
+                issues.push(`Orphaned child context: ${child.domain} has no corresponding parent`);
+            }
+        }
+        
+        // Check for content duplication
+        const contentOverlaps = this.detectContentOverlaps(coordination);
+        issues.push(...contentOverlaps);
+        
+        return {
+            valid: issues.length === 0,
+            issues: issues
+        };
+    }
+
+    /**
+     * Detect content overlaps between parent and child contexts
+     */
+    private detectContentOverlaps(coordination: MultiLevelContextCoordination): string[] {
+        const overlaps: string[] = [];
+        
+        // Simple content overlap detection
+        for (const relationship of coordination.relationships) {
+            const parent = coordination.parentContexts.find(p => p.contextPath === relationship.parentPath);
+            const child = coordination.childContexts.find(c => c.contextPath === relationship.childPath);
+            
+            if (parent && child) {
+                // Check for business rule duplication
+                if (parent.businessRuleCount > 0 && child.businessRuleCount > 0) {
+                    const overlapRatio = Math.min(parent.businessRuleCount, child.businessRuleCount) / 
+                                       Math.max(parent.businessRuleCount, child.businessRuleCount);
+                    if (overlapRatio > 0.5) {
+                        overlaps.push(`Potential content overlap between ${parent.domain} and ${child.domain}: ${Math.round(overlapRatio * 100)}% rule similarity`);
+                    }
+                }
+            }
+        }
+        
+        return overlaps;
+    }
 
     /**
      * Detect semantic subdirectories that warrant their own context files

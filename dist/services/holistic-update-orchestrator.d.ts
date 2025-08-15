@@ -39,6 +39,66 @@ export interface GranularContextQualification {
     hasSemanticCoherence: boolean;
     hasAIAssistanceValue: boolean;
 }
+export interface MultiLevelContextCoordination {
+    parentContexts: ContextHierarchyEntry[];
+    childContexts: ContextHierarchyEntry[];
+    relationships: ParentChildRelationship[];
+    contentDistribution: Map<string, ContentDistributionStrategy>;
+    consistencyValidation: ConsistencyValidationResult;
+}
+export interface ContextHierarchyEntry {
+    contextPath: string;
+    domain: string;
+    hierarchyLevel: 'parent' | 'child';
+    content: string;
+    businessConceptCount: number;
+    businessRuleCount: number;
+    specialization: string;
+    parentReference?: string;
+}
+export interface ParentChildRelationship {
+    parentPath: string;
+    childPath: string;
+    contentSpecialization: ContentSpecialization;
+    crossReferences: CrossContextReferences;
+}
+export interface ContentSpecialization {
+    parentFocus: string;
+    childFocus: string;
+    contentDistribution: {
+        parent: string[];
+        child: string[];
+    };
+    duplicationAvoidance: {
+        preventDuplication: boolean;
+        specializedContent: boolean;
+        crossReferencesEnabled: boolean;
+    };
+}
+export interface CrossContextReferences {
+    parentToChild: {
+        reference: string;
+        navigationHint: string;
+    };
+    childToParent: {
+        reference: string;
+        navigationHint: string;
+    };
+}
+export interface HierarchyPlanGroups {
+    parentPlans: DomainUpdatePlan[];
+    childPlans: DomainUpdatePlan[];
+}
+export interface ContentDistributionStrategy {
+    parentContent: string[];
+    childContent: string[];
+    sharedContent: string[];
+    exclusiveContent: Map<string, string[]>;
+}
+export interface ConsistencyValidationResult {
+    valid: boolean;
+    issues: string[];
+}
 /**
  * Orchestrates holistic context updates across all affected domains
  * Ensures atomic, consistent updates with full rollback capability
@@ -139,6 +199,82 @@ export declare class HolisticUpdateOrchestrator {
      */
     private trackAdditionalGranularPaths;
     private additionalGranularPaths?;
+    /**
+     * Multi-Level Context Generation Coordination Infrastructure
+     * Implements TEMP-CONTEXT-GRANULAR-INTEL-g7x2-F001: Parent-child context coordination
+     */
+    /**
+     * Coordinate multi-level context generation ensuring parent-child consistency
+     */
+    private coordinateMultiLevelContextGeneration;
+    /**
+     * Group update plans by hierarchy level (parent vs child)
+     */
+    private groupPlansByHierarchyLevel;
+    /**
+     * Check if plan is domain-level (parent) context
+     */
+    private isDomainLevelPlan;
+    /**
+     * Check if plan is granular subdomain (child) context
+     */
+    private isGranularSubdomainPlan;
+    /**
+     * Find child plans that belong to a specific parent
+     */
+    private findChildPlansForParent;
+    /**
+     * Generate parent context with content distribution strategy
+     */
+    private generateParentContextWithDistribution;
+    /**
+     * Generate child context with specialization for specific algorithms
+     */
+    private generateChildContextWithSpecialization;
+    /**
+     * Generate parent context content focusing on broad domain understanding
+     */
+    private generateParentContextContent;
+    /**
+     * Generate child context content focusing on algorithm-specific details
+     */
+    private generateChildContextContent;
+    /**
+     * Extract subdomains from semantic results
+     */
+    private extractSubdomains;
+    /**
+     * Identify cross-subdomain integration patterns
+     */
+    private identifyCrossSubdomainPatterns;
+    /**
+     * Extract algorithm-specific concepts for child contexts
+     */
+    private extractAlgorithmSpecificConcepts;
+    /**
+     * Check if concept is algorithm-specific
+     */
+    private isAlgorithmSpecificConcept;
+    /**
+     * Extract implementation details for child contexts
+     */
+    private extractImplementationDetails;
+    /**
+     * Define content specialization between parent and child
+     */
+    private defineContentSpecialization;
+    /**
+     * Generate cross-references between parent and child contexts
+     */
+    private generateCrossReferences;
+    /**
+     * Validate consistency across context hierarchy
+     */
+    private validateHierarchyConsistency;
+    /**
+     * Detect content overlaps between parent and child contexts
+     */
+    private detectContentOverlaps;
     /**
      * Detect semantic subdirectories that warrant their own context files
      * Implements BR-CEE-002: Domain detection must recognize semantic subdirectories with business content
