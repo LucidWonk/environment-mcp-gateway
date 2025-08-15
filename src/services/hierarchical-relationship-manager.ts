@@ -1,7 +1,7 @@
 import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
 import * as fs from 'fs';
-import * as path from 'path';
+import * as _path from 'path';
 import { SemanticAnalysisResult } from './semantic-analysis.js';
 import { GeneratedContextContent } from './context-template-generator.js';
 
@@ -584,7 +584,7 @@ export class HierarchicalRelationshipManager {
     private calculateRelationshipStrength(
         sourceNode: HierarchyNode,
         targetNode: HierarchyNode,
-        semanticResults: SemanticAnalysisResult[]
+        _semanticResults: SemanticAnalysisResult[]
     ): number {
         // Calculate based on concept overlap, rule similarity, and domain proximity
         const conceptOverlap = sourceNode.contentSummary.primaryConcepts.filter(c => 
@@ -658,7 +658,7 @@ export class HierarchicalRelationshipManager {
 
     private optimizeForAIComprehension(): void {
         // Enhance relationships with AI-specific optimizations
-        this.hierarchyMap.relationshipGraph.forEach((relationships, contextId) => {
+        this.hierarchyMap.relationshipGraph.forEach((relationships, _contextId) => {
             relationships.forEach(relationship => {
                 // Boost AI optimization score based on content quality
                 const sourceNode = this.hierarchyMap.contextHierarchy.get(relationship.parentContextId);
@@ -711,9 +711,9 @@ export class HierarchicalRelationshipManager {
     }
 
     private determineContentDistribution(
-        parentContext: GeneratedContextContent,
-        childContext: GeneratedContextContent,
-        sharedConceptCount: number
+        _parentContext: GeneratedContextContent,
+        _childContext: GeneratedContextContent,
+        _sharedConceptCount: number
     ): { parentSections: string[]; childSections: string[]; sharedSections: string[] } {
         return {
             parentSections: ['architectural-overview', 'integration-patterns'],
@@ -741,27 +741,27 @@ export class HierarchicalRelationshipManager {
     }
 
     private createConceptReferences(
-        sourceContext: GeneratedContextContent,
-        targetContext: GeneratedContextContent,
-        semanticResults: SemanticAnalysisResult[]
+        _sourceContext: GeneratedContextContent,
+        _targetContext: GeneratedContextContent,
+        _semanticResults: SemanticAnalysisResult[]
     ): CrossReference[] {
         // Placeholder implementation
         return [];
     }
 
     private createImplementationReferences(
-        sourceContext: GeneratedContextContent,
-        targetContext: GeneratedContextContent,
-        semanticResults: SemanticAnalysisResult[]
+        _sourceContext: GeneratedContextContent,
+        _targetContext: GeneratedContextContent,
+        _semanticResults: SemanticAnalysisResult[]
     ): CrossReference[] {
         // Placeholder implementation
         return [];
     }
 
     private createRuleReferences(
-        sourceContext: GeneratedContextContent,
-        targetContext: GeneratedContextContent,
-        semanticResults: SemanticAnalysisResult[]
+        _sourceContext: GeneratedContextContent,
+        _targetContext: GeneratedContextContent,
+        _semanticResults: SemanticAnalysisResult[]
     ): CrossReference[] {
         // Placeholder implementation
         return [];

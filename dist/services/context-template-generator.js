@@ -285,7 +285,7 @@ export class ContextTemplateGenerator {
      * Apply AI optimizations to content
      * Step 3.1: AI Optimization Layer
      */
-    applyAIOptimizations(content, hints, semanticResults) {
+    applyAIOptimizations(content, hints, _semanticResults) {
         const enhancements = [];
         const markers = [];
         const references = [];
@@ -296,12 +296,13 @@ export class ContextTemplateGenerator {
                 case 'add-confidence-indicators':
                     enhancements.push('Added confidence indicators for AI interpretation');
                     break;
-                case 'include-cross-references':
+                case 'include-cross-references': {
                     const refMatches = content.match(/[A-Z][a-zA-Z]*\.[A-Z][a-zA-Z]*/g);
                     if (refMatches) {
                         references.push(...refMatches);
                     }
                     break;
+                }
                 case 'semantic-markup':
                     markers.push('business-concept', 'domain-boundary', 'implementation-detail');
                     break;
@@ -342,9 +343,10 @@ export class ContextTemplateGenerator {
                 return result.businessConcepts.length > 0;
             case 'has-business-rules':
                 return result.businessRules.length > 0;
-            case 'min-confidence':
+            case 'min-confidence': {
                 const avgConfidence = result.businessConcepts.reduce((sum, c) => sum + c.confidence, 0) / result.businessConcepts.length;
                 return avgConfidence >= (parameters.threshold || 70);
+            }
             case 'domain-matches':
                 return result.domainContext.includes(parameters.pattern || '');
             default:

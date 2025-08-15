@@ -348,7 +348,7 @@ export class HierarchicalRelationshipManager {
             }
         };
     }
-    calculateRelationshipStrength(sourceNode, targetNode, semanticResults) {
+    calculateRelationshipStrength(sourceNode, targetNode, _semanticResults) {
         // Calculate based on concept overlap, rule similarity, and domain proximity
         const conceptOverlap = sourceNode.contentSummary.primaryConcepts.filter(c => targetNode.contentSummary.primaryConcepts.includes(c)).length;
         const maxConcepts = Math.max(sourceNode.contentSummary.primaryConcepts.length, targetNode.contentSummary.primaryConcepts.length, 1);
@@ -406,7 +406,7 @@ export class HierarchicalRelationshipManager {
     }
     optimizeForAIComprehension() {
         // Enhance relationships with AI-specific optimizations
-        this.hierarchyMap.relationshipGraph.forEach((relationships, contextId) => {
+        this.hierarchyMap.relationshipGraph.forEach((relationships, _contextId) => {
             relationships.forEach(relationship => {
                 // Boost AI optimization score based on content quality
                 const sourceNode = this.hierarchyMap.contextHierarchy.get(relationship.parentContextId);
@@ -449,7 +449,7 @@ export class HierarchicalRelationshipManager {
     conceptsSimilar(concept1, concept2) {
         return concept1.toLowerCase() === concept2.toLowerCase();
     }
-    determineContentDistribution(parentContext, childContext, sharedConceptCount) {
+    determineContentDistribution(_parentContext, _childContext, _sharedConceptCount) {
         return {
             parentSections: ['architectural-overview', 'integration-patterns'],
             childSections: ['implementation-details', 'algorithm-specifics'],
@@ -468,15 +468,15 @@ export class HierarchicalRelationshipManager {
             bidirectional: true
         };
     }
-    createConceptReferences(sourceContext, targetContext, semanticResults) {
+    createConceptReferences(_sourceContext, _targetContext, _semanticResults) {
         // Placeholder implementation
         return [];
     }
-    createImplementationReferences(sourceContext, targetContext, semanticResults) {
+    createImplementationReferences(_sourceContext, _targetContext, _semanticResults) {
         // Placeholder implementation
         return [];
     }
-    createRuleReferences(sourceContext, targetContext, semanticResults) {
+    createRuleReferences(_sourceContext, _targetContext, _semanticResults) {
         // Placeholder implementation
         return [];
     }

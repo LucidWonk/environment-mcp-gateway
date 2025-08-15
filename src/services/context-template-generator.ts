@@ -2,7 +2,7 @@ import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { SemanticAnalysisResult, BusinessConcept, BusinessRule } from './semantic-analysis.js';
+import { SemanticAnalysisResult, BusinessConcept } from './semantic-analysis.js';
 
 const logger = winston.createLogger({
     level: Environment.mcpLogLevel,
@@ -255,27 +255,27 @@ export class ContextTemplateGenerator {
         const filteredResults = this.applyContentFilters(semanticResults, generator.filters);
         
         switch (generator.type) {
-            case 'business-concepts':
-                return this.generateBusinessConceptsContent(filteredResults, generator.template);
-                
-            case 'business-rules':
-                return this.generateBusinessRulesContent(filteredResults, generator.template);
-                
-            case 'implementation-details':
-                return this.generateImplementationDetailsContent(filteredResults, generator.template, complexityLevel);
-                
-            case 'integration-points':
-                return this.generateIntegrationPointsContent(filteredResults, generator.template, domainPath);
-                
-            case 'recent-changes':
-                return this.generateRecentChangesContent(filteredResults, generator.template);
-                
-            case 'hierarchical-context':
-                return this.generateHierarchicalContextContent(domainPath, generator.template);
-                
-            default:
-                logger.warn(`Unknown content generator type: ${generator.type}`);
-                return '';
+        case 'business-concepts':
+            return this.generateBusinessConceptsContent(filteredResults, generator.template);
+            
+        case 'business-rules':
+            return this.generateBusinessRulesContent(filteredResults, generator.template);
+            
+        case 'implementation-details':
+            return this.generateImplementationDetailsContent(filteredResults, generator.template, complexityLevel);
+            
+        case 'integration-points':
+            return this.generateIntegrationPointsContent(filteredResults, generator.template, domainPath);
+            
+        case 'recent-changes':
+            return this.generateRecentChangesContent(filteredResults, generator.template);
+            
+        case 'hierarchical-context':
+            return this.generateHierarchicalContextContent(domainPath, generator.template);
+            
+        default:
+            logger.warn(`Unknown content generator type: ${generator.type}`);
+            return '';
         }
     }
 
@@ -475,7 +475,7 @@ export class ContextTemplateGenerator {
     private applyAIOptimizations(
         content: string, 
         hints: string[], 
-        semanticResults: SemanticAnalysisResult[]
+        _semanticResults: SemanticAnalysisResult[]
     ): { content: string; enhancements: string[]; markers: string[]; references: string[] } {
         const enhancements: string[] = [];
         const markers: string[] = [];
@@ -486,18 +486,19 @@ export class ContextTemplateGenerator {
         // Apply structural enhancements
         hints.forEach(hint => {
             switch (hint) {
-                case 'add-confidence-indicators':
-                    enhancements.push('Added confidence indicators for AI interpretation');
-                    break;
-                case 'include-cross-references':
-                    const refMatches = content.match(/[A-Z][a-zA-Z]*\.[A-Z][a-zA-Z]*/g);
-                    if (refMatches) {
-                        references.push(...refMatches);
-                    }
-                    break;
-                case 'semantic-markup':
-                    markers.push('business-concept', 'domain-boundary', 'implementation-detail');
-                    break;
+            case 'add-confidence-indicators':
+                enhancements.push('Added confidence indicators for AI interpretation');
+                break;
+            case 'include-cross-references': {
+                const refMatches = content.match(/[A-Z][a-zA-Z]*\.[A-Z][a-zA-Z]*/g);
+                if (refMatches) {
+                    references.push(...refMatches);
+                }
+                break;
+            }
+            case 'semantic-markup':
+                markers.push('business-concept', 'domain-boundary', 'implementation-detail');
+                break;
             }
         });
         
@@ -517,12 +518,12 @@ export class ContextTemplateGenerator {
         return results.filter(result => {
             return filters.every(filter => {
                 switch (filter.operation) {
-                    case 'include':
-                        return this.evaluateFilterCondition(result, filter.condition, filter.parameters);
-                    case 'exclude':
-                        return !this.evaluateFilterCondition(result, filter.condition, filter.parameters);
-                    default:
-                        return true;
+                case 'include':
+                    return this.evaluateFilterCondition(result, filter.condition, filter.parameters);
+                case 'exclude':
+                    return !this.evaluateFilterCondition(result, filter.condition, filter.parameters);
+                default:
+                    return true;
                 }
             });
         });
@@ -534,17 +535,18 @@ export class ContextTemplateGenerator {
      */
     private evaluateFilterCondition(result: SemanticAnalysisResult, condition: string, parameters: Record<string, any>): boolean {
         switch (condition) {
-            case 'has-business-concepts':
-                return result.businessConcepts.length > 0;
-            case 'has-business-rules':
-                return result.businessRules.length > 0;
-            case 'min-confidence':
-                const avgConfidence = result.businessConcepts.reduce((sum, c) => sum + c.confidence, 0) / result.businessConcepts.length;
-                return avgConfidence >= (parameters.threshold || 70);
-            case 'domain-matches':
-                return result.domainContext.includes(parameters.pattern || '');
-            default:
-                return true;
+        case 'has-business-concepts':
+            return result.businessConcepts.length > 0;
+        case 'has-business-rules':
+            return result.businessRules.length > 0;
+        case 'min-confidence': {
+            const avgConfidence = result.businessConcepts.reduce((sum, c) => sum + c.confidence, 0) / result.businessConcepts.length;
+            return avgConfidence >= (parameters.threshold || 70);
+        }
+        case 'domain-matches':
+            return result.domainContext.includes(parameters.pattern || '');
+        default:
+            return true;
         }
     }
 

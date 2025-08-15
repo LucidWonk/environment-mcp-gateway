@@ -855,17 +855,75 @@ export class HolisticUpdateOrchestrator {
     /**
      * Construct granular context path from qualified domain
      */
-    private constructGranularContextPath(granularDomain: string, _qualification: GranularContextQualification): string {
-        // Convert granular domain to directory path (e.g., Analysis.Fractal -> Analysis/Fractal)
+    private constructGranularContextPath(granularDomain: string, qualification: GranularContextQualification): string {
+        // Enhanced path construction that preserves full directory structure
+        // Fix for issue: was creating /projectRoot/Analysis/Fractal/.context 
+        // instead of /projectRoot/Utility/Analysis/Fractal/.context
+        
         const domainParts = granularDomain.split('.');
         
         if (domainParts.length > 1) {
-            // Multi-level granular path: /projectRoot/Domain/Subdomain/.context
+            // Multi-level granular path with proper directory mapping
+            
+            // Map domain to actual source directory structure
+            const actualDirectoryPath = this.mapDomainToActualPath(granularDomain, qualification);
+            
+            if (actualDirectoryPath) {
+                return path.join(actualDirectoryPath, '.context');
+            }
+            
+            // Fallback to original logic if mapping fails
             const domainPath = domainParts.join('/');
-            return path.join(this.projectRoot, domainPath, '.context');
+            return path.join(this.projectRoot, 'Utility', domainPath, '.context');
         } else {
             // Single-level domain path: /projectRoot/Domain/.context
             return path.join(this.projectRoot, granularDomain, '.context');
+        }
+    }
+    
+    /**
+     * Map granular domain to actual source directory path
+     * Fixes path resolution to match actual file locations
+     */
+    private mapDomainToActualPath(granularDomain: string, _qualification: GranularContextQualification): string | null {
+        // Map common domain patterns to their actual directory locations
+        const domainToPathMap: { [key: string]: string } = {
+            'Analysis.Fractal': path.join(this.projectRoot, 'Utility', 'Analysis', 'Fractal'),
+            'Analysis.Indicator': path.join(this.projectRoot, 'Utility', 'Analysis', 'Indicator'),
+            'Analysis.Pattern': path.join(this.projectRoot, 'Utility', 'Analysis', 'Pattern'),
+            'Data.Provider': path.join(this.projectRoot, 'Utility', 'Data', 'Provider'),
+            'Data.Fractal': path.join(this.projectRoot, 'Utility', 'Data', 'Fractal'),
+            'Data.Indicator': path.join(this.projectRoot, 'Utility', 'Data', 'Indicator'),
+            'Messaging.Queue': path.join(this.projectRoot, 'Utility', 'Messaging'),
+            'Domain.Configuration': path.join(this.projectRoot, 'Utility', 'Domain', 'Configuration')
+        };
+        
+        // Direct mapping
+        if (domainToPathMap[granularDomain]) {
+            return domainToPathMap[granularDomain];
+        }
+        
+        // Pattern-based mapping for unknown domains
+        const parts = granularDomain.split('.');
+        if (parts.length >= 2) {
+            const basePath = path.join(this.projectRoot, 'Utility', ...parts);
+            // Verify the directory exists
+            if (this.directoryExists(basePath)) {
+                return basePath;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Check if directory exists (synchronous for performance)
+     */
+    private directoryExists(dirPath: string): boolean {
+        try {
+            return fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory();
+        } catch {
+            return false;
         }
     }
 
@@ -1965,7 +2023,7 @@ Cross References: ${generatedContent.aiOptimizations.crossReferences.length}
      * Generate parent context navigation section
      * Step 3.1: Parent Context Navigation
      */
-    private generateParentNavigationSection(domainPath: string): string {
+    private generateParentNavigationSection(_domainPath: string): string {
         return `
 
 ## Navigation & Hierarchy

@@ -193,6 +193,15 @@ export declare class HolisticUpdateOrchestrator {
      */
     private constructGranularContextPath;
     /**
+     * Map granular domain to actual source directory path
+     * Fixes path resolution to match actual file locations
+     */
+    private mapDomainToActualPath;
+    /**
+     * Check if directory exists (synchronous for performance)
+     */
+    private directoryExists;
+    /**
      * Get confidence score for a specific granular path
      */
     private getPathConfidenceScore;
