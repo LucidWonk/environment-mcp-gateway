@@ -1,0 +1,34 @@
+{
+  "contextId": "ctx-1755223751479-svrl3lwg2",
+  "domainPath": "Analysis.Fractal",
+  "templateUsed": "analysis-high",
+  "content": "# Domain Context\n\n## Domain Overview\n# Analysis.Fractal Domain Overview\n\nGenerated from semantic analysis of advanced boundary detection.\n\nBusiness Concepts\n\n## Business Concepts\n\n### Entitys\n- **FractalAnalysisSystem** (confidence: 0.7999999999999999%)\n  Context: Core domain entity with business logic and state. Dependencies: Lucidwonks.Utility.Data.Fractal, Lucidwonks.Utility.Data.Inflection (6 more)\n  Dependencies: Lucidwonks.Utility.Data.Fractal, Lucidwonks.Utility.Data.Inflection, Lucidwonks.Utility.Messaging, IMessageQueue<InflectionPointDenormalizedData>, IMessageQueue<FractalLeg>, IFractalLegRepository, IFractalAnalysisAlgorithm, TimeSpan\n\n## Domain Analysis\n- Average concept confidence: 1%\n- Total concepts identified: 1\n- Files analyzed: 1\n\nCurrent Implementation\n\n# Current Implementation\n\n## /mnt/m/projects/lucidwonks/Utility/Analysis/Fractal/FractalAnalysisSystem.cs\nLanguage: C#\nChange Type: modified\nImpact Level: high\n\nAffected Components:\n- Entity:FractalAnalysisSystem\n\nIntegration Points\n\n# Integration Points\n\n## Cross-Domain Dependencies\n\n- Lucidwonks\n- IMessageQueue<InflectionPointDenormalizedData>\n- IMessageQueue<FractalLeg>\n- IFractalLegRepository\n- IFractalAnalysisAlgorithm\n- TimeSpan\n\n## Domain Distribution\n\n- **Analysis.Fractal**: 1 files\n\nRecent Changes\n\n# Recent Changes\n\n## Modified Files\n\n### /mnt/m/projects/lucidwonks/Utility/Analysis/Fractal/FractalAnalysisSystem.cs\n- Impact: high\n- Domain: Analysis.Fractal\n- Business Concepts: 1\n- Business Rules: 0\n\nAnalysis of 1 changed files.\n\n",
+  "metadata": {
+    "generationTime": 6,
+    "tokenCount": 383,
+    "sections": [
+      "Business Concepts",
+      "Current Implementation",
+      "Integration Points",
+      "Recent Changes"
+    ],
+    "hierarchicalReferences": [],
+    "optimizationLevel": "advanced"
+  },
+  "aiOptimizations": {
+    "structuralEnhancements": [
+      "Added confidence indicators for AI interpretation"
+    ],
+    "semanticMarkers": [
+      "business-concept",
+      "domain-boundary",
+      "implementation-detail",
+      "business-concept",
+      "domain-boundary",
+      "implementation-detail"
+    ],
+    "crossReferences": [
+      "Analysis.Fractal"
+    ]
+  }
+}

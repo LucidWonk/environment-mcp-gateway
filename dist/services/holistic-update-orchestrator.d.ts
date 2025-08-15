@@ -108,6 +108,8 @@ export declare class HolisticUpdateOrchestrator {
     private readonly rollbackManager;
     private readonly semanticAnalysis;
     private readonly contextGenerator;
+    private readonly contextTemplateGenerator;
+    private readonly hierarchicalRelationshipManager;
     private readonly timeoutManager;
     private projectRoot;
     constructor(projectRoot?: string);
@@ -349,5 +351,45 @@ export declare class HolisticUpdateOrchestrator {
      * Cleanup old update data
      */
     performMaintenance(): Promise<void>;
+    /**
+     * Generate enhanced context content using AI-optimized templates
+     * Step 3.1: Template-Based Context Content Generation Integration
+     */
+    private generateEnhancedContextContent;
+    /**
+     * Determine complexity level based on semantic analysis results
+     * Step 3.1: Complexity Assessment for Template Selection
+     */
+    private determineComplexityLevel;
+    /**
+     * Generate parent context navigation section
+     * Step 3.1: Parent Context Navigation
+     */
+    private generateParentNavigationSection;
+    /**
+     * Generate child context navigation section
+     * Step 3.1: Child Context Navigation
+     */
+    private generateChildNavigationSection;
+    /**
+     * Generate fallback content when template generation fails
+     * Step 3.1: Fallback Content Generation
+     */
+    private generateFallbackContent;
+    /**
+     * Extract generated contexts from coordination structure
+     * Step 3.2: Context Extraction for Hierarchy Building
+     */
+    private extractGeneratedContexts;
+    /**
+     * Enhance relationships with specialized content and cross-references
+     * Step 3.2: Relationship Enhancement with Specialization
+     */
+    private enhanceRelationshipsWithSpecialization;
+    /**
+     * Generate hierarchy visualization report
+     * Step 3.2: Hierarchy Visualization Integration
+     */
+    generateHierarchyVisualizationReport(): string;
 }
 //# sourceMappingURL=holistic-update-orchestrator.d.ts.map

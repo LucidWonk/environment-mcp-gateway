@@ -1,0 +1,35 @@
+{
+  "contextId": "ctx-1755223751482-vsi0lrfvb",
+  "domainPath": "Analysis.Indicator",
+  "templateUsed": "analysis-high",
+  "content": "# Domain Context\n\n## Domain Overview\n# Analysis.Indicator Domain Overview\n\nGenerated from semantic analysis of advanced boundary detection.\n\nBusiness Concepts\n\n## Business Concepts\n\n### Entitys\n- **RelativeStrengthIndex** (confidence: 0.7999999999999999%)\n  Context: Core domain entity with business logic and state. Dependencies: Lucidwonks.Utility.Data.Indicator\n  Dependencies: Lucidwonks.Utility.Data.Indicator\n\n## Domain Analysis\n- Average concept confidence: 1%\n- Total concepts identified: 1\n- Files analyzed: 1\n\nBusiness Rules\n\n# Business Rules\n\n## Validation Rules\n\n1. **Technical indicator RSI must be properly configured and registered**\n   - Confidence: 0.9%\n   - Source: RelativeStrengthIndex.cs\n\n2. **Validation rule enforced in code: Value must be positive**\n   - Confidence: 0.85%\n   - Source: RelativeStrengthIndex.cs\n\n3. **Validation rule enforced in code: Period must be positive**\n   - Confidence: 0.85%\n   - Source: RelativeStrengthIndex.cs\n\n## Workflow Rules\n\n1. **Period for RSI calculation**\n   - Confidence: 0.95%\n   - Source: RelativeStrengthIndex.cs\n\n2. **Calculation rule: the RSI value for the current data point, utilizing the base class to manage the value queue and computing RSI once sufficient data is available. This defines how values are computed or processed.**\n   - Confidence: 0.85%\n   - Source: RelativeStrengthIndex.cs\n\n3. **Integer parameters marked as required indicate critical calculation inputs (Property: Period)**\n   - Confidence: 0.85%\n   - Source: RelativeStrengthIndex.cs\n\n4. **Period parameters control algorithm temporal scope and calculation windows**\n   - Confidence: 0.8%\n   - Source: RelativeStrengthIndex.cs\n\n5. **Calculation rule: the RSI value based on the current data window, handling initial simple averages and subsequent smoothed averages using Wilder's method. This defines how values are computed or processed.**\n   - Confidence: 0.75%\n   - Source: RelativeStrengthIndex.cs\n\n## Business-logic Rules\n\n1. **Required parameter Period has additional constraints indicating critical business importance**\n   - Confidence: 0.9%\n   - Source: RelativeStrengthIndex.cs\n\n2. **Technical indicator RSI must be properly configured and registered**\n   - Confidence: 0.9%\n   - Source: RelativeStrengthIndex.cs\n\n3. **Business rule: Period + 1 data points (e. This defines important operational constraints or behavior.**\n   - Confidence: 0.85%\n   - Source: RelativeStrengthIndex.cs\n\n4. **Momentum indicators measure price change velocity and overbought/oversold conditions (Implementation: RelativeStrengthIndex)**\n   - Confidence: 0.85%\n   - Source: RelativeStrengthIndex.cs\n\n5. **Optional indicator parameters suggest algorithmic composition patterns (Property: BaseIndicator)**\n   - Confidence: 0.85%\n   - Source: RelativeStrengthIndex.cs\n\nExtracted 12 business rules from semantic analysis.\n\n\n\nCurrent Implementation\n\n# Current Implementation\n\n## /mnt/m/projects/lucidwonks/Utility/Analysis/Indicator/Momentum/RelativeStrengthIndex.cs\nLanguage: C#\nChange Type: modified\nImpact Level: high\n\nAffected Components:\n- Entity:RelativeStrengthIndex\n\nIntegration Points\n\n# Integration Points\n\n## Cross-Domain Dependencies\n\n- Lucidwonks\n\n## Domain Distribution\n\n- **Analysis.Indicator**: 1 files\n\nRecent Changes\n\n# Recent Changes\n\n## Modified Files\n\n### /mnt/m/projects/lucidwonks/Utility/Analysis/Indicator/Momentum/RelativeStrengthIndex.cs\n- Impact: high\n- Domain: Analysis.Indicator\n- Business Concepts: 1\n- Business Rules: 12\n\nAnalysis of 1 changed files.\n\n",
+  "metadata": {
+    "generationTime": 9,
+    "tokenCount": 877,
+    "sections": [
+      "Business Concepts",
+      "Business Rules",
+      "Current Implementation",
+      "Integration Points",
+      "Recent Changes"
+    ],
+    "hierarchicalReferences": [],
+    "optimizationLevel": "advanced"
+  },
+  "aiOptimizations": {
+    "structuralEnhancements": [
+      "Added confidence indicators for AI interpretation"
+    ],
+    "semanticMarkers": [
+      "business-concept",
+      "domain-boundary",
+      "implementation-detail",
+      "business-concept",
+      "domain-boundary",
+      "implementation-detail"
+    ],
+    "crossReferences": [
+      "Analysis.Indicator"
+    ]
+  }
+}

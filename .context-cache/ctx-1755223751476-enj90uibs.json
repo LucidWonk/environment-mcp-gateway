@@ -1,0 +1,18 @@
+{
+  "contextId": "ctx-1755223751476-enj90uibs",
+  "domainPath": "Data.Provider",
+  "templateUsed": "fallback-medium",
+  "content": "# Domain Context\n\n## Domain Overview\n# Data.Provider Domain Overview\n\nGenerated from semantic analysis of advanced boundary detection.\n\n",
+  "metadata": {
+    "generationTime": 3,
+    "tokenCount": 34,
+    "sections": [],
+    "hierarchicalReferences": [],
+    "optimizationLevel": "basic"
+  },
+  "aiOptimizations": {
+    "structuralEnhancements": [],
+    "semanticMarkers": [],
+    "crossReferences": []
+  }
+}
