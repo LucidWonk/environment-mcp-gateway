@@ -42,10 +42,62 @@ export interface GranularBoundaryDetectionResult {
     semanticCoherence: number;
     aiAssistanceValue: number;
 }
+export interface AlgorithmDomainData {
+    baseConceptCount: number;
+    sophisticationLevel: 'high' | 'medium' | 'low';
+    coreConcepts: string[];
+    advancedConcepts: string[];
+}
+export interface AlgorithmComplexityPattern {
+    patterns: string[];
+    complexityWeight: number;
+    indicator: string;
+}
+export interface AccuracyValidationMetrics {
+    overallAccuracy: number;
+    granularDetectionRate: number;
+    falsePositiveRate: number;
+    domainSpecificAccuracy: Map<string, number>;
+    expertValidationScore?: number;
+    confidenceDistribution: number[];
+    totalValidations: number;
+    detectionThresholds: {
+        high: number;
+        medium: number;
+        low: number;
+    };
+}
+export interface HumanExpertFeedback {
+    fileId: string;
+    expectedDomain: string;
+    actualDomain: string;
+    isCorrect: boolean;
+    expertConfidence: number;
+    improvementSuggestions: string[];
+    timestamp: Date;
+    validationType: 'granular' | 'domain-level';
+    complexityAssessment: 'high' | 'medium' | 'low';
+}
+export interface BoundaryDetectionConfig {
+    businessConceptWeight: number;
+    algorithmComplexityWeight: number;
+    semanticCoherenceWeight: number;
+    granularThreshold: number;
+    domainThreshold: number;
+    mathematicalComplexityMultiplier: number;
+    tradingAlgorithmBonus: number;
+    designPatternWeight: number;
+    enableAdaptiveTuning: boolean;
+    learningRate: number;
+    minimumFeedbackCount: number;
+    maxAnalysisTimeMs: number;
+    cacheExpirationHours: number;
+}
 export declare class SemanticAnalysisService {
     private readonly maxAnalysisTime;
     private readonly cacheDir;
     private readonly xmlRuleParser;
+    private config;
     constructor();
     /**
      * Analyze code changes for semantic meaning
@@ -118,13 +170,43 @@ export declare class SemanticAnalysisService {
      */
     private detectGranularContextBoundary;
     /**
-     * Analyze business concept density for semantic boundary qualification
+     * Advanced business concept density analysis for semantic boundary qualification
+     * Implements TEMP-CONTEXT-GRANULAR-INTEL-g7x2-F002: Enhanced semantic analysis
      */
     private analyzeBusinessConceptDensity;
     /**
-     * Analyze algorithmic complexity for boundary qualification
+     * Get algorithm domain mappings with sophistication levels
+     */
+    private getAlgorithmDomainMappings;
+    /**
+     * Analyze trading-specific concepts for additional concept density
+     */
+    private analyzeTradingSpecificConcepts;
+    /**
+     * Enhanced algorithmic complexity analysis for boundary qualification
+     * Implements TEMP-CONTEXT-GRANULAR-INTEL-g7x2-F002: Advanced complexity detection
      */
     private analyzeAlgorithmicComplexity;
+    /**
+     * Get sophisticated algorithm patterns with complexity weights
+     */
+    private getSophisticatedAlgorithmPatterns;
+    /**
+     * Check if file/directory matches algorithm pattern
+     */
+    private matchesAlgorithmPattern;
+    /**
+     * Detect mathematical complexity indicators
+     */
+    private detectMathematicalComplexity;
+    /**
+     * Analyze business logic complexity
+     */
+    private analyzeBusinessLogicComplexity;
+    /**
+     * Analyze trading algorithm specific complexity
+     */
+    private analyzeTradingAlgorithmComplexity;
     /**
      * Analyze semantic coherence for domain boundary qualification
      */
@@ -153,5 +235,50 @@ export declare class SemanticAnalysisService {
     private humanizeMethodName;
     private inferTypeFromName;
     private determineDomainContext;
+    /**
+     * Calculate accuracy validation metrics for boundary detection
+     * Step 2.2: Accuracy Validation and Human Expert Integration
+     */
+    calculateAccuracyMetrics(analysisResults: SemanticAnalysisResult[], expertFeedback: HumanExpertFeedback[]): AccuracyValidationMetrics;
+    /**
+     * Store human expert feedback for continuous learning
+     * Step 2.2: Human Expert Integration
+     */
+    storeExpertFeedback(feedback: HumanExpertFeedback): void;
+    /**
+     * Load historical expert feedback for analysis
+     * Step 2.2: Expert Integration Infrastructure
+     */
+    loadExpertFeedback(): HumanExpertFeedback[];
+    /**
+     * Generate accuracy validation report
+     * Step 2.2: Reporting and Analysis
+     */
+    generateAccuracyReport(): string;
+    /**
+     * Load boundary detection configuration
+     * Step 2.3: Configuration and Adaptive Tuning
+     */
+    private loadConfiguration;
+    /**
+     * Save boundary detection configuration
+     * Step 2.3: Configuration Management
+     */
+    saveConfiguration(config: BoundaryDetectionConfig): void;
+    /**
+     * Get current configuration
+     * Step 2.3: Configuration Access
+     */
+    getConfiguration(): BoundaryDetectionConfig;
+    /**
+     * Update configuration with adaptive tuning based on expert feedback
+     * Step 2.3: Adaptive Tuning
+     */
+    adaptivelyTuneConfiguration(): BoundaryDetectionConfig;
+    /**
+     * Generate configuration tuning report
+     * Step 2.3: Configuration Analysis and Reporting
+     */
+    generateConfigurationReport(): string;
 }
 //# sourceMappingURL=semantic-analysis.d.ts.map

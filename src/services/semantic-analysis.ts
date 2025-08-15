@@ -59,10 +59,76 @@ export interface GranularBoundaryDetectionResult {
     aiAssistanceValue: number;
 }
 
+export interface AlgorithmDomainData {
+    baseConceptCount: number;
+    sophisticationLevel: 'high' | 'medium' | 'low';
+    coreConcepts: string[];
+    advancedConcepts: string[];
+}
+
+export interface AlgorithmComplexityPattern {
+    patterns: string[];
+    complexityWeight: number;
+    indicator: string;
+}
+
+export interface AccuracyValidationMetrics {
+    overallAccuracy: number;
+    granularDetectionRate: number;
+    falsePositiveRate: number;
+    domainSpecificAccuracy: Map<string, number>;
+    expertValidationScore?: number;
+    confidenceDistribution: number[];
+    totalValidations: number;
+    detectionThresholds: {
+        high: number;
+        medium: number;
+        low: number;
+    };
+}
+
+export interface HumanExpertFeedback {
+    fileId: string;
+    expectedDomain: string;
+    actualDomain: string;
+    isCorrect: boolean;
+    expertConfidence: number;
+    improvementSuggestions: string[];
+    timestamp: Date;
+    validationType: 'granular' | 'domain-level';
+    complexityAssessment: 'high' | 'medium' | 'low';
+}
+
+export interface BoundaryDetectionConfig {
+    // Complexity scoring weights
+    businessConceptWeight: number;
+    algorithmComplexityWeight: number;
+    semanticCoherenceWeight: number;
+    
+    // Detection thresholds
+    granularThreshold: number;
+    domainThreshold: number;
+    
+    // Algorithm pattern weights
+    mathematicalComplexityMultiplier: number;
+    tradingAlgorithmBonus: number;
+    designPatternWeight: number;
+    
+    // Adaptive learning settings
+    enableAdaptiveTuning: boolean;
+    learningRate: number;
+    minimumFeedbackCount: number;
+    
+    // Performance constraints  
+    maxAnalysisTimeMs: number;
+    cacheExpirationHours: number;
+}
+
 export class SemanticAnalysisService {
     private readonly maxAnalysisTime = 15000; // 15 seconds as per requirements
     private readonly cacheDir = process.env.SEMANTIC_CACHE_DIR || '.semantic-cache';
     private readonly xmlRuleParser: XmlDocumentationRuleParser;
+    private config: BoundaryDetectionConfig;
 
     constructor() {
         // Ensure cache directory exists
@@ -72,7 +138,11 @@ export class SemanticAnalysisService {
         
         // Initialize enhanced XML documentation rule parser (Step 3.1 & 3.2)
         this.xmlRuleParser = new XmlDocumentationRuleParser();
-        logger.info('SemanticAnalysisService initialized with enhanced XML documentation rule parser');
+        
+        // Load configuration (Step 2.3: Configuration and Adaptive Tuning)
+        this.config = this.loadConfiguration();
+        
+        logger.info('SemanticAnalysisService initialized with enhanced XML documentation rule parser and adaptive configuration');
     }
 
     /**
@@ -943,73 +1013,279 @@ export class SemanticAnalysisService {
     }
 
     /**
-     * Analyze business concept density for semantic boundary qualification
+     * Advanced business concept density analysis for semantic boundary qualification
+     * Implements TEMP-CONTEXT-GRANULAR-INTEL-g7x2-F002: Enhanced semantic analysis
      */
     private analyzeBusinessConceptDensity(directoryPath: string): { conceptCount: number; concepts: string[] } {
-        // This would analyze files in the directory to count distinct business concepts
-        // For now, provide intelligent estimation based on path patterns
         const pathLower = directoryPath.toLowerCase();
         
         let conceptCount = 0;
         const concepts: string[] = [];
         
-        // Fractal analysis concepts
-        if (pathLower.includes('fractal')) {
-            conceptCount += 5; // High concept density for fractal algorithms
-            concepts.push('FractalLeg', 'InflectionPoint', 'FractalAnalysis', 'MetaFractal', 'FractalValidation');
+        // Enhanced algorithm domain concept mapping with sophistication scoring
+        const algorithmDomainMappings = this.getAlgorithmDomainMappings();
+        
+        for (const [domainPattern, conceptData] of algorithmDomainMappings.entries()) {
+            if (pathLower.includes(domainPattern)) {
+                conceptCount += conceptData.baseConceptCount;
+                concepts.push(...conceptData.coreConcepts);
+                
+                // Add sophistication bonus for complex domains
+                if (conceptData.sophisticationLevel === 'high') {
+                    conceptCount += 2; // Bonus for high-sophistication domains
+                    concepts.push(...conceptData.advancedConcepts);
+                }
+            }
         }
         
-        // Technical indicator concepts
-        if (pathLower.includes('indicator')) {
-            conceptCount += 4;
-            concepts.push('TechnicalIndicator', 'IndicatorCalculation', 'SignalGeneration', 'ParameterValidation');
+        // Additional concept density analysis based on directory structure depth
+        const directoryDepth = directoryPath.split('/').length;
+        if (directoryDepth >= 4) { // Deep directory structures likely have specialized concepts
+            conceptCount += 1;
+            concepts.push('SpecializedDomainLogic');
         }
         
-        // Pattern recognition concepts
-        if (pathLower.includes('pattern')) {
-            conceptCount += 3;
-            concepts.push('PatternRecognition', 'PatternValidation', 'PatternMatching');
-        }
-        
-        // Momentum analysis concepts
-        if (pathLower.includes('momentum')) {
-            conceptCount += 3;
-            concepts.push('MomentumIndicator', 'RSI', 'StochasticOscillator');
-        }
+        // Enhanced concept density analysis for specific trading patterns
+        conceptCount += this.analyzeTradingSpecificConcepts(pathLower, concepts);
         
         return { conceptCount, concepts };
     }
 
     /**
-     * Analyze algorithmic complexity for boundary qualification
+     * Get algorithm domain mappings with sophistication levels
+     */
+    private getAlgorithmDomainMappings(): Map<string, AlgorithmDomainData> {
+        const mappings = new Map<string, AlgorithmDomainData>();
+        
+        // High sophistication algorithm domains
+        mappings.set('fractal', {
+            baseConceptCount: 6,
+            sophisticationLevel: 'high',
+            coreConcepts: ['FractalLeg', 'InflectionPoint', 'FractalAnalysis', 'MetaFractal', 'FractalValidation', 'FractalHierarchy'],
+            advancedConcepts: ['RecursiveFractalDetection', 'FractalPatternValidation']
+        });
+        
+        mappings.set('indicator', {
+            baseConceptCount: 5,
+            sophisticationLevel: 'high',
+            coreConcepts: ['TechnicalIndicator', 'IndicatorCalculation', 'SignalGeneration', 'ParameterValidation', 'ThresholdAnalysis'],
+            advancedConcepts: ['CompositeIndicators', 'IndicatorOptimization']
+        });
+        
+        mappings.set('pattern', {
+            baseConceptCount: 4,
+            sophisticationLevel: 'medium',
+            coreConcepts: ['PatternRecognition', 'PatternValidation', 'PatternMatching', 'PatternClassification'],
+            advancedConcepts: ['MachineLearningPatterns']
+        });
+        
+        // Medium sophistication domains  
+        mappings.set('momentum', {
+            baseConceptCount: 3,
+            sophisticationLevel: 'medium',
+            coreConcepts: ['MomentumIndicator', 'RSI', 'StochasticOscillator'],
+            advancedConcepts: ['MomentumDivergence']
+        });
+        
+        mappings.set('trend', {
+            baseConceptCount: 3,
+            sophisticationLevel: 'medium',
+            coreConcepts: ['TrendAnalysis', 'MovingAverage', 'TrendReversal'],
+            advancedConcepts: ['TrendStrengthMeasurement']
+        });
+        
+        // Data provider concepts
+        mappings.set('provider', {
+            baseConceptCount: 3,
+            sophisticationLevel: 'medium',
+            coreConcepts: ['DataProvider', 'APIIntegration', 'DataValidation'],
+            advancedConcepts: ['RealTimeDataStreaming']
+        });
+        
+        // Messaging concepts
+        mappings.set('event', {
+            baseConceptCount: 3,
+            sophisticationLevel: 'medium',
+            coreConcepts: ['DomainEvent', 'EventPublishing', 'EventHandling'],
+            advancedConcepts: ['EventSourcing']
+        });
+        
+        return mappings;
+    }
+
+    /**
+     * Analyze trading-specific concepts for additional concept density
+     */
+    private analyzeTradingSpecificConcepts(pathLower: string, concepts: string[]): number {
+        let additionalConcepts = 0;
+        
+        // Trading algorithm specific patterns
+        const tradingPatterns = [
+            { pattern: 'backtest', concepts: ['BacktestEngine', 'PerformanceMetrics'], count: 2 },
+            { pattern: 'portfolio', concepts: ['PortfolioManagement', 'RiskAnalysis'], count: 2 },
+            { pattern: 'execution', concepts: ['TradeExecution', 'OrderManagement'], count: 2 },
+            { pattern: 'risk', concepts: ['RiskManagement', 'VaRCalculation'], count: 2 },
+            { pattern: 'optimization', concepts: ['ParameterOptimization', 'GeneticAlgorithm'], count: 2 }
+        ];
+        
+        for (const { pattern, concepts: patternConcepts, count } of tradingPatterns) {
+            if (pathLower.includes(pattern)) {
+                additionalConcepts += count;
+                concepts.push(...patternConcepts);
+            }
+        }
+        
+        return additionalConcepts;
+    }
+
+    /**
+     * Enhanced algorithmic complexity analysis for boundary qualification
+     * Implements TEMP-CONTEXT-GRANULAR-INTEL-g7x2-F002: Advanced complexity detection
      */
     private analyzeAlgorithmicComplexity(filePath: string): { complexityScore: number; indicators: string[] } {
         const fileName = filePath.split(/[/\\]/).pop()?.toLowerCase() || '';
+        const directoryPath = filePath.split(/[/\\]/).slice(0, -1).join('/').toLowerCase();
         const indicators: string[] = [];
         let complexityScore = 0.0;
         
-        // Algorithm complexity indicators
-        if (fileName.includes('algorithm') || fileName.includes('analysis')) {
-            complexityScore += 0.3;
-            indicators.push('AlgorithmicImplementation');
+        // High-sophistication algorithm pattern detection
+        const sophisticatedAlgorithmPatterns = this.getSophisticatedAlgorithmPatterns();
+        
+        for (const pattern of sophisticatedAlgorithmPatterns) {
+            if (this.matchesAlgorithmPattern(fileName, directoryPath, pattern)) {
+                complexityScore += pattern.complexityWeight;
+                indicators.push(pattern.indicator);
+            }
         }
         
-        if (fileName.includes('fractal') || fileName.includes('detection')) {
-            complexityScore += 0.4; // High complexity for fractal detection
-            indicators.push('SophisticatedMathematicalOperations');
-        }
+        // Advanced mathematical operation detection
+        complexityScore += this.detectMathematicalComplexity(fileName, indicators);
         
-        if (fileName.includes('indicator') || fileName.includes('calculation')) {
-            complexityScore += 0.35;
-            indicators.push('TechnicalCalculationLogic');
-        }
+        // Business logic sophistication analysis
+        complexityScore += this.analyzeBusinessLogicComplexity(fileName, directoryPath, indicators);
         
-        if (fileName.includes('validation') || fileName.includes('rule')) {
-            complexityScore += 0.25;
-            indicators.push('BusinessRuleValidation');
-        }
+        // Trading algorithm specific complexity patterns
+        complexityScore += this.analyzeTradingAlgorithmComplexity(fileName, directoryPath, indicators);
         
         return { complexityScore: Math.min(complexityScore, 1.0), indicators };
+    }
+
+    /**
+     * Get sophisticated algorithm patterns with complexity weights
+     */
+    private getSophisticatedAlgorithmPatterns(): AlgorithmComplexityPattern[] {
+        return [
+            // Very high complexity patterns
+            { patterns: ['fractal', 'recursive'], complexityWeight: 0.45, indicator: 'RecursiveFractalDetection' },
+            { patterns: ['meta.*fractal', 'hierarchical.*fractal'], complexityWeight: 0.4, indicator: 'HierarchicalFractalAnalysis' },
+            { patterns: ['optimization', 'genetic'], complexityWeight: 0.4, indicator: 'OptimizationAlgorithms' },
+            
+            // High complexity patterns
+            { patterns: ['indicator', 'calculation'], complexityWeight: 0.35, indicator: 'TechnicalIndicatorCalculation' },
+            { patterns: ['pattern.*recognition', 'machine.*learning'], complexityWeight: 0.35, indicator: 'PatternRecognitionAlgorithms' },
+            { patterns: ['analysis.*engine', 'processing.*pipeline'], complexityWeight: 0.3, indicator: 'AnalysisEngineLogic' },
+            
+            // Medium complexity patterns
+            { patterns: ['validation', 'rule.*engine'], complexityWeight: 0.25, indicator: 'BusinessRuleValidation' },
+            { patterns: ['backtest', 'simulation'], complexityWeight: 0.25, indicator: 'BacktestingAlgorithms' },
+            { patterns: ['signal.*generation', 'threshold.*analysis'], complexityWeight: 0.2, indicator: 'SignalProcessingLogic' },
+            
+            // Moderate complexity patterns
+            { patterns: ['algorithm', 'analysis'], complexityWeight: 0.15, indicator: 'AlgorithmicImplementation' },
+            { patterns: ['detector', 'finder'], complexityWeight: 0.15, indicator: 'DetectionAlgorithms' }
+        ];
+    }
+
+    /**
+     * Check if file/directory matches algorithm pattern
+     */
+    private matchesAlgorithmPattern(fileName: string, directoryPath: string, pattern: AlgorithmComplexityPattern): boolean {
+        const combinedPath = `${directoryPath}/${fileName}`;
+        
+        return pattern.patterns.some(patternStr => {
+            const regex = new RegExp(patternStr, 'i');
+            return regex.test(fileName) || regex.test(directoryPath) || regex.test(combinedPath);
+        });
+    }
+
+    /**
+     * Detect mathematical complexity indicators
+     */
+    private detectMathematicalComplexity(fileName: string, indicators: string[]): number {
+        let complexityBonus = 0.0;
+        
+        const mathematicalPatterns = [
+            { pattern: /mathematical|calculus|derivative/, bonus: 0.15, indicator: 'MathematicalOperations' },
+            { pattern: /statistics|statistical|stochastic/, bonus: 0.1, indicator: 'StatisticalAnalysis' },
+            { pattern: /matrix|linear.*algebra|vector/, bonus: 0.1, indicator: 'LinearAlgebra' },
+            { pattern: /fourier|fft|transform/, bonus: 0.15, indicator: 'SignalProcessing' },
+            { pattern: /regression|correlation|covariance/, bonus: 0.1, indicator: 'StatisticalModeling' }
+        ];
+        
+        for (const { pattern, bonus, indicator } of mathematicalPatterns) {
+            if (pattern.test(fileName)) {
+                complexityBonus += bonus;
+                indicators.push(indicator);
+            }
+        }
+        
+        return complexityBonus;
+    }
+
+    /**
+     * Analyze business logic complexity
+     */
+    private analyzeBusinessLogicComplexity(fileName: string, directoryPath: string, indicators: string[]): number {
+        let complexityBonus = 0.0;
+        
+        // Complex business logic patterns
+        const businessLogicPatterns = [
+            { pattern: 'workflow', bonus: 0.1, indicator: 'WorkflowLogic' },
+            { pattern: 'orchestrat', bonus: 0.15, indicator: 'OrchestrationLogic' },
+            { pattern: 'coordinator', bonus: 0.1, indicator: 'CoordinationLogic' },
+            { pattern: 'manager', bonus: 0.05, indicator: 'ManagementLogic' },
+            { pattern: 'strategy', bonus: 0.1, indicator: 'StrategyPattern' },
+            { pattern: 'factory', bonus: 0.05, indicator: 'FactoryPattern' }
+        ];
+        
+        const combinedPath = `${directoryPath}/${fileName}`;
+        
+        for (const { pattern, bonus, indicator } of businessLogicPatterns) {
+            if (combinedPath.includes(pattern)) {
+                complexityBonus += bonus;
+                indicators.push(indicator);
+            }
+        }
+        
+        return complexityBonus;
+    }
+
+    /**
+     * Analyze trading algorithm specific complexity
+     */
+    private analyzeTradingAlgorithmComplexity(fileName: string, directoryPath: string, indicators: string[]): number {
+        let complexityBonus = 0.0;
+        
+        const tradingComplexityPatterns = [
+            { pattern: 'portfolio.*optimization', bonus: 0.3, indicator: 'PortfolioOptimization' },
+            { pattern: 'risk.*management', bonus: 0.25, indicator: 'RiskManagementAlgorithms' },
+            { pattern: 'execution.*algorithm', bonus: 0.2, indicator: 'TradeExecutionLogic' },
+            { pattern: 'arbitrage', bonus: 0.25, indicator: 'ArbitrageAlgorithms' },
+            { pattern: 'market.*making', bonus: 0.2, indicator: 'MarketMakingAlgorithms' },
+            { pattern: 'order.*book', bonus: 0.15, indicator: 'OrderBookAnalysis' }
+        ];
+        
+        const combinedPath = `${directoryPath}/${fileName}`.toLowerCase();
+        
+        for (const { pattern, bonus, indicator } of tradingComplexityPatterns) {
+            const regex = new RegExp(pattern, 'i');
+            if (regex.test(combinedPath)) {
+                complexityBonus += bonus;
+                indicators.push(indicator);
+            }
+        }
+        
+        return complexityBonus;
     }
 
     /**
@@ -1255,5 +1531,375 @@ export class SemanticAnalysisService {
         }
         
         return this.extractDomainFromPath(filePath);
+    }
+
+    /**
+     * Calculate accuracy validation metrics for boundary detection
+     * Step 2.2: Accuracy Validation and Human Expert Integration
+     */
+    public calculateAccuracyMetrics(
+        analysisResults: SemanticAnalysisResult[],
+        expertFeedback: HumanExpertFeedback[]
+    ): AccuracyValidationMetrics {
+        const totalValidations = expertFeedback.length;
+        const correctPredictions = expertFeedback.filter(f => f.isCorrect).length;
+        const overallAccuracy = totalValidations > 0 ? correctPredictions / totalValidations : 0;
+
+        // Calculate granular detection rate (how often we detect granular vs domain-level)
+        const granularDetections = analysisResults.filter(r => r.domainContext.includes('.')).length;
+        const granularDetectionRate = analysisResults.length > 0 ? granularDetections / analysisResults.length : 0;
+
+        // Calculate false positive rate
+        const falsePositives = expertFeedback.filter(f => !f.isCorrect && f.validationType === 'granular').length;
+        const totalGranularPredictions = expertFeedback.filter(f => f.validationType === 'granular').length;
+        const falsePositiveRate = totalGranularPredictions > 0 ? falsePositives / totalGranularPredictions : 0;
+
+        // Domain-specific accuracy
+        const domainSpecificAccuracy = new Map<string, number>();
+        const domains = [...new Set(expertFeedback.map(f => f.expectedDomain))];
+        
+        domains.forEach(domain => {
+            const domainFeedback = expertFeedback.filter(f => f.expectedDomain === domain);
+            const domainCorrect = domainFeedback.filter(f => f.isCorrect).length;
+            const accuracy = domainFeedback.length > 0 ? domainCorrect / domainFeedback.length : 0;
+            domainSpecificAccuracy.set(domain, accuracy);
+        });
+
+        // Expert validation score (weighted by expert confidence)
+        const expertValidationScore = expertFeedback.length > 0 ? 
+            expertFeedback.reduce((sum, f) => sum + (f.isCorrect ? f.expertConfidence : 0), 0) / expertFeedback.length : 
+            undefined;
+
+        // Confidence distribution
+        const confidenceRanges = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+        const confidenceDistribution = confidenceRanges.map(threshold => 
+            expertFeedback.filter(f => f.expertConfidence >= threshold).length / Math.max(expertFeedback.length, 1)
+        );
+
+        return {
+            overallAccuracy,
+            granularDetectionRate,
+            falsePositiveRate,
+            domainSpecificAccuracy,
+            expertValidationScore,
+            confidenceDistribution,
+            totalValidations,
+            detectionThresholds: {
+                high: 0.85, // Algorithm detection confidence thresholds
+                medium: 0.65,
+                low: 0.45
+            }
+        };
+    }
+
+    /**
+     * Store human expert feedback for continuous learning
+     * Step 2.2: Human Expert Integration
+     */
+    public storeExpertFeedback(feedback: HumanExpertFeedback): void {
+        const feedbackDir = path.join(this.cacheDir, 'expert-feedback');
+        if (!fs.existsSync(feedbackDir)) {
+            fs.mkdirSync(feedbackDir, { recursive: true });
+        }
+
+        const feedbackFile = path.join(feedbackDir, `${Date.now()}-${feedback.fileId}.json`);
+        fs.writeFileSync(feedbackFile, JSON.stringify(feedback, null, 2));
+        
+        logger.info(`Expert feedback stored for file ${feedback.fileId}, accuracy: ${feedback.isCorrect}`);
+    }
+
+    /**
+     * Load historical expert feedback for analysis
+     * Step 2.2: Expert Integration Infrastructure
+     */
+    public loadExpertFeedback(): HumanExpertFeedback[] {
+        const feedbackDir = path.join(this.cacheDir, 'expert-feedback');
+        if (!fs.existsSync(feedbackDir)) {
+            return [];
+        }
+
+        const feedbackFiles = fs.readdirSync(feedbackDir).filter(f => f.endsWith('.json'));
+        const feedback: HumanExpertFeedback[] = [];
+
+        feedbackFiles.forEach(file => {
+            try {
+                const content = fs.readFileSync(path.join(feedbackDir, file), 'utf8');
+                const feedbackData = JSON.parse(content);
+                // Convert timestamp string back to Date object
+                feedbackData.timestamp = new Date(feedbackData.timestamp);
+                feedback.push(feedbackData);
+            } catch (error) {
+                logger.warn(`Failed to load expert feedback from ${file}:`, error);
+            }
+        });
+
+        return feedback.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    }
+
+    /**
+     * Generate accuracy validation report
+     * Step 2.2: Reporting and Analysis
+     */
+    public generateAccuracyReport(): string {
+        const expertFeedback = this.loadExpertFeedback();
+        const metrics = this.calculateAccuracyMetrics([], expertFeedback);
+
+        const report = `
+# Granular Context Intelligence - Accuracy Validation Report
+
+## Overall Performance
+- **Overall Accuracy**: ${(metrics.overallAccuracy * 100).toFixed(1)}%
+- **Total Validations**: ${metrics.totalValidations}
+- **Expert Validation Score**: ${metrics.expertValidationScore ? (metrics.expertValidationScore * 100).toFixed(1) + '%' : 'N/A'}
+
+## Boundary Detection Performance
+- **Granular Detection Rate**: ${(metrics.granularDetectionRate * 100).toFixed(1)}%
+- **False Positive Rate**: ${(metrics.falsePositiveRate * 100).toFixed(1)}%
+
+## Domain-Specific Accuracy
+${Array.from(metrics.domainSpecificAccuracy.entries())
+        .map(([domain, accuracy]) => `- **${domain}**: ${(accuracy * 100).toFixed(1)}%`)
+        .join('\n')}
+
+## Detection Thresholds
+- **High Complexity**: ${(metrics.detectionThresholds.high * 100).toFixed(0)}%
+- **Medium Complexity**: ${(metrics.detectionThresholds.medium * 100).toFixed(0)}%
+- **Low Complexity**: ${(metrics.detectionThresholds.low * 100).toFixed(0)}%
+
+## Confidence Distribution
+${metrics.confidenceDistribution.map((dist, idx) => 
+        `- **≥${(0.5 + idx * 0.1).toFixed(1)}**: ${(dist * 100).toFixed(1)}%`
+    ).join('\n')}
+
+## Recommendations
+${metrics.overallAccuracy < 0.85 ? '- Consider adjusting algorithm complexity patterns\n' : ''}${
+    metrics.falsePositiveRate > 0.15 ? '- Review granular detection thresholds\n' : ''
+}${metrics.granularDetectionRate < 0.7 ? '- Enhance sophisticated algorithm detection patterns\n' : ''}
+
+Generated: ${new Date().toISOString()}
+        `.trim();
+
+        return report;
+    }
+
+    /**
+     * Load boundary detection configuration
+     * Step 2.3: Configuration and Adaptive Tuning
+     */
+    private loadConfiguration(): BoundaryDetectionConfig {
+        const configFile = path.join(this.cacheDir, 'boundary-detection-config.json');
+        
+        // Default configuration
+        const defaultConfig: BoundaryDetectionConfig = {
+            // Complexity scoring weights
+            businessConceptWeight: 0.4,
+            algorithmComplexityWeight: 0.35,
+            semanticCoherenceWeight: 0.25,
+            
+            // Detection thresholds
+            granularThreshold: 0.65,
+            domainThreshold: 0.45,
+            
+            // Algorithm pattern weights
+            mathematicalComplexityMultiplier: 1.5,
+            tradingAlgorithmBonus: 0.2,
+            designPatternWeight: 0.3,
+            
+            // Adaptive learning settings
+            enableAdaptiveTuning: true,
+            learningRate: 0.1,
+            minimumFeedbackCount: 5,
+            
+            // Performance constraints
+            maxAnalysisTimeMs: 15000,
+            cacheExpirationHours: 24
+        };
+
+        try {
+            if (fs.existsSync(configFile)) {
+                const configData = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+                // Merge with defaults to ensure all properties exist
+                const mergedConfig = { ...defaultConfig, ...configData };
+                logger.info('Loaded boundary detection configuration from cache');
+                return mergedConfig;
+            }
+        } catch (error) {
+            logger.warn('Failed to load configuration file, using defaults:', error);
+        }
+
+        // Save default configuration
+        this.saveConfiguration(defaultConfig);
+        return defaultConfig;
+    }
+
+    /**
+     * Save boundary detection configuration
+     * Step 2.3: Configuration Management
+     */
+    public saveConfiguration(config: BoundaryDetectionConfig): void {
+        const configFile = path.join(this.cacheDir, 'boundary-detection-config.json');
+        
+        try {
+            fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+            this.config = config;
+            logger.info('Boundary detection configuration saved successfully');
+        } catch (error) {
+            logger.error('Failed to save configuration:', error);
+            throw new Error(`Failed to save configuration: ${error}`);
+        }
+    }
+
+    /**
+     * Get current configuration
+     * Step 2.3: Configuration Access
+     */
+    public getConfiguration(): BoundaryDetectionConfig {
+        return { ...this.config }; // Return copy to prevent direct modification
+    }
+
+    /**
+     * Update configuration with adaptive tuning based on expert feedback
+     * Step 2.3: Adaptive Tuning
+     */
+    public adaptivelyTuneConfiguration(): BoundaryDetectionConfig {
+        if (!this.config.enableAdaptiveTuning) {
+            logger.info('Adaptive tuning disabled, skipping configuration update');
+            return this.config;
+        }
+
+        const expertFeedback = this.loadExpertFeedback();
+        
+        if (expertFeedback.length < this.config.minimumFeedbackCount) {
+            logger.info(`Insufficient feedback for adaptive tuning (${expertFeedback.length}/${this.config.minimumFeedbackCount})`);
+            return this.config;
+        }
+
+        // Calculate recent accuracy metrics
+        const recentFeedback = expertFeedback.slice(0, 20); // Last 20 feedback entries
+        const accuracy = recentFeedback.filter(f => f.isCorrect).length / recentFeedback.length;
+        
+        // Adaptive tuning based on accuracy
+        const updatedConfig = { ...this.config };
+        
+        if (accuracy < 0.8) {
+            // Poor accuracy - make detection more conservative
+            logger.info(`Low accuracy detected (${(accuracy * 100).toFixed(1)}%), making detection more conservative`);
+            
+            updatedConfig.granularThreshold += this.config.learningRate * 0.1;
+            updatedConfig.algorithmComplexityWeight += this.config.learningRate * 0.05;
+            updatedConfig.businessConceptWeight -= this.config.learningRate * 0.03;
+            
+        } else if (accuracy > 0.95) {
+            // High accuracy - can be more aggressive in detection
+            logger.info(`High accuracy detected (${(accuracy * 100).toFixed(1)}%), making detection more aggressive`);
+            
+            updatedConfig.granularThreshold -= this.config.learningRate * 0.05;
+            updatedConfig.algorithmComplexityWeight -= this.config.learningRate * 0.02;
+            updatedConfig.semanticCoherenceWeight += this.config.learningRate * 0.03;
+        }
+
+        // Analyze domain-specific feedback for targeted adjustments
+        const domainAccuracy = new Map<string, number[]>();
+        recentFeedback.forEach(feedback => {
+            const domain = feedback.expectedDomain;
+            if (!domainAccuracy.has(domain)) {
+                domainAccuracy.set(domain, []);
+            }
+            domainAccuracy.get(domain)!.push(feedback.isCorrect ? 1 : 0);
+        });
+
+        // Adjust trading algorithm bonus based on trading domain performance
+        const tradingDomains = ['Analysis.Fractal', 'Analysis.Indicator', 'Data.Provider'];
+        const tradingFeedback = recentFeedback.filter(f => 
+            tradingDomains.some(domain => f.expectedDomain.startsWith(domain))
+        );
+        
+        if (tradingFeedback.length > 0) {
+            const tradingAccuracy = tradingFeedback.filter(f => f.isCorrect).length / tradingFeedback.length;
+            if (tradingAccuracy < 0.85) {
+                updatedConfig.tradingAlgorithmBonus += this.config.learningRate * 0.1;
+                logger.info('Boosting trading algorithm detection bonus due to poor trading domain accuracy');
+            }
+        }
+
+        // Ensure values stay within reasonable bounds
+        updatedConfig.granularThreshold = Math.max(0.3, Math.min(0.9, updatedConfig.granularThreshold));
+        updatedConfig.domainThreshold = Math.max(0.2, Math.min(0.6, updatedConfig.domainThreshold));
+        updatedConfig.businessConceptWeight = Math.max(0.2, Math.min(0.6, updatedConfig.businessConceptWeight));
+        updatedConfig.algorithmComplexityWeight = Math.max(0.2, Math.min(0.6, updatedConfig.algorithmComplexityWeight));
+        updatedConfig.semanticCoherenceWeight = Math.max(0.1, Math.min(0.4, updatedConfig.semanticCoherenceWeight));
+        updatedConfig.tradingAlgorithmBonus = Math.max(0.0, Math.min(0.5, updatedConfig.tradingAlgorithmBonus));
+
+        // Normalize weights to sum to 1.0
+        const totalWeight = updatedConfig.businessConceptWeight + 
+                           updatedConfig.algorithmComplexityWeight + 
+                           updatedConfig.semanticCoherenceWeight;
+        
+        updatedConfig.businessConceptWeight /= totalWeight;
+        updatedConfig.algorithmComplexityWeight /= totalWeight;
+        updatedConfig.semanticCoherenceWeight /= totalWeight;
+
+        // Save updated configuration if significant changes were made
+        const hasSignificantChanges = Math.abs(updatedConfig.granularThreshold - this.config.granularThreshold) > 0.01 ||
+                                    Math.abs(updatedConfig.businessConceptWeight - this.config.businessConceptWeight) > 0.02;
+
+        if (hasSignificantChanges) {
+            logger.info('Significant adaptive tuning changes detected, saving updated configuration');
+            this.saveConfiguration(updatedConfig);
+        }
+
+        return updatedConfig;
+    }
+
+    /**
+     * Generate configuration tuning report
+     * Step 2.3: Configuration Analysis and Reporting
+     */
+    public generateConfigurationReport(): string {
+        const expertFeedback = this.loadExpertFeedback();
+        const currentConfig = this.getConfiguration();
+        
+        const report = `
+# Boundary Detection Configuration Report
+
+## Current Configuration
+### Complexity Scoring Weights
+- **Business Concept Weight**: ${(currentConfig.businessConceptWeight * 100).toFixed(1)}%
+- **Algorithm Complexity Weight**: ${(currentConfig.algorithmComplexityWeight * 100).toFixed(1)}%
+- **Semantic Coherence Weight**: ${(currentConfig.semanticCoherenceWeight * 100).toFixed(1)}%
+
+### Detection Thresholds
+- **Granular Threshold**: ${(currentConfig.granularThreshold * 100).toFixed(1)}%
+- **Domain Threshold**: ${(currentConfig.domainThreshold * 100).toFixed(1)}%
+
+### Algorithm Pattern Weights
+- **Mathematical Complexity Multiplier**: ${currentConfig.mathematicalComplexityMultiplier.toFixed(2)}x
+- **Trading Algorithm Bonus**: ${(currentConfig.tradingAlgorithmBonus * 100).toFixed(1)}%
+- **Design Pattern Weight**: ${(currentConfig.designPatternWeight * 100).toFixed(1)}%
+
+### Adaptive Learning Settings
+- **Enable Adaptive Tuning**: ${currentConfig.enableAdaptiveTuning ? 'Yes' : 'No'}
+- **Learning Rate**: ${(currentConfig.learningRate * 100).toFixed(1)}%
+- **Minimum Feedback Count**: ${currentConfig.minimumFeedbackCount}
+
+### Performance Constraints
+- **Max Analysis Time**: ${currentConfig.maxAnalysisTimeMs}ms
+- **Cache Expiration**: ${currentConfig.cacheExpirationHours}h
+
+## Feedback Analysis
+- **Total Expert Feedback Entries**: ${expertFeedback.length}
+- **Adaptive Tuning Eligible**: ${expertFeedback.length >= currentConfig.minimumFeedbackCount ? 'Yes' : 'No'}
+
+## Configuration Health
+${currentConfig.granularThreshold > 0.8 ? '⚠️ Granular threshold very high - may miss valid detections\n' : ''}${
+    currentConfig.granularThreshold < 0.5 ? '⚠️ Granular threshold very low - may produce false positives\n' : ''
+}${currentConfig.businessConceptWeight + currentConfig.algorithmComplexityWeight + currentConfig.semanticCoherenceWeight !== 1.0 ? 
+    '⚠️ Weights do not sum to 1.0 - normalization may be needed\n' : ''
+}
+
+Generated: ${new Date().toISOString()}
+        `.trim();
+
+        return report;
     }
 }
