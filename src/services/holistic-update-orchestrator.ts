@@ -627,6 +627,78 @@ export class HolisticUpdateOrchestrator {
     }
 
     /**
+     * Identify granular domains that qualify for their own context files
+     * Enhanced Granular Context Intelligence: Determine which domains should remain granular
+     */
+    private identifyQualifiedGranularDomains(affectedDomains: string[], semanticResults: SemanticAnalysisResult[]): Set<string> {
+        const qualifiedDomains = new Set<string>();
+        
+        logger.info(`🔍 Evaluating ${affectedDomains.length} affected domains for granular context qualification: ${affectedDomains.join(', ')}`);
+        
+        for (const domain of affectedDomains) {
+            if (domain.includes('.')) {
+                logger.info(`🎯 Evaluating granular domain: ${domain}`);
+                
+                // Check if this granular domain qualifies for its own context
+                const domainResults = semanticResults.filter(result => 
+                    result.domainContext === domain ||
+                    result.businessConcepts.some(concept => concept.domain === domain)
+                );
+                
+                logger.info(`   📊 Found ${domainResults.length} semantic results for domain ${domain}`);
+                
+                const qualification = this.evaluateGranularContextQualification(domain, domainResults);
+                
+                logger.info(`   📈 Qualification results for ${domain}:`);
+                logger.info(`      - Confidence Score: ${qualification.confidenceScore.toFixed(3)}`);
+                logger.info(`      - Business Concepts: ${qualification.businessConceptCount}`);
+                logger.info(`      - Business Rules: ${qualification.businessRuleCount}`);
+                logger.info(`      - Algorithmic Complexity: ${qualification.hasAlgorithmicComplexity}`);
+                logger.info(`      - Semantic Coherence: ${qualification.hasSemanticCoherence}`);
+                logger.info(`      - Qualifies: ${qualification.qualifiesForGranularContext}`);
+                
+                if (qualification.qualifiesForGranularContext) {
+                    qualifiedDomains.add(domain);
+                    logger.info(`✅ Domain ${domain} qualifies for granular context (confidence: ${qualification.confidenceScore.toFixed(3)})`);
+                } else {
+                    logger.info(`❌ Domain ${domain} does not qualify for granular context (confidence: ${qualification.confidenceScore.toFixed(3)})`);
+                }
+            } else {
+                logger.debug(`⏭️  Skipping parent domain: ${domain} (no dot notation)`);
+            }
+        }
+        
+        logger.info(`✅ Granular domain qualification complete: ${qualifiedDomains.size} domains qualified: ${Array.from(qualifiedDomains).join(', ')}`);
+        return qualifiedDomains;
+    }
+
+    /**
+     * Intelligent domain consolidation that preserves qualified granular domains
+     * Enhanced Granular Context Intelligence: Balance between granular and consolidated contexts
+     */
+    private intelligentDomainConsolidation(affectedDomains: string[], qualifiedGranularDomains: Set<string>): string[] {
+        const finalDomains = new Set<string>();
+        
+        for (const domain of affectedDomains) {
+            if (qualifiedGranularDomains.has(domain)) {
+                // Preserve qualified granular domains
+                finalDomains.add(domain);
+                logger.info(`🎯 Preserving granular domain: ${domain}`);
+            } else if (domain.includes('.')) {
+                // Consolidate unqualified granular domains to parent
+                const parentDomain = domain.split('.')[0];
+                finalDomains.add(parentDomain);
+                logger.debug(`🔄 Consolidating ${domain} to parent domain: ${parentDomain}`);
+            } else {
+                // Keep parent domains as-is
+                finalDomains.add(domain);
+            }
+        }
+        
+        return Array.from(finalDomains);
+    }
+
+    /**
      * Create update plan for all affected domains
      */
     private async createDomainUpdatePlan(
@@ -635,9 +707,10 @@ export class HolisticUpdateOrchestrator {
     ): Promise<DomainUpdatePlan[]> {
         const plans: DomainUpdatePlan[] = [];
 
-        // Consolidate subdomains into parent domains to avoid fragmented context files
-        // E.g., Analysis.Indicator should be consolidated into Analysis
-        const consolidatedDomains = this.consolidateSubdomains(affectedDomains);
+        // Enhanced Granular Context Intelligence: Preserve qualified granular domains
+        // Only consolidate domains that don't qualify for granular context
+        const qualifiedGranularDomains = this.identifyQualifiedGranularDomains(affectedDomains, semanticResults);
+        const consolidatedDomains = this.intelligentDomainConsolidation(affectedDomains, qualifiedGranularDomains);
 
         for (const domain of consolidatedDomains) {
             // Enhanced hierarchical context path creation
@@ -762,22 +835,28 @@ export class HolisticUpdateOrchestrator {
         const hasSemanticCoherence = this.assessSemanticCoherence(granularDomain, results);
         const hasAIAssistanceValue = this.assessAIAssistanceValue(granularDomain, results);
         
-        // Multi-criteria confidence scoring
+        // Enhanced multi-criteria confidence scoring for algorithmic domains
         let confidenceScore = 0.0;
         
-        // Business concept density scoring (35% weight)
-        if (businessConceptCount >= 3) {
-            confidenceScore += 0.35 * Math.min(businessConceptCount / 5.0, 1.0);
+        // Business concept density scoring (30% weight) - More forgiving for algorithmic domains
+        if (businessConceptCount >= 1) {
+            if (hasAlgorithmicComplexity) {
+                // Algorithmic domains: 1 concept = 80% of max score, 2+ concepts = 100%
+                confidenceScore += 0.30 * Math.min(0.8 + (businessConceptCount - 1) * 0.2, 1.0);
+            } else {
+                // Non-algorithmic domains: need more concepts for high score
+                confidenceScore += 0.30 * Math.min(businessConceptCount / 5.0, 1.0);
+            }
         }
         
-        // Business rule density scoring (25% weight)  
+        // Business rule density scoring (20% weight) - Reduced weight
         if (businessRuleCount > 0) {
-            confidenceScore += 0.25 * Math.min(businessRuleCount / 10.0, 1.0);
+            confidenceScore += 0.20 * Math.min(businessRuleCount / 10.0, 1.0);
         }
         
-        // Algorithmic complexity scoring (25% weight)
+        // Algorithmic complexity scoring (35% weight) - Increased weight for algorithmic domains
         if (hasAlgorithmicComplexity) {
-            confidenceScore += 0.25;
+            confidenceScore += 0.35;
         }
         
         // Semantic coherence scoring (15% weight)
@@ -785,8 +864,10 @@ export class HolisticUpdateOrchestrator {
             confidenceScore += 0.15;
         }
         
-        // Qualification decision: require >0.85 confidence and >=3 business concepts
-        const qualifiesForGranularContext = confidenceScore > 0.85 && businessConceptCount >= 3;
+        // Enhanced qualification decision: More practical criteria for real-world scenarios
+        // Algorithm-heavy domains like Analysis.Fractal deserve granular context even with fewer concepts
+        const qualifiesForGranularContext = (confidenceScore > 0.70 && businessConceptCount >= 1 && hasAlgorithmicComplexity) ||
+                                          (confidenceScore > 0.80 && businessConceptCount >= 2);
         
         return {
             qualifiesForGranularContext,

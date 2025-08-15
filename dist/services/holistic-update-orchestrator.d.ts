@@ -155,6 +155,16 @@ export declare class HolisticUpdateOrchestrator {
      */
     private consolidateSubdomains;
     /**
+     * Identify granular domains that qualify for their own context files
+     * Enhanced Granular Context Intelligence: Determine which domains should remain granular
+     */
+    private identifyQualifiedGranularDomains;
+    /**
+     * Intelligent domain consolidation that preserves qualified granular domains
+     * Enhanced Granular Context Intelligence: Balance between granular and consolidated contexts
+     */
+    private intelligentDomainConsolidation;
+    /**
      * Create update plan for all affected domains
      */
     private createDomainUpdatePlan;
