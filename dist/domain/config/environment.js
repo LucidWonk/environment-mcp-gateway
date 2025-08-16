@@ -1,15 +1,23 @@
 import { config } from 'dotenv';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-// Load environment variables from .env.development in parent directory
-// Use resolve to get absolute path - handle both src and dist directories
-const projectRoot = resolve(__dirname, '..', '..', '..');
-const envPath = join(projectRoot, '.env.development');
+// Load environment variables from .env.development in EnvironmentMCPGateway root directory
+// Calculate path from src/domain/config back to EnvironmentMCPGateway root
+const mcpGatewayRoot = resolve(__dirname, '..', '..', '..');
+const envPath = join(mcpGatewayRoot, '.env.development');
 console.info(`Loading environment from: ${envPath}`);
-config({ path: envPath });
+// Verify the file exists before trying to load it
+if (existsSync(envPath)) {
+    config({ path: envPath });
+    console.info(`✅ Environment file loaded successfully from ${envPath}`);
+}
+else {
+    console.warn(`❌ Environment file not found at ${envPath}, using process environment variables`);
+}
 export class Environment {
     // Database - development database configuration
     static get dbHost() { return process.env.DB_HOST ?? 'localhost'; }
@@ -20,7 +28,7 @@ export class Environment {
     // Git configuration for development workflow
     static get gitRepoPath() {
         // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
-        return process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks';
+        return process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/projects/lucidwonks';
     }
     static get gitUserName() { return process.env.GIT_USER_NAME; }
     static get gitUserEmail() { return process.env.GIT_USER_EMAIL; }
@@ -31,7 +39,7 @@ export class Environment {
     static get solutionPath() { return join(this.projectRoot, 'Lucidwonks.sln'); }
     static get projectRoot() {
         // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
-        const root = process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/Projects/Lucidwonks';
+        const root = process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/projects/lucidwonks';
         // Validate the path exists and log for debugging
         console.info(`Project root resolved to: ${root}`);
         return root;
