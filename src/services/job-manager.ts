@@ -37,21 +37,31 @@ class JobManager {
     async startJob(request: JobRequest): Promise<{ jobId: string; started: boolean }> {
         const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        console.info('🚀 JobManager: Starting new job', {
-            jobId,
-            type: request.type,
-            requestedBy: request.requestedBy || 'unknown',
-            parameterKeys: Object.keys(request.parameters || {}),
-            timestamp: new Date().toISOString()
-        });
+        if (!process.env.MCP_SILENT_MODE) {
+
+        
+            console.info('🚀 JobManager: Starting new job', {
+                jobId,
+                type: request.type,
+                requestedBy: request.requestedBy || 'unknown',
+                parameterKeys: Object.keys(request.parameters || {}),
+                timestamp: new Date().toISOString()
+            });
+
+        
+        }
         
         // Check if we're at capacity
         if (this.runningJobs.size >= this.maxConcurrentJobs) {
-            console.warn(`⚠️ JobManager: At maximum concurrent job capacity (${this.maxConcurrentJobs}), job will be queued`, {
-                jobId,
-                runningJobs: this.runningJobs.size,
-                maxConcurrentJobs: this.maxConcurrentJobs
-            });
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.warn(`⚠️ JobManager: At maximum concurrent job capacity (${this.maxConcurrentJobs}), job will be queued`, {
+                    jobId,
+                    runningJobs: this.runningJobs.size,
+                    maxConcurrentJobs: this.maxConcurrentJobs
+                });
+
+            }
         }
         
         const job: JobStatus = {
@@ -68,20 +78,28 @@ class JobManager {
         };
 
         this.jobs.set(jobId, job);
-        console.info('📋 JobManager: Job entry created', { jobId, status: 'queued' });
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info('📋 JobManager: Job entry created', { jobId, status: 'queued' });
+
+        }
 
         // Start job execution asynchronously (don't await)
         this.executeJob(jobId).catch(error => {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.error(`❌ JobManager: Job ${jobId} failed during execution`, {
-                jobId,
-                error: error instanceof Error ? {
-                    name: error.name,
-                    message: error.message,
-                    stack: error.stack
-                } : error,
-                timestamp: new Date().toISOString()
-            });
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.error(`❌ JobManager: Job ${jobId} failed during execution`, {
+                    jobId,
+                    error: error instanceof Error ? {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    } : error,
+                    timestamp: new Date().toISOString()
+                });
+
+            }
             
             this.updateJobStatus(jobId, {
                 status: 'failed',
@@ -147,50 +165,76 @@ class JobManager {
     private async executeJob(jobId: string): Promise<void> {
         const job = this.jobs.get(jobId);
         if (!job) {
-            console.error(`❌ JobManager: Cannot execute job - job ${jobId} not found in registry`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.error(`❌ JobManager: Cannot execute job - job ${jobId} not found in registry`);
+
+            }
             return;
         }
 
-        console.info(`📋 JobManager: Preparing to execute job ${jobId}`, {
-            jobId,
-            type: job.type,
-            currentRunningJobs: this.runningJobs.size,
-            maxCapacity: this.maxConcurrentJobs
-        });
+        if (!process.env.MCP_SILENT_MODE) {
+
+
+            console.info(`📋 JobManager: Preparing to execute job ${jobId}`, {
+                jobId,
+                type: job.type,
+                currentRunningJobs: this.runningJobs.size,
+                maxCapacity: this.maxConcurrentJobs
+            });
+
+
+        }
 
         // Wait for available slot if we're at max capacity
         let waitTime = 0;
         while (this.runningJobs.size >= this.maxConcurrentJobs) {
             if (waitTime === 0) {
-                console.info(`⏳ JobManager: Job ${jobId} waiting for available execution slot`, {
-                    jobId,
-                    runningJobs: this.runningJobs.size,
-                    maxCapacity: this.maxConcurrentJobs
-                });
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info(`⏳ JobManager: Job ${jobId} waiting for available execution slot`, {
+                        jobId,
+                        runningJobs: this.runningJobs.size,
+                        maxCapacity: this.maxConcurrentJobs
+                    });
+
+                }
             }
             await new Promise(resolve => setTimeout(resolve, 1000));
             waitTime += 1000;
             
             // Log every 30 seconds while waiting
             if (waitTime % 30000 === 0) {
-                console.info(`⏳ JobManager: Job ${jobId} still waiting (${waitTime/1000}s)`, {
-                    jobId,
-                    waitTime,
-                    runningJobs: this.runningJobs.size
-                });
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info(`⏳ JobManager: Job ${jobId} still waiting (${waitTime/1000}s)`, {
+                        jobId,
+                        waitTime,
+                        runningJobs: this.runningJobs.size
+                    });
+
+                }
             }
         }
 
         if (waitTime > 0) {
-            console.info(`✅ JobManager: Job ${jobId} execution slot available after ${waitTime/1000}s wait`, { jobId, waitTime });
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`✅ JobManager: Job ${jobId} execution slot available after ${waitTime/1000}s wait`, { jobId, waitTime });
+
+            }
         }
 
         this.runningJobs.add(jobId);
-        console.info(`🔄 JobManager: Starting execution of job ${jobId}`, {
-            jobId,
-            type: job.type,
-            startTime: new Date().toISOString()
-        });
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`🔄 JobManager: Starting execution of job ${jobId}`, {
+                jobId,
+                type: job.type,
+                startTime: new Date().toISOString()
+            });
+
+        }
         
         this.updateJobStatus(jobId, {
             status: 'running',
@@ -201,39 +245,65 @@ class JobManager {
             let result;
             const jobStartTime = Date.now();
             
-            console.info(`🔧 JobManager: Executing job type: ${job.type}`, { jobId, type: job.type });
+            if (!process.env.MCP_SILENT_MODE) {
+
+            
+                console.info(`🔧 JobManager: Executing job type: ${job.type}`, { jobId, type: job.type });
+
+            
+            }
             
             switch (job.type) {
             case 'full-repository-reindex':
-                console.info('📁 JobManager: Starting full repository re-index execution', { jobId });
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info('📁 JobManager: Starting full repository re-index execution', { jobId });
+
+                }
                 result = await this.executeFullRepositoryReindex(jobId, job.metadata);
                 break;
             case 'holistic-update':
-                console.info('🔄 JobManager: Starting holistic update execution', { jobId });
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info('🔄 JobManager: Starting holistic update execution', { jobId });
+
+                }
                 result = await this.executeHolisticUpdate(jobId, job.metadata);
                 break;
             case 'cross-domain-analysis':
-                console.info('🔍 JobManager: Starting cross-domain analysis execution', { jobId });
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info('🔍 JobManager: Starting cross-domain analysis execution', { jobId });
+
+                }
                 result = await this.executeCrossDomainAnalysis(jobId, job.metadata);
                 break;
             default: {
                 const errorMsg = `Unknown job type: ${job.type}`;
-                console.error(`❌ JobManager: ${errorMsg}`, { 
-                    jobId, 
-                    type: job.type,
-                    supportedTypes: ['full-repository-reindex', 'holistic-update', 'cross-domain-analysis']
-                });
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.error(`❌ JobManager: ${errorMsg}`, { 
+                        jobId, 
+                        type: job.type,
+                        supportedTypes: ['full-repository-reindex', 'holistic-update', 'cross-domain-analysis']
+                    });
+
+                }
                 throw new Error(errorMsg);
             }
             }
 
             const executionTime = Date.now() - jobStartTime;
-            console.info(`✅ JobManager: Job ${jobId} completed successfully`, {
-                jobId,
-                type: job.type,
-                executionTime,
-                resultKeys: result ? Object.keys(result) : []
-            });
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`✅ JobManager: Job ${jobId} completed successfully`, {
+                    jobId,
+                    type: job.type,
+                    executionTime,
+                    resultKeys: result ? Object.keys(result) : []
+                });
+
+            }
 
             this.updateJobStatus(jobId, {
                 status: 'completed',
@@ -244,16 +314,20 @@ class JobManager {
 
         } catch (error) {
             const executionTime = Date.now() - Date.now(); // This will be 0, but shows structure
-            console.error(`❌ JobManager: Job ${jobId} failed during execution`, {
-                jobId,
-                type: job.type,
-                executionTime,
-                error: error instanceof Error ? {
-                    name: error.name,
-                    message: error.message,
-                    stack: error.stack
-                } : error
-            });
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.error(`❌ JobManager: Job ${jobId} failed during execution`, {
+                    jobId,
+                    type: job.type,
+                    executionTime,
+                    error: error instanceof Error ? {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    } : error
+                });
+
+            }
             
             this.updateJobStatus(jobId, {
                 status: 'failed',
@@ -263,10 +337,14 @@ class JobManager {
             });
         } finally {
             this.runningJobs.delete(jobId);
-            console.info(`🏁 JobManager: Job ${jobId} execution completed, removed from running jobs`, {
-                jobId,
-                remainingRunningJobs: this.runningJobs.size
-            });
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`🏁 JobManager: Job ${jobId} execution completed, removed from running jobs`, {
+                    jobId,
+                    remainingRunningJobs: this.runningJobs.size
+                });
+
+            }
         }
     }
 

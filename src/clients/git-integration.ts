@@ -1,22 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
 import { SemanticAnalysisService, SemanticAnalysisResult } from '../services/semantic-analysis.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'git-integration.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface GitChangeAnalysis {
     changedFiles: string[];

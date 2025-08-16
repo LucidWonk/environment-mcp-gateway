@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// Set silent mode for MCP operations to prevent console output contamination
+process.env.MCP_SILENT_MODE = 'true';
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -13,29 +16,22 @@ import { SolutionParser } from './infrastructure/solution-parser.js';
 import { AdapterManager } from './adapters/adapter-manager.js';
 import { ToolRegistry } from './orchestrator/tool-registry.js';
 import { HealthServer } from './health-server.js';
-import winston from 'winston';
+import { createMCPLogger } from './utils/mcp-logger.js';
 
 // Initialize environment and logging
 try {
     Environment.validateEnvironment();
 } catch (error) {
-    console.error('Environment validation failed:', error);
+    // Only log in development mode, not during MCP operations
+    const isDevelopment = process.env.NODE_ENV === 'development' && !process.env.MCP_SILENT_MODE;
+    if (isDevelopment) {
+        console.error('Environment validation failed:', error);
+    }
     process.exit(1);
 }
 
-// Configure logging
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
-    ]
-});
+// Configure logging - avoid console output during MCP operations
+const logger = createMCPLogger('environment-mcp-gateway.log');
 
 class EnvironmentMCPGateway {
     private server: Server;

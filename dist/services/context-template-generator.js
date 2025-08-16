@@ -1,15 +1,7 @@
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
 import * as fs from 'fs';
 import * as path from 'path';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'context-template-generator.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Advanced template-based context content generator
  * Step 3.1: Template-Based Context Content Generation

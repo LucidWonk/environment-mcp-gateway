@@ -7,15 +7,8 @@ import { ImpactMapper } from './impact-mapper.js';
 import { CrossDomainCoordinator } from './cross-domain-coordinator.js';
 import { HolisticUpdateOrchestrator } from './holistic-update-orchestrator.js';
 import { ContextEventManager } from '../events/context-events.js';
-import winston from 'winston';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'update-integration.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Orchestrates the complete update integration workflow
  * 1. Perform cross-domain impact analysis

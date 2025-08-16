@@ -1,15 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import winston from 'winston';
 import { SemanticAnalysisService } from './semantic-analysis.js';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'domain-analyzer.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Analyzes domain boundaries and cross-domain relationships
  * Implements Domain-Driven Design (DDD) boundary detection

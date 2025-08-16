@@ -1,14 +1,7 @@
 import * as path from 'path';
-import winston from 'winston';
 import { BoundaryDetectionConfigManager } from './boundary-detection-config-manager.js';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'semantic-boundary-detector.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Intelligent semantic boundary detector for granular context creation
  * Implements BR-CEE-005: Boundary detection algorithm must achieve >85% accuracy

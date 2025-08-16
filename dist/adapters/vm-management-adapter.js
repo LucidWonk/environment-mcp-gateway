@@ -1,15 +1,7 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 // VM Management Adapter Class
 export class VMManagementAdapter {
     static DEFAULT_VM_TEMPLATES = [

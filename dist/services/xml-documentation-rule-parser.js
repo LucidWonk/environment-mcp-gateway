@@ -1,14 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import winston from 'winston';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'xml-documentation-parser.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('xml-documentation-parser.log');
 export var XmlRuleType;
 (function (XmlRuleType) {
     XmlRuleType["ValidationRule"] = "validation";

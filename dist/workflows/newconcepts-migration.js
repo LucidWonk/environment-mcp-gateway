@@ -3,16 +3,9 @@
  * Specialized workflow for migrating concepts from NewConcepts folder to mature domain structures
  * Implements TEMP-CONTEXT-ENGINE-a7b3 NewConcepts workflow capability
  */
-import winston from 'winston';
 import path from 'path';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'newconcepts-migration.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Orchestrates NewConcepts evolution into mature domain structures
  */

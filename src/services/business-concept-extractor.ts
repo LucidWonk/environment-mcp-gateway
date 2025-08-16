@@ -1,19 +1,7 @@
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
 import { BusinessConcept, BusinessRule } from './semantic-analysis.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'business-concept-extractor.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface ConceptCluster {
     domain: string;

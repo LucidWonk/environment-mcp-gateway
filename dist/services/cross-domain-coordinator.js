@@ -1,16 +1,9 @@
 import * as path from 'path';
-import winston from 'winston';
 import { DomainAnalyzer } from './domain-analyzer.js';
 import { ImpactMapper } from './impact-mapper.js';
 import { HolisticUpdateOrchestrator } from './holistic-update-orchestrator.js';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'cross-domain-coordinator.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Coordinates cross-domain updates with sophisticated impact analysis
  * Manages dependencies, parallel execution, and rollback coordination

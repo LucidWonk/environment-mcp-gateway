@@ -1,12 +1,5 @@
-import winston from 'winston';
-const logger = winston.createLogger({
-    level: 'debug',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'timeout-manager.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 export class TimeoutManager {
     static DEFAULT_CONFIG = {
         semanticAnalysis: 60000, // 60 seconds

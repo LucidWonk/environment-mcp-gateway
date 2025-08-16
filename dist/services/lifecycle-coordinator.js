@@ -3,16 +3,9 @@
  * Orchestrates complex multi-system lifecycle operations between document and registry systems
  * Implements TEMP-CONTEXT-ENGINE-a7b3 lifecycle integration capability
  */
-import winston from 'winston';
 import { contextEventManager } from '../events/context-events.js';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'lifecycle-coordinator.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Coordinates lifecycle operations across document and registry systems
  * Provides transaction-like semantics with rollback capabilities

@@ -5,16 +5,9 @@
  */
 import * as fs from 'fs';
 // import * as path from 'path';
-import winston from 'winston';
 import { ApprovalWorkflowManager } from './approval-workflow.js';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'registry-manager.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Core registry management service for capability lifecycle management
  * Handles placeholder ID conversion and registry integrity

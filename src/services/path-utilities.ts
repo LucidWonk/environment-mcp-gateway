@@ -1,19 +1,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import winston from 'winston';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: 'debug',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'path-utilities.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface PathResolutionResult {
     resolvedPath: string;

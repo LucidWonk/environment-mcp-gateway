@@ -1,15 +1,8 @@
 import * as path from 'path';
-import winston from 'winston';
 import { DomainAnalyzer } from './domain-analyzer.js';
 import { SemanticAnalysisService } from './semantic-analysis.js';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'impact-mapper.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Maps and analyzes the impact of changes across domain boundaries
  * Provides prediction and visualization of cross-domain propagation

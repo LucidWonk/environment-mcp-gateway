@@ -1,14 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import winston from 'winston';
-const logger = winston.createLogger({
-    level: 'debug',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'path-utilities.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Comprehensive path utilities for handling cross-platform path issues,
  * case sensitivity problems, and Docker volume mount inconsistencies

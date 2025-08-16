@@ -4,26 +4,15 @@
  * Implements TEMP-CONTEXT-ENGINE-a7b3 lifecycle integration capability
  */
 
-import winston from 'winston';
 import { DocumentMigrationService } from './document-migration.js';
 import { RegistryManager } from './registry-manager.js';
 import { PlaceholderTracker } from './placeholder-tracker.js';
 import { ApprovalWorkflowManager } from './approval-workflow.js';
 import { ArchiveManager } from './archive-manager.js';
 import { contextEventManager } from '../events/context-events.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'lifecycle-coordinator.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface CoordinatedOperation {
     operationId: string;

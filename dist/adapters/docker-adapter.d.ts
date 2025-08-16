@@ -64,6 +64,7 @@ export declare class DockerAdapter {
     private static readonly REDPANDA_IMAGE_PATTERNS;
     private static readonly REDPANDA_CONSOLE_IMAGE_PATTERNS;
     private executeDockerCommand;
+    private normalizeContainerStatus;
     private executeComposeCommand;
     private parseDockerPsOutput;
     listContainers(): Promise<ContainerInfo[]>;

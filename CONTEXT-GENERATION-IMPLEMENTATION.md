@@ -3,6 +3,7 @@
 **Implementation ID**: TEMP-CONTEXT-ENGINE-a7b3  
 **Step**: 1.3 - Context File Generation from Semantic Analysis  
 **Date**: 2025-08-05  
+**Last Enhanced**: 2025-08-16 (Added Document Lifecycle Completion workflows)
 **Status**: COMPLETED ✅
 
 ## Overview
@@ -208,13 +209,77 @@ interface SemanticAnalysisResult {
 **Cross-Domain Dependencies**: Tracked and documented in integration points  
 **NewConcepts Lifecycle**: Ready for transition from temporary to permanent IDs
 
+## Enhanced Document Lifecycle Completion
+
+### **Template Versioning Updates**
+**Version Enhancement**: Updated ICP templates to include comprehensive Document Lifecycle Completion phases
+
+**Template Version Changes**:
+- **`template.codification.icp.md`**: 2.0.0 → 3.0.0 (Major: Added Phase 5)
+- **`template.implementation.icp.md`**: 1.1 → 2.0.0 (Major: Added Phase N+1)
+- **`template.setup.icp.md`**: New → 1.0.0 (Added versioning system)
+
+### **New Completion Workflows**
+
+#### **Concept ICP Phase 5: Document Lifecycle Completion**
+**Automated Execution**: After Phase 4 (Implementation ICP Generation)
+
+**Step 5.1: Document Archival with Timestamping** (6 subtasks)
+- ✅ **Automated Timestamping**: `YYYYMMDD-HHMM` format generation
+- ✅ **Complete Archival**: Archives both concept.req AND codification.icp with timestamps
+- ✅ **Index Management**: Updates `Implemented/README.md` with completion entries
+- ✅ **Integrity Validation**: Ensures archived documents maintain full accessibility
+
+**Step 5.2: Domain Document Placement Analysis** (8 subtasks)
+- ✅ **Namespace Analysis**: Scans solution structure for proper Documentation placement
+- ✅ **Merge vs Create Logic**: Analyzes existing documentation for >70% conceptual overlap
+- ✅ **Human Approval Gate**: Presents placement proposal before any changes
+- ✅ **Intelligent Merging**: Enhances existing documents rather than duplicating
+
+**Step 5.3: Lifecycle Completion Validation** (4 subtasks)
+- ✅ **System Consistency**: Validates cross-references and documentation coherence
+- ✅ **Final Report**: Complete summary of archival and placement actions
+
+#### **Implementation ICP Phase N+1: Implementation Lifecycle Completion**
+**Automated Execution**: After all implementation phases complete
+
+**Step N+1.1: Implementation Documentation Finalization** (5 subtasks)
+- ✅ **Status Updates**: Updates domain.md and digital.md files to "Implemented"
+- ✅ **Registry Completion**: Finalizes capability registry with completion dates
+- ✅ **Cross-Reference Updates**: Ensures documentation reflects implementation completion
+
+**Step N+1.2: Implementation Artifact Archival** (4 subtasks)
+- ✅ **ICP Archival**: Archives implementation ICP with timestamp for NewConcepts
+- ✅ **Completion Tracking**: Updates archival index with implementation metrics
+- ✅ **Final Validation**: Confirms implementation lifecycle integrity
+
+### **System Integration Impact**
+
+#### **Context Engineering System Benefits**
+1. **Zero Orphaned Documents**: All concept documents properly archived with timestamps
+2. **Namespace Alignment**: Domain documents placed in code-structure-aligned locations
+3. **Merge Intelligence**: Existing documents enhanced rather than duplicated
+4. **Complete Traceability**: Full archival index maintains historical implementation record
+
+#### **MCP Gateway Integration**
+- **Enhanced Document Management**: Context generation now supports proper lifecycle completion
+- **Archive Awareness**: Tools can reference archived concepts for historical context
+- **Placement Intelligence**: Context files placed considering namespace structure
+- **Lifecycle Coordination**: MCP tools coordinate with document lifecycle phases
+
+#### **Template System Consistency**
+- **Versioning Enforcement**: All templates now have consistent update instructions
+- **Change Tracking**: Template modifications properly versioned and documented
+- **Instruction Propagation**: Template update rules consistent across all templates
+
 ## Next Steps
 
-1. **Step 2.1**: Implement Context Management Core functionality
-2. **Step 2.2**: Develop Context Change Detection system  
-3. **Step 2.3**: Create Context Lifecycle Management
+1. **Step 2.1**: Implement Context Management Core functionality with lifecycle awareness
+2. **Step 2.2**: Develop Context Change Detection system integrated with archival workflows
+3. **Step 2.3**: Create Context Lifecycle Management supporting new completion phases
 4. **XUnit Testing**: Implement proper test suite using approved framework
 5. **Production Deployment**: Move from development to production configuration
+6. **Document Lifecycle Integration**: Integrate MCP context generation with new completion workflows
 
 ---
 

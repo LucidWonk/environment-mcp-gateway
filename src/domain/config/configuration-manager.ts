@@ -3,24 +3,13 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { watch, FSWatcher } from 'fs';
 import { existsSync, readFileSync } from 'fs';
-import winston from 'winston';
+import { createMCPLogger } from '../../utils/mcp-logger.js';
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const logger = winston.createLogger({
-    level: process.env.MCP_LOG_LEVEL ?? 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface ConfigurationChangeEvent {
     type: 'environment' | 'dotenv';

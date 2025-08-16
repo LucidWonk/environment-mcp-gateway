@@ -1,21 +1,9 @@
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { SemanticAnalysisResult, BusinessConcept } from './semantic-analysis.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'context-template-generator.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface ContextTemplate {
     templateId: string;

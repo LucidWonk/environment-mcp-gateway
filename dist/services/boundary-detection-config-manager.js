@@ -1,14 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import winston from 'winston';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'boundary-detection-config.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Configuration management system for semantic boundary detection
  * Implements BR-CEE-005: Configuration must support >85% accuracy requirement

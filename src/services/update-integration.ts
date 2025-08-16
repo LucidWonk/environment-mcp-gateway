@@ -8,20 +8,9 @@ import { ImpactMapper } from './impact-mapper.js';
 import { CrossDomainCoordinator } from './cross-domain-coordinator.js';
 import { HolisticUpdateOrchestrator } from './holistic-update-orchestrator.js';
 import { ContextEventManager } from '../events/context-events.js';
-import winston from 'winston';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'update-integration.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface UpdateIntegrationRequest {
     changedFiles: string[];

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import winston from 'winston';
+import { createMCPLoggerWithColor } from '../utils/mcp-logger.js';
 import { AtomicFileManager } from './atomic-file-manager.js';
 import { RollbackManager } from './rollback-manager.js';
 import { SemanticAnalysisService } from './semantic-analysis.js';
@@ -9,25 +9,7 @@ import { ContextTemplateGenerator } from './context-template-generator.js';
 import { HierarchicalRelationshipManager } from './hierarchical-relationship-manager.js';
 import { PathUtilities } from './path-utilities.js';
 import { TimeoutManager } from './timeout-manager.js';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json(), winston.format.printf(({ timestamp, level, message, ...meta }) => {
-        let logString = `${timestamp} [${level.toUpperCase()}]: ${message}`;
-        if (Object.keys(meta).length > 0) {
-            logString += ` ${JSON.stringify(meta, null, 2)}`;
-        }
-        return logString;
-    })),
-    transports: [
-        new winston.transports.Console({
-            format: winston.format.combine(winston.format.colorize(), winston.format.simple())
-        }),
-        new winston.transports.File({
-            filename: 'holistic-update-orchestrator.log',
-            format: winston.format.json()
-        })
-    ]
-});
+const logger = createMCPLoggerWithColor('holistic-update-orchestrator.log');
 /**
  * Orchestrates holistic context updates across all affected domains
  * Ensures atomic, consistent updates with full rollback capability
@@ -108,8 +90,12 @@ export class HolisticUpdateOrchestrator {
             gitCommitHash: request.gitCommitHash,
             timestamp: new Date().toISOString()
         });
-        console.info(`🚀 Starting holistic update ${updateId} for ${request.changedFiles.length} files`);
-        console.info(`📁 Files to process: ${request.changedFiles.slice(0, 5).join(', ')}${request.changedFiles.length > 5 ? '...' : ''}`);
+        if (!process.env.MCP_SILENT_MODE) {
+            console.info(`🚀 Starting holistic update ${updateId} for ${request.changedFiles.length} files`);
+        }
+        if (!process.env.MCP_SILENT_MODE) {
+            console.info(`📁 Files to process: ${request.changedFiles.slice(0, 5).join(', ')}${request.changedFiles.length > 5 ? '...' : ''}`);
+        }
         const metrics = {
             semanticAnalysisTime: 0,
             domainAnalysisTime: 0,
@@ -118,7 +104,9 @@ export class HolisticUpdateOrchestrator {
         };
         try {
             // Phase 1: Semantic Analysis of Changed Files
-            console.info(`🔍 Phase 1: Starting semantic analysis for ${request.changedFiles.length} files`);
+            if (!process.env.MCP_SILENT_MODE) {
+                console.info(`🔍 Phase 1: Starting semantic analysis for ${request.changedFiles.length} files`);
+            }
             const semanticStartTime = Date.now();
             const semanticResults = await this.timeoutManager.executeWithTimeout(this.performSemanticAnalysis(request.changedFiles), 'semanticAnalysis', {
                 fileCount: request.changedFiles.length,
@@ -126,14 +114,26 @@ export class HolisticUpdateOrchestrator {
                 triggerType: request.triggerType
             });
             metrics.semanticAnalysisTime = Date.now() - semanticStartTime;
-            console.info(`✅ Phase 1 completed: Semantic analysis produced ${semanticResults.length} results in ${metrics.semanticAnalysisTime}ms`);
+            if (!process.env.MCP_SILENT_MODE) {
+                console.info(`✅ Phase 1 completed: Semantic analysis produced ${semanticResults.length} results in ${metrics.semanticAnalysisTime}ms`);
+            }
             // Critical check: If semantic analysis produced no results, this is a major issue
             if (semanticResults.length === 0) {
-                console.error(`❌ CRITICAL: Semantic analysis returned 0 results for ${request.changedFiles.length} files!`);
-                console.error('💡 This explains why context generation fails. Debugging info:');
-                console.error(`   - Files to analyze: ${request.changedFiles.join(', ')}`);
-                console.error(`   - Project root: ${this.projectRoot}`);
-                console.error(`   - Working directory: ${process.cwd()}`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`❌ CRITICAL: Semantic analysis returned 0 results for ${request.changedFiles.length} files!`);
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error('💡 This explains why context generation fails. Debugging info:');
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`   - Files to analyze: ${request.changedFiles.join(', ')}`);
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`   - Project root: ${this.projectRoot}`);
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`   - Working directory: ${process.cwd()}`);
+                }
                 logger.error('CRITICAL: Semantic analysis returned 0 results', {
                     updateId,
                     fileCount: request.changedFiles.length,
@@ -142,15 +142,25 @@ export class HolisticUpdateOrchestrator {
                 });
             }
             // Phase 2: Domain Impact Analysis
-            console.info('🏗️ Phase 2: Starting domain impact analysis');
+            if (!process.env.MCP_SILENT_MODE) {
+                console.info('🏗️ Phase 2: Starting domain impact analysis');
+            }
             const domainStartTime = Date.now();
             const domainAnalysisOperation = async () => {
-                console.info(`🔍 Identifying affected domains from ${semanticResults.length} semantic results`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.info(`🔍 Identifying affected domains from ${semanticResults.length} semantic results`);
+                }
                 const affectedDomains = await this.identifyAffectedDomains(semanticResults, request.changedFiles);
-                console.info(`📋 Found ${affectedDomains.length} affected domains: ${affectedDomains.join(', ')}`);
-                console.info('📝 Creating domain update plan');
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.info(`📋 Found ${affectedDomains.length} affected domains: ${affectedDomains.join(', ')}`);
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.info('📝 Creating domain update plan');
+                }
                 const updatePlan = await this.createDomainUpdatePlan(affectedDomains, semanticResults);
-                console.info(`✅ Domain update plan created with ${Object.keys(updatePlan).length} domain entries`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.info(`✅ Domain update plan created with ${Object.keys(updatePlan).length} domain entries`);
+                }
                 return { affectedDomains, updatePlan };
             };
             const { affectedDomains, updatePlan } = await this.timeoutManager.executeWithTimeout(domainAnalysisOperation(), 'domainAnalysis', {
@@ -159,53 +169,81 @@ export class HolisticUpdateOrchestrator {
                 updateId
             });
             metrics.domainAnalysisTime = Date.now() - domainStartTime;
-            console.info(`✅ Phase 2 completed: Domain analysis completed in ${metrics.domainAnalysisTime}ms`);
+            if (!process.env.MCP_SILENT_MODE) {
+                console.info(`✅ Phase 2 completed: Domain analysis completed in ${metrics.domainAnalysisTime}ms`);
+            }
             // Phase 3: Create Rollback Snapshot
             const rollbackData = await this.rollbackManager.createHolisticSnapshot(updateId, affectedDomains, this.projectRoot);
             // Phase 4: Generate Context Content
-            console.info('📝 Phase 4: Starting context content generation');
+            if (!process.env.MCP_SILENT_MODE) {
+                console.info('📝 Phase 4: Starting context content generation');
+            }
             const contextStartTime = Date.now();
-            console.info(`🔧 Generating context updates for ${Object.keys(updatePlan).length} domains`);
+            if (!process.env.MCP_SILENT_MODE) {
+                console.info(`🔧 Generating context updates for ${Object.keys(updatePlan).length} domains`);
+            }
             const allContextUpdates = await this.generateAllContextUpdates(updatePlan, semanticResults);
             metrics.contextGenerationTime = Date.now() - contextStartTime;
-            console.info(`✅ Phase 4 completed: Generated ${allContextUpdates.length} context updates in ${metrics.contextGenerationTime}ms`);
+            if (!process.env.MCP_SILENT_MODE) {
+                console.info(`✅ Phase 4 completed: Generated ${allContextUpdates.length} context updates in ${metrics.contextGenerationTime}ms`);
+            }
             // Performance timeout check - ensure we don't exceed the specified timeout
             if (Date.now() - startTime > performanceTimeout) {
                 const elapsedTime = Date.now() - startTime;
                 const timeoutError = `Performance timeout exceeded during context generation (${elapsedTime}ms > ${performanceTimeout}ms)`;
-                console.error(`⏰ ${timeoutError}`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`⏰ ${timeoutError}`);
+                }
                 throw new Error(timeoutError);
             }
             // Phase 5: Execute Atomic File Operations
-            console.info(`💾 Phase 5: Starting atomic file operations for ${allContextUpdates.length} updates`);
+            if (!process.env.MCP_SILENT_MODE) {
+                console.info(`💾 Phase 5: Starting atomic file operations for ${allContextUpdates.length} updates`);
+            }
             const fileOpStartTime = Date.now();
             let fileOperations;
             try {
                 fileOperations = await this.createFileOperations(allContextUpdates);
-                console.info(`📋 Created ${fileOperations.length} file operations`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.info(`📋 Created ${fileOperations.length} file operations`);
+                }
             }
             catch (error) {
                 logger.error('❌ Failed to create file operations', error);
-                console.error(`❌ File operation creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`❌ File operation creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
                 throw new Error(`File operation creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
             let operationResult;
             try {
                 operationResult = await this.atomicFileManager.executeAtomicOperations(fileOperations);
-                console.info(`✅ Atomic file operations completed: ${operationResult.success ? 'SUCCESS' : 'FAILED'}`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.info(`✅ Atomic file operations completed: ${operationResult.success ? 'SUCCESS' : 'FAILED'}`);
+                }
             }
             catch (error) {
                 logger.error('❌ Atomic file operations failed', error);
-                console.error(`❌ Atomic file operations failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                console.error(`   - Operations attempted: ${fileOperations.length}`);
-                console.error(`   - Error type: ${error instanceof Error ? error.constructor.name : 'Unknown'}`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`❌ Atomic file operations failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`   - Operations attempted: ${fileOperations.length}`);
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`   - Error type: ${error instanceof Error ? error.constructor.name : 'Unknown'}`);
+                }
                 throw new Error(`Atomic file operations failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
             metrics.fileOperationTime = Date.now() - fileOpStartTime;
-            console.info(`✅ Phase 5 completed: File operations completed in ${metrics.fileOperationTime}ms`);
+            if (!process.env.MCP_SILENT_MODE) {
+                console.info(`✅ Phase 5 completed: File operations completed in ${metrics.fileOperationTime}ms`);
+            }
             if (!operationResult.success) {
                 const operationError = `Atomic file operations failed: ${operationResult.error?.message}`;
-                console.error(`❌ ${operationError}`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.error(`❌ ${operationError}`);
+                }
                 logger.error('Atomic file operations failed', {
                     updateId,
                     error: operationResult.error,
@@ -1421,8 +1459,12 @@ ${contextContent.recentChanges}
             }
             catch (error) {
                 // If file exists but isn't writable, or any other error, default to create
-                console.warn(`⚠️ File ${update.filePath} exists but has permission issues, using create operation instead`);
-                console.warn(`   Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.warn(`⚠️ File ${update.filePath} exists but has permission issues, using create operation instead`);
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+                    console.warn(`   Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
                 operationType = 'create';
                 // If file exists but can't be written, try multiple strategies to fix it
                 if (fs.existsSync(update.filePath)) {
@@ -1430,32 +1472,48 @@ ${contextContent.recentChanges}
                         // Strategy 1: Try to fix permissions first
                         try {
                             await fs.promises.chmod(update.filePath, 0o666);
-                            console.info(`✅ Fixed permissions for: ${update.filePath}`);
+                            if (!process.env.MCP_SILENT_MODE) {
+                                console.info(`✅ Fixed permissions for: ${update.filePath}`);
+                            }
                             // Test if it's now writable
                             await fs.promises.access(update.filePath, fs.constants.W_OK);
                             operationType = 'update'; // Can now update
-                            console.info('✅ File is now writable, switching to update operation');
+                            if (!process.env.MCP_SILENT_MODE) {
+                                console.info('✅ File is now writable, switching to update operation');
+                            }
                         }
                         catch (chmodError) {
-                            console.warn(`⚠️ Could not fix permissions, trying removal: ${chmodError instanceof Error ? chmodError.message : 'Unknown error'}`);
+                            if (!process.env.MCP_SILENT_MODE) {
+                                console.warn(`⚠️ Could not fix permissions, trying removal: ${chmodError instanceof Error ? chmodError.message : 'Unknown error'}`);
+                            }
                             // Strategy 2: Try to remove the file
                             await fs.promises.unlink(update.filePath);
-                            console.info(`✅ Removed problematic file: ${update.filePath}`);
+                            if (!process.env.MCP_SILENT_MODE) {
+                                console.info(`✅ Removed problematic file: ${update.filePath}`);
+                            }
                         }
                     }
                     catch (unlinkError) {
-                        console.error(`❌ Could not remove problematic file: ${update.filePath}`);
-                        console.error(`   Error: ${unlinkError instanceof Error ? unlinkError.message : 'Unknown error'}`);
+                        if (!process.env.MCP_SILENT_MODE) {
+                            console.error(`❌ Could not remove problematic file: ${update.filePath}`);
+                        }
+                        if (!process.env.MCP_SILENT_MODE) {
+                            console.error(`   Error: ${unlinkError instanceof Error ? unlinkError.message : 'Unknown error'}`);
+                        }
                         // Strategy 3: Create with a different name and then move
                         const tempPath = `${update.filePath}.tmp.${Date.now()}`;
-                        console.warn(`⚠️ Trying alternative strategy: writing to temp file ${tempPath}`);
+                        if (!process.env.MCP_SILENT_MODE) {
+                            console.warn(`⚠️ Trying alternative strategy: writing to temp file ${tempPath}`);
+                        }
                         try {
                             // We'll modify the operation to write to a temp file and then handle the move in atomic operations
                             operationType = 'create';
                             // Update the operation path to use temp file, we'll handle the final move elsewhere
                         }
                         catch {
-                            console.error(`❌ All file replacement strategies failed for: ${update.filePath}`);
+                            if (!process.env.MCP_SILENT_MODE) {
+                                console.error(`❌ All file replacement strategies failed for: ${update.filePath}`);
+                            }
                         }
                     }
                 }

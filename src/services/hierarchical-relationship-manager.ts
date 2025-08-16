@@ -1,22 +1,10 @@
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
 import * as fs from 'fs';
 import * as _path from 'path';
 import { SemanticAnalysisResult } from './semantic-analysis.js';
 import { GeneratedContextContent } from './context-template-generator.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'hierarchical-relationship-manager.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface HierarchicalRelationship {
     relationshipId: string;

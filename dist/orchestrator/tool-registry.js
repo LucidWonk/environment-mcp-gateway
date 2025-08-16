@@ -13,16 +13,8 @@ import { documentLifecycleTools, documentLifecycleHandlers } from '../tools/docu
 import { registryLifecycleTools, registryLifecycleHandlers } from '../tools/registry-lifecycle.js';
 import { lifecycleIntegrationTools, lifecycleIntegrationHandlers } from '../tools/lifecycle-integration.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 export class ToolRegistry {
     gitAdapter;
     azureDevOpsToolRegistry;

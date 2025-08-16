@@ -1,14 +1,6 @@
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
 import * as fs from 'fs';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'hierarchical-relationship-manager.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Advanced hierarchical relationship manager for context coordination
  * Step 3.2: Hierarchical Relationship Management

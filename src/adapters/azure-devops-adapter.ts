@@ -1,5 +1,5 @@
-import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
 // Define types for Azure DevOps API responses  
 export type TemplateParameterValue = string | number | boolean | null | undefined;
@@ -7,18 +7,7 @@ export type PipelineResourceValue = string | number | boolean | { [key: string]:
 export type PipelineParameterValue = string | number | boolean | string[] | { [key: string]: any };
 export type AzureDevOpsApiResponse = Record<string, any>;
 
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface PipelineInfo {
     id: number;
@@ -523,7 +512,7 @@ export class AzureDevOpsAdapter {
                     apiVersion: this.apiVersion,
                     pipelinesCount: 0,
                     activeRuns: 0,
-                    message: 'Azure DevOps not configured',
+                    message: 'Azure DevOps not configured - missing organization or PAT',
                     issues: [{
                         severity: 'warning',
                         component: 'Configuration',
@@ -532,35 +521,71 @@ export class AzureDevOpsAdapter {
                 };
             }
 
-            logger.info('Checking Azure DevOps health');
+            logger.info('Checking Azure DevOps health', { organization: this.organization, project: this.project });
 
-            // Test connection by getting project info
-            const projectEndpoint = `/project?api-version=${this.apiVersion}`;
-            const _projectInfo = await this.makeRequest<AzureDevOpsApiResponse>(projectEndpoint);
+            // Test connection by getting project info with timeout and error handling
+            try {
+                const projectEndpoint = `/project?api-version=${this.apiVersion}`;
+                const _projectInfo = await this.makeRequest<AzureDevOpsApiResponse>(projectEndpoint);
+                
+                // If we get here, the project exists and we can connect
+                logger.info('Azure DevOps project connection successful');
+                
+                // Try to get additional info, but don't fail if these don't work
+                let pipelinesCount = 0;
+                let activeRuns = 0;
+                
+                try {
+                    const pipelinesResponse = await this.makeRequest<{ count: number }>(
+                        `/pipelines?api-version=${this.apiVersion}&$top=1`
+                    );
+                    pipelinesCount = pipelinesResponse.count || 0;
+                } catch (pipelineError) {
+                    logger.warn('Could not get pipelines count', { error: pipelineError });
+                }
+                
+                try {
+                    const runsResponse = await this.makeRequest<{ count: number }>(
+                        `/pipelines/runs?api-version=${this.apiVersion}&statusFilter=inProgress&$top=1`
+                    );
+                    activeRuns = runsResponse.count || 0;
+                } catch (runsError) {
+                    logger.warn('Could not get active runs count', { error: runsError });
+                }
 
-            // Get pipelines count
-            const pipelinesResponse = await this.makeRequest<{ count: number }>(
-                `/pipelines?api-version=${this.apiVersion}&$top=1`
-            );
+                const health: AzureDevOpsHealth = {
+                    connected: true,
+                    organization: this.organization,
+                    project: this.project,
+                    apiVersion: this.apiVersion,
+                    pipelinesCount,
+                    activeRuns,
+                    message: 'Azure DevOps connection healthy',
+                    issues: []
+                };
 
-            // Get active runs count
-            const runsResponse = await this.makeRequest<{ count: number }>(
-                `/pipelines/runs?api-version=${this.apiVersion}&statusFilter=inProgress&$top=1`
-            );
-
-            const health: AzureDevOpsHealth = {
-                connected: true,
-                organization: this.organization,
-                project: this.project,
-                apiVersion: this.apiVersion,
-                pipelinesCount: pipelinesResponse.count || 0,
-                activeRuns: runsResponse.count || 0,
-                message: 'Azure DevOps connection healthy',
-                issues: []
-            };
-
-            logger.info('Azure DevOps health check completed', { health: 'healthy' });
-            return health;
+                logger.info('Azure DevOps health check completed', { health: 'healthy' });
+                return health;
+                
+            } catch (projectError) {
+                // Handle project-specific connection failures
+                logger.error('Azure DevOps project connection failed', { projectError });
+                
+                return {
+                    connected: false,
+                    organization: this.organization,
+                    project: this.project,
+                    apiVersion: this.apiVersion,
+                    pipelinesCount: 0,
+                    activeRuns: 0,
+                    message: `Azure DevOps project '${this.project}' not accessible: ${projectError instanceof Error ? projectError.message : 'Unknown error'}`,
+                    issues: [{
+                        severity: 'error',
+                        component: 'Project Access',
+                        message: `Cannot access project '${this.project}' - check project name and permissions`
+                    }]
+                };
+            }
         } catch (error) {
             logger.error('Azure DevOps health check failed', { error });
             

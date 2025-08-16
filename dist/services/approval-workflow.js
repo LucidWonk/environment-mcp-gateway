@@ -3,15 +3,8 @@
  * Manages human approval workflows for document restructuring
  * Implements TEMP-CONTEXT-ENGINE-a7b3 approval workflow capability
  */
-import winston from 'winston';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'approval-workflow.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Manages approval workflows for document and registry changes
  * Provides human oversight for automated system operations

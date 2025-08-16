@@ -581,7 +581,11 @@ async function _validateDomainStructure(): Promise<{ success: boolean, details: 
  */
 export async function handleExecuteFullRepositoryReindex(args: any): Promise<any> {
     try {
-        console.info('🚀 ASYNC: Starting async full repository re-index handler');
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info('🚀 ASYNC: Starting async full repository re-index handler');
+
+        }
         
         // Start async job and return immediately
         const jobRequest: JobRequest = {
@@ -590,9 +594,19 @@ export async function handleExecuteFullRepositoryReindex(args: any): Promise<any
             requestedBy: 'mcp-client'
         };
 
-        console.info('🚀 ASYNC: Calling jobManager.startJob()');
+        if (!process.env.MCP_SILENT_MODE) {
+
+
+            console.info('🚀 ASYNC: Calling jobManager.startJob()');
+
+
+        }
         const { jobId, started } = await jobManager.startJob(jobRequest);
-        console.info(`🚀 ASYNC: Job started with ID: ${jobId}, started: ${started}`);
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`🚀 ASYNC: Job started with ID: ${jobId}, started: ${started}`);
+
+        }
 
         return {
             success: started,
@@ -602,7 +616,11 @@ export async function handleExecuteFullRepositoryReindex(args: any): Promise<any
             statusCommand: `Use 'get-job-status' with jobId '${jobId}' to monitor progress`
         };
     } catch (error) {
-        console.error('❌ ASYNC: Error in async handler, falling back to sync:', error);
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.error('❌ ASYNC: Error in async handler, falling back to sync:', error);
+
+        }
         // Fallback to sync version if job system fails
         return await handleExecuteFullRepositoryReindexSync(args);
     }
@@ -624,10 +642,28 @@ export async function handleExecuteFullRepositoryReindexSync(args: any): Promise
             triggerType = 'manual'
         } = args;
 
-        console.info(`🔄 Starting full repository re-indexing with cleanup: ${cleanupFirst}`);
-        console.info(`📁 Project root path: ${projectRoot}`);
-        console.info(`📁 Current working directory: ${process.cwd()}`);
-        console.info(`📁 Resolved project root: ${path.resolve(projectRoot)}`);
+        if (!process.env.MCP_SILENT_MODE) {
+
+
+            console.info(`🔄 Starting full repository re-indexing with cleanup: ${cleanupFirst}`);
+
+
+        }
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`📁 Project root path: ${projectRoot}`);
+
+        }
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`📁 Current working directory: ${process.cwd()}`);
+
+        }
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`📁 Resolved project root: ${path.resolve(projectRoot)}`);
+
+        }
 
         let contextFilesRemoved = 0;
         let filesDiscovered = 0;
@@ -640,7 +676,11 @@ export async function handleExecuteFullRepositoryReindexSync(args: any): Promise
         if (cleanupFirst) {
             try {
                 contextFilesRemoved = await cleanupContextFiles();
-                console.info(`🗑️ Cleaned up ${contextFilesRemoved} existing .context files`);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info(`🗑️ Cleaned up ${contextFilesRemoved} existing .context files`);
+
+                }
             } catch (error) {
                 errors.push(`Context cleanup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
@@ -648,20 +688,48 @@ export async function handleExecuteFullRepositoryReindexSync(args: any): Promise
 
         // Step 2: Dynamically discover all source files
         try {
-            console.info(`🔍 Starting file discovery with extensions: ${fileExtensions.join(', ')} and exclude patterns: ${excludePatterns.join(', ')}`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`🔍 Starting file discovery with extensions: ${fileExtensions.join(', ')} and exclude patterns: ${excludePatterns.join(', ')}`);
+
+            }
             const discoveredPaths = await discoverSourceFiles(fileExtensions, excludePatterns);
             discoveredFiles.push(...discoveredPaths);
             filesDiscovered = discoveredFiles.length;
-            console.info(`📁 Discovered ${filesDiscovered} source files for analysis`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`📁 Discovered ${filesDiscovered} source files for analysis`);
+
+            }
             
             if (filesDiscovered === 0) {
                 errors.push('File discovery found 0 files - this may be due to overly restrictive exclusion patterns or missing files');
-                console.error('❌ CRITICAL: File discovery returned 0 files!');
-                console.info(`Debug: Project root = ${projectRoot}`);
-                console.info(`Debug: Extensions = ${JSON.stringify(fileExtensions)}`);
-                console.info(`Debug: Exclude patterns = ${JSON.stringify(excludePatterns)}`);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.error('❌ CRITICAL: File discovery returned 0 files!');
+
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info(`Debug: Project root = ${projectRoot}`);
+
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info(`Debug: Extensions = ${JSON.stringify(fileExtensions)}`);
+
+                }
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info(`Debug: Exclude patterns = ${JSON.stringify(excludePatterns)}`);
+
+                }
             } else {
-                console.info(`📋 Sample discovered files: ${discoveredFiles.slice(0, 10).join(', ')}${discoveredFiles.length > 10 ? '...' : ''}`);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info(`📋 Sample discovered files: ${discoveredFiles.slice(0, 10).join(', ')}${discoveredFiles.length > 10 ? '...' : ''}`);
+
+                }
             }
         } catch (error) {
             errors.push(`File discovery failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -674,7 +742,11 @@ export async function handleExecuteFullRepositoryReindexSync(args: any): Promise
         
         for (let i = 0; i < discoveredFiles.length; i += batchSize) {
             const batch = discoveredFiles.slice(i, i + batchSize);
-            console.info(`📊 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(discoveredFiles.length/batchSize)} (${batch.length} files)`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`📊 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(discoveredFiles.length/batchSize)} (${batch.length} files)`);
+
+            }
             
             try {
                 // Analyze this batch of files
@@ -709,7 +781,11 @@ export async function handleExecuteFullRepositoryReindexSync(args: any): Promise
         const executionTime = Date.now() - startTime;
 
         // ✅ COMPREHENSIVE SUCCESS CRITERIA VALIDATION
-        console.info('🔍 Validating comprehensive success criteria...');
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info('🔍 Validating comprehensive success criteria...');
+
+        }
         
         const codeDirectories = await findCodeDirectories();
         const existingContextDirs = await findExistingContextDirectories();
@@ -734,29 +810,75 @@ export async function handleExecuteFullRepositoryReindexSync(args: any): Promise
         
         // Log detailed success analysis
         if (missingContextDirs.length > 0) {
-            console.error(`❌ COVERAGE FAILED: ${missingContextDirs.length} code directories missing .context folders:`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.error(`❌ COVERAGE FAILED: ${missingContextDirs.length} code directories missing .context folders:`);
+
+            }
             missingContextDirs.forEach(dir => {
-                console.error(`   📁 Missing .context: ${path.relative(projectRoot, dir)}`);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.error(`   📁 Missing .context: ${path.relative(projectRoot, dir)}`);
+
+                }
             });
         }
         
         if (qualityIssues.length > 0) {
-            console.error(`❌ QUALITY FAILED: ${qualityIssues.length} context quality issues found:`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.error(`❌ QUALITY FAILED: ${qualityIssues.length} context quality issues found:`);
+
+            }
             qualityIssues.forEach(issue => {
-                console.error(`   ⚠️ Quality issue: ${issue}`);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.error(`   ⚠️ Quality issue: ${issue}`);
+
+                }
             });
         }
         
         if (success) {
-            console.info(`✅ SUCCESS CRITERIA MET: All ${codeDirectories.length} code directories have high-quality .context folders`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`✅ SUCCESS CRITERIA MET: All ${codeDirectories.length} code directories have high-quality .context folders`);
+
+            }
         }
         
-        console.info('📊 Context Analysis:');
-        console.info(`   - Code directories found: ${codeDirectories.length}`);
-        console.info(`   - Context directories found: ${existingContextDirs.length}`);
-        console.info(`   - Coverage: ${contextParentDirs.length}/${codeDirectories.length} (${Math.round(contextParentDirs.length / codeDirectories.length * 100)}%)`);
-        console.info(`   - Missing .context folders: ${missingContextDirs.length}`);
-        console.info(`   - Quality issues: ${qualityIssues.length}`);
+        if (!process.env.MCP_SILENT_MODE) {
+
+        
+            console.info('📊 Context Analysis:');
+
+        
+        }
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`   - Code directories found: ${codeDirectories.length}`);
+
+        }
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`   - Context directories found: ${existingContextDirs.length}`);
+
+        }
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`   - Coverage: ${contextParentDirs.length}/${codeDirectories.length} (${Math.round(contextParentDirs.length / codeDirectories.length * 100)}%)`);
+
+        }
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`   - Missing .context folders: ${missingContextDirs.length}`);
+
+        }
+        if (!process.env.MCP_SILENT_MODE) {
+
+            console.info(`   - Quality issues: ${qualityIssues.length}`);
+
+        }
 
         return {
             success,
@@ -806,7 +928,13 @@ async function findCodeDirectories(): Promise<string[]> {
     const fs = await import('fs/promises');
     const codeDirectories: string[] = [];
     
-    console.info('🔍 Scanning for directories containing code files...');
+    if (!process.env.MCP_SILENT_MODE) {
+
+    
+        console.info('🔍 Scanning for directories containing code files...');
+
+    
+    }
     
     async function scanDirectory(dir: string): Promise<void> {
         try {
@@ -845,13 +973,23 @@ async function findCodeDirectories(): Promise<string[]> {
                 }
             }
         } catch (error) {
-            console.warn(`⚠️ Could not scan directory ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.warn(`⚠️ Could not scan directory ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+            }
         }
     }
     
     await scanDirectory(projectRoot);
     
-    console.info(`📊 Found ${codeDirectories.length} directories containing code files`);
+    if (!process.env.MCP_SILENT_MODE) {
+
+    
+        console.info(`📊 Found ${codeDirectories.length} directories containing code files`);
+
+    
+    }
     return codeDirectories.sort();
 }
 
@@ -880,13 +1018,23 @@ async function findExistingContextDirectories(): Promise<string[]> {
                 }
             }
         } catch (error) {
-            console.warn(`⚠️ Could not scan for context dirs in ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.warn(`⚠️ Could not scan for context dirs in ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+            }
         }
     }
     
     await scanForContextDirs(projectRoot);
     
-    console.info(`📊 Found ${contextDirectories.length} existing .context directories`);
+    if (!process.env.MCP_SILENT_MODE) {
+
+    
+        console.info(`📊 Found ${contextDirectories.length} existing .context directories`);
+
+    
+    }
     return contextDirectories.sort();
 }
 
@@ -903,13 +1051,23 @@ async function discoverSourceFiles(extensions: string[], excludePatterns: string
     let filesExcluded = 0;
     let directoriesExcluded = 0;
     
-    console.info(`🚀 Starting file discovery in project root: ${projectRoot}`);
+    if (!process.env.MCP_SILENT_MODE) {
+
+    
+        console.info(`🚀 Starting file discovery in project root: ${projectRoot}`);
+
+    
+    }
     
     async function scanDirectory(dir: string): Promise<void> {
         try {
             directoriesScanned++;
             const entries = await fs.readdir(dir, { withFileTypes: true });
-            console.info(`📂 Scanning directory: ${dir} (${entries.length} entries)`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`📂 Scanning directory: ${dir} (${entries.length} entries)`);
+
+            }
             
             for (const entry of entries) {
                 const fullPath = path.join(dir, entry.name);
@@ -925,10 +1083,18 @@ async function discoverSourceFiles(extensions: string[], excludePatterns: string
                 if (isExcluded) {
                     if (entry.isDirectory()) {
                         directoriesExcluded++;
-                        console.info(`❌ Excluded directory: ${relativePath}`);
+                        if (!process.env.MCP_SILENT_MODE) {
+
+                            console.info(`❌ Excluded directory: ${relativePath}`);
+
+                        }
                     } else {
                         filesExcluded++;
-                        console.info(`❌ Excluded file: ${relativePath}`);
+                        if (!process.env.MCP_SILENT_MODE) {
+
+                            console.info(`❌ Excluded file: ${relativePath}`);
+
+                        }
                     }
                     continue;
                 }
@@ -942,26 +1108,64 @@ async function discoverSourceFiles(extensions: string[], excludePatterns: string
                     if (extensions.includes(ext)) {
                         // Store absolute path for proper file reading
                         files.push(fullPath);
-                        console.info(`✅ Included file: ${relativePath} -> ${fullPath}`);
+                        if (!process.env.MCP_SILENT_MODE) {
+
+                            console.info(`✅ Included file: ${relativePath} -> ${fullPath}`);
+
+                        }
                     } else {
-                        console.info(`⏩ Skipped file (wrong extension): ${relativePath} (${ext})`);
+                        if (!process.env.MCP_SILENT_MODE) {
+
+                            console.info(`⏩ Skipped file (wrong extension): ${relativePath} (${ext})`);
+
+                        }
                     }
                 }
             }
         } catch (error) {
             // Skip directories we can't read
-            console.warn(`⚠️ Skipping directory ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.warn(`⚠️ Skipping directory ${dir}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+            }
         }
     }
     
     await scanDirectory(projectRoot);
     
-    console.info('📊 File discovery complete:');
-    console.info(`  - Directories scanned: ${directoriesScanned}`);
-    console.info(`  - Directories excluded: ${directoriesExcluded}`);
-    console.info(`  - Files scanned: ${filesScanned}`);
-    console.info(`  - Files excluded: ${filesExcluded}`);
-    console.info(`  - Files matched: ${files.length}`);
+    if (!process.env.MCP_SILENT_MODE) {
+
+    
+        console.info('📊 File discovery complete:');
+
+    
+    }
+    if (!process.env.MCP_SILENT_MODE) {
+
+        console.info(`  - Directories scanned: ${directoriesScanned}`);
+
+    }
+    if (!process.env.MCP_SILENT_MODE) {
+
+        console.info(`  - Directories excluded: ${directoriesExcluded}`);
+
+    }
+    if (!process.env.MCP_SILENT_MODE) {
+
+        console.info(`  - Files scanned: ${filesScanned}`);
+
+    }
+    if (!process.env.MCP_SILENT_MODE) {
+
+        console.info(`  - Files excluded: ${filesExcluded}`);
+
+    }
+    if (!process.env.MCP_SILENT_MODE) {
+
+        console.info(`  - Files matched: ${files.length}`);
+
+    }
     
     return files;
 }
@@ -987,7 +1191,11 @@ async function cleanupContextFiles(): Promise<number> {
                         // Remove the entire .context directory
                         await fs.rm(fullPath, { recursive: true, force: true });
                         removedCount++;
-                        console.info(`🗑️ Removed .context directory: ${fullPath}`);
+                        if (!process.env.MCP_SILENT_MODE) {
+
+                            console.info(`🗑️ Removed .context directory: ${fullPath}`);
+
+                        }
                     } else {
                         // Recursively scan subdirectories
                         await cleanDirectory(fullPath);
@@ -999,14 +1207,30 @@ async function cleanupContextFiles(): Promise<number> {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             
             if (errorMessage.includes('EROFS') || errorMessage.includes('read-only')) {
-                console.warn(`⚠️ Read-only filesystem detected - skipping cleanup in directory ${dir}. This is expected for containerized environments with read-only mounts.`);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.warn(`⚠️ Read-only filesystem detected - skipping cleanup in directory ${dir}. This is expected for containerized environments with read-only mounts.`);
+
+                }
             } else if (errorMessage.includes('ENOENT')) {
                 // Directory doesn't exist, which is fine
-                console.info(`Directory ${dir} does not exist, skipping cleanup`);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.info(`Directory ${dir} does not exist, skipping cleanup`);
+
+                }
             } else if (errorMessage.includes('EACCES')) {
-                console.warn(`⚠️ Permission denied - skipping cleanup in directory ${dir}: ${errorMessage}`);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.warn(`⚠️ Permission denied - skipping cleanup in directory ${dir}: ${errorMessage}`);
+
+                }
             } else {
-                console.warn(`Skipping cleanup in directory ${dir}: ${errorMessage}`);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.warn(`Skipping cleanup in directory ${dir}: ${errorMessage}`);
+
+                }
             }
         }
     }
@@ -1022,7 +1246,13 @@ async function validateContextQuality(contextDirectories: string[]): Promise<str
     const fs = await import('fs/promises');
     const qualityIssues: string[] = [];
     
-    console.info(`🔍 Validating quality of ${contextDirectories.length} context directories...`);
+    if (!process.env.MCP_SILENT_MODE) {
+
+    
+        console.info(`🔍 Validating quality of ${contextDirectories.length} context directories...`);
+
+    
+    }
     
     for (const contextDir of contextDirectories) {
         try {
@@ -1089,7 +1319,13 @@ async function validateContextQuality(contextDirectories: string[]): Promise<str
         }
     }
     
-    console.info(`📊 Context quality validation completed: ${qualityIssues.length} issues found`);
+    if (!process.env.MCP_SILENT_MODE) {
+
+    
+        console.info(`📊 Context quality validation completed: ${qualityIssues.length} issues found`);
+
+    
+    }
     return qualityIssues;
 }
 

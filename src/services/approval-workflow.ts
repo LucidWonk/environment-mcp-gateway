@@ -4,20 +4,9 @@
  * Implements TEMP-CONTEXT-ENGINE-a7b3 approval workflow capability
  */
 
-import winston from 'winston';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'approval-workflow.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface ApprovalRequest {
     proposalId: string;

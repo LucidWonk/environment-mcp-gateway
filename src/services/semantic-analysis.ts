@@ -1,21 +1,9 @@
-import winston from 'winston';
-import { Environment } from '../domain/config/environment.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { XmlDocumentationRuleParser } from './xml-documentation-rule-parser.js';
 
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'semantic-analysis.log' })
-    ]
-});
+const logger = createMCPLogger('semantic-analysis.log');
 
 export interface BusinessConcept {
     name: string;

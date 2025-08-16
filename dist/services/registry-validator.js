@@ -3,15 +3,8 @@
  * Validates registry consistency and ensures data integrity
  * Implements TEMP-CONTEXT-ENGINE-a7b3 registry validation capability
  */
-import winston from 'winston';
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'registry-validator.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 /**
  * Comprehensive registry validation service
  * Ensures registry integrity and consistency

@@ -11,13 +11,24 @@ const __dirname = dirname(__filename);
 // Calculate path from src/domain/config back to EnvironmentMCPGateway root
 const mcpGatewayRoot = resolve(__dirname, '..', '..', '..');
 const envPath = join(mcpGatewayRoot, '.env.development');
-console.info(`Loading environment from: ${envPath}`);
+
+// Only log environment loading in development mode, not during MCP operations
+const isDevelopment = process.env.NODE_ENV === 'development' && !process.env.MCP_SILENT_MODE;
+
+if (isDevelopment) {
+    console.info(`Loading environment from: ${envPath}`);
+}
+
 // Verify the file exists before trying to load it
 if (existsSync(envPath)) {
     config({ path: envPath });
-    console.info(`✅ Environment file loaded successfully from ${envPath}`);
+    if (isDevelopment) {
+        console.info(`✅ Environment file loaded successfully from ${envPath}`);
+    }
 } else {
-    console.warn(`❌ Environment file not found at ${envPath}, using process environment variables`);
+    if (isDevelopment) {
+        console.warn(`❌ Environment file not found at ${envPath}, using process environment variables`);
+    }
 }
 
 export class Environment {
@@ -45,8 +56,11 @@ export class Environment {
     public static get projectRoot(): string { 
         // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
         const root = process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/projects/lucidwonks';
-        // Validate the path exists and log for debugging
-        console.info(`Project root resolved to: ${root}`);
+        // Only log in development mode, not during MCP operations
+        const isDevelopment = process.env.NODE_ENV === 'development' && !process.env.MCP_SILENT_MODE;
+        if (isDevelopment) {
+            console.info(`Project root resolved to: ${root}`);
+        }
         return root;
     }
     

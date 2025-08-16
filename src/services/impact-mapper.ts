@@ -1,20 +1,9 @@
 import * as path from 'path';
-import winston from 'winston';
 import { DomainAnalyzer, DomainMap, CrossDomainRelationship, DomainBoundary } from './domain-analyzer.js';
 import { SemanticAnalysisService, SemanticAnalysisResult } from './semantic-analysis.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'impact-mapper.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface ImpactNode {
     domain: string;

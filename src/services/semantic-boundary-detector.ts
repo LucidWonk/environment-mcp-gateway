@@ -1,20 +1,9 @@
 import * as path from 'path';
-import winston from 'winston';
 import { SemanticAnalysisResult, BusinessConcept } from './semantic-analysis.js';
 import { BoundaryDetectionConfigManager, ConfigValidationResult } from './boundary-detection-config-manager.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'semantic-boundary-detector.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface BoundaryDetectionConfig {
     // Business concept density thresholds

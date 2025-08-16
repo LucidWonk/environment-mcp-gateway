@@ -1,20 +1,9 @@
-import winston from 'winston';
 import { ConfigurationManager, ConfigurationChangeEvent } from '../domain/config/configuration-manager.js';
 import { AzureDevOpsAdapter } from './azure-devops-adapter.js';
 import { DockerAdapter } from './docker-adapter.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: process.env.MCP_LOG_LEVEL ?? 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface AdapterInstances {
     azureDevOps: AzureDevOpsAdapter;

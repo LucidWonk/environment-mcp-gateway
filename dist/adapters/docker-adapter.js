@@ -1,14 +1,7 @@
 import { spawn } from 'child_process';
-import winston from 'winston';
 import { Environment } from '../domain/config/environment.js';
-const logger = winston.createLogger({
-    level: Environment.mcpLogLevel,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'environment-mcp-gateway.log' })
-    ]
-});
+import { createMCPLogger } from '../utils/mcp-logger.js';
+const logger = createMCPLogger('mcp-gateway.log');
 export class DockerAdapter {
     static TIMESCALE_IMAGE_PATTERNS = [
         'timescale/timescaledb',
@@ -47,13 +40,35 @@ export class DockerAdapter {
             });
         });
     }
-    async executeComposeCommand(args) {
+    normalizeContainerStatus(status) {
+        switch (status.toLowerCase()) {
+            case 'running':
+                return 'running';
+            case 'restarting':
+                return 'restarting';
+            case 'dead':
+                return 'dead';
+            case 'exited':
+                return 'exited';
+            default:
+                return 'stopped';
+        }
+    }
+    async executeComposeCommand(args, timeoutMs = 30000) {
         return new Promise((resolve, reject) => {
+            // Use parent directory where docker-compose.yml is located
+            const composePath = Environment.projectRoot;
             const process = spawn('docker-compose', args, {
-                cwd: Environment.projectRoot
+                cwd: composePath,
+                stdio: ['pipe', 'pipe', 'pipe']
             });
             let stdout = '';
             let stderr = '';
+            // Set timeout to prevent hanging
+            const timeout = setTimeout(() => {
+                process.kill('SIGTERM');
+                reject(new Error(`Docker compose command timed out after ${timeoutMs}ms`));
+            }, timeoutMs);
             process.stdout.on('data', (data) => {
                 stdout += data.toString();
             });
@@ -61,6 +76,7 @@ export class DockerAdapter {
                 stderr += data.toString();
             });
             process.on('close', (code) => {
+                clearTimeout(timeout);
                 if (code === 0) {
                     resolve(stdout.trim());
                 }
@@ -69,6 +85,7 @@ export class DockerAdapter {
                 }
             });
             process.on('error', (error) => {
+                clearTimeout(timeout);
                 reject(new Error(`Failed to execute docker-compose command: ${error.message}`));
             });
         });
@@ -387,17 +404,31 @@ export class DockerAdapter {
     }
     async getComposeServices() {
         try {
-            const output = await this.executeComposeCommand(['ps', '--format', 'json']);
-            const services = JSON.parse(output);
+            const output = await this.executeComposeCommand(['ps', '--format', 'json'], 15000);
+            // Handle empty output
+            if (!output || output.trim() === '') {
+                logger.warn('No docker-compose services found');
+                return [];
+            }
+            // Parse JSON - handle both single object and array formats
+            let services;
+            try {
+                const parsed = JSON.parse(output);
+                services = Array.isArray(parsed) ? parsed : [parsed];
+            }
+            catch (parseError) {
+                logger.error('Failed to parse docker-compose JSON output', { output, parseError });
+                return [];
+            }
             return services.map((service) => ({
-                name: service.Service,
+                name: service.Service || service.Name || 'unknown',
                 status: service.State === 'running' ? 'running' : 'stopped',
                 container: service.ID ? {
                     id: service.ID,
-                    name: service.Name,
-                    image: service.Image,
-                    status: service.State,
-                    ports: service.Ports ? service.Ports.split(',') : [],
+                    name: service.Name || service.Service,
+                    image: service.Image || 'unknown',
+                    status: this.normalizeContainerStatus(service.State || 'unknown'),
+                    ports: service.Ports ? service.Ports.split(',').map(p => p.trim()) : [],
                     createdAt: new Date(),
                     command: service.Command || ''
                 } : undefined,
@@ -411,7 +442,8 @@ export class DockerAdapter {
     }
     async restartComposeService(serviceName) {
         try {
-            await this.executeComposeCommand(['restart', serviceName]);
+            // Use shorter timeout for restart operations to prevent hanging
+            await this.executeComposeCommand(['restart', serviceName], 20000);
             logger.info('Compose service restarted successfully', { serviceName });
             return true;
         }

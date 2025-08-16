@@ -4,22 +4,11 @@
  * Implements TEMP-CONTEXT-ENGINE-a7b3 registry validation capability
  */
 
-import winston from 'winston';
 import { RegistryManager, CapabilityRegistryEntry } from './registry-manager.js';
 import { PlaceholderTracker, PlaceholderIDInfo } from './placeholder-tracker.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'registry-validator.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface ValidationRule {
     ruleId: string;

@@ -1,20 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import winston from 'winston';
 import { BoundaryDetectionConfig } from './semantic-boundary-detector.js';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'boundary-detection-config.log' })
-    ]
-});
+const logger = createMCPLogger('mcp-gateway.log');
 
 export interface RepositoryTypeConfig {
     name: string;

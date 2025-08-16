@@ -130,7 +130,11 @@ export class ContextEventManager {
             try {
                 await handler(event);
             } catch (error) {
-                console.error(`Error in event handler for ${eventType}:`, error);
+                if (!process.env.MCP_SILENT_MODE) {
+
+                    console.error(`Error in event handler for ${eventType}:`, error);
+
+                }
                 // Don't re-throw to prevent one handler from affecting others
             }
         });
@@ -261,36 +265,68 @@ export class ContextEventManager {
     setupDefaultHandlers(): void {
         // Log all integration events
         this.on('IntegrationPhaseStarted', (event) => {
-            console.info(`Integration ${event.integrationId}: Started phase ${event.data.phase}`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`Integration ${event.integrationId}: Started phase ${event.data.phase}`);
+
+            }
         });
 
         this.on('CrossDomainImpactDetected', (event) => {
-            console.info(`Integration ${event.integrationId}: Cross-domain impact detected affecting ${event.data.affectedDomains.length} domains`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`Integration ${event.integrationId}: Cross-domain impact detected affecting ${event.data.affectedDomains.length} domains`);
+
+            }
         });
 
         this.on('MultiDomainUpdateTriggered', (event) => {
-            console.info(`Integration ${event.integrationId}: Multi-domain update triggered with plan ${event.data.coordinationPlan.planId}`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`Integration ${event.integrationId}: Multi-domain update triggered with plan ${event.data.coordinationPlan.planId}`);
+
+            }
         });
 
         this.on('IntegratedUpdateCompleted', (event) => {
-            console.info(`Integration ${event.integrationId}: Completed successfully in ${event.data.result.executionMetrics.totalTime}ms`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`Integration ${event.integrationId}: Completed successfully in ${event.data.result.executionMetrics.totalTime}ms`);
+
+            }
         });
 
         this.on('IntegratedUpdateFailed', (event) => {
-            console.error(`Integration ${event.integrationId}: Failed - ${event.data.error}`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.error(`Integration ${event.integrationId}: Failed - ${event.data.error}`);
+
+            }
         });
 
         // Log rollback events
         this.on('IntegrationRollbackStarted', (event) => {
-            console.warn(`Integration ${event.integrationId}: Rollback started`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.warn(`Integration ${event.integrationId}: Rollback started`);
+
+            }
         });
 
         this.on('IntegrationRollbackCompleted', (event) => {
-            console.info(`Integration ${event.integrationId}: Rollback completed successfully`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.info(`Integration ${event.integrationId}: Rollback completed successfully`);
+
+            }
         });
 
         this.on('IntegrationRollbackFailed', (event) => {
-            console.error(`Integration ${event.integrationId}: Rollback failed - ${event.data.error}`);
+            if (!process.env.MCP_SILENT_MODE) {
+
+                console.error(`Integration ${event.integrationId}: Rollback failed - ${event.data.error}`);
+
+            }
         });
     }
 }

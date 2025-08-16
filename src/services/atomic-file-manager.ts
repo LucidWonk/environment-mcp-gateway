@@ -1,20 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
-import winston from 'winston';
+import { createMCPLogger } from '../utils/mcp-logger.js';
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'atomic-file-manager.log' })
-    ]
-});
+const logger = createMCPLogger('atomic-file-manager.log');
 
 export interface FileOperation {
     type: 'create' | 'update' | 'delete';
@@ -119,17 +108,27 @@ export class AtomicFileManager {
                     
                 // Check that file doesn't already exist (for create operations)
                 if (fs.existsSync(operation.targetPath)) {
-                    console.warn(`⚠️ Create operation requested but file already exists: ${operation.targetPath}`);
-                    console.warn('   Attempting to handle this gracefully by removing existing file first');
+                    if (!process.env.MCP_SILENT_MODE) {
+                        console.warn(`⚠️ Create operation requested but file already exists: ${operation.targetPath}`);
+                    }
+                    if (!process.env.MCP_SILENT_MODE) {
+                        console.warn('   Attempting to handle this gracefully by removing existing file first');
+                    }
                     
                     try {
                         // Try to fix permissions and remove the existing file
                         await fs.promises.chmod(operation.targetPath, 0o666);
                         await fs.promises.unlink(operation.targetPath);
-                        console.info(`✅ Successfully removed existing file for create operation: ${operation.targetPath}`);
+                        if (!process.env.MCP_SILENT_MODE) {
+                            console.info(`✅ Successfully removed existing file for create operation: ${operation.targetPath}`);
+                        }
                     } catch (removeError) {
-                        console.error(`❌ Could not remove existing file for create operation: ${operation.targetPath}`);
-                        console.error(`   Error: ${removeError instanceof Error ? removeError.message : 'Unknown error'}`);
+                        if (!process.env.MCP_SILENT_MODE) {
+                            console.error(`❌ Could not remove existing file for create operation: ${operation.targetPath}`);
+                        }
+                        if (!process.env.MCP_SILENT_MODE) {
+                            console.error(`   Error: ${removeError instanceof Error ? removeError.message : 'Unknown error'}`);
+                        }
                         throw new Error(`Cannot create file - already exists and could not be removed: ${operation.targetPath}`);
                     }
                 }
@@ -150,25 +149,45 @@ export class AtomicFileManager {
                     const parentDir = path.dirname(operation.targetPath);
                     const parentExists = fs.existsSync(parentDir);
                     
-                    console.error(`❌ Write permission check failed for: ${operation.targetPath}`);
-                    console.error(`   File exists: ${fs.existsSync(operation.targetPath)}`);
-                    console.error(`   Parent dir exists: ${parentExists}`);
-                    if (stats) {
-                        console.error(`   File mode: ${stats.mode.toString(8)}`);
-                        console.error(`   File uid: ${stats.uid}, gid: ${stats.gid}`);
+                    if (!process.env.MCP_SILENT_MODE) {
+                        console.error(`❌ Write permission check failed for: ${operation.targetPath}`);
                     }
-                    console.error(`   Process uid: ${process.getuid?.() || 'unknown'}, gid: ${process.getgid?.() || 'unknown'}`);
-                    console.error(`   Error details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    if (!process.env.MCP_SILENT_MODE) {
+                        console.error(`   File exists: ${fs.existsSync(operation.targetPath)}`);
+                    }
+                    if (!process.env.MCP_SILENT_MODE) {
+                        console.error(`   Parent dir exists: ${parentExists}`);
+                    }
+                    if (stats) {
+                        if (!process.env.MCP_SILENT_MODE) {
+                            console.error(`   File mode: ${stats.mode.toString(8)}`);
+                        }
+                        if (!process.env.MCP_SILENT_MODE) {
+                            console.error(`   File uid: ${stats.uid}, gid: ${stats.gid}`);
+                        }
+                    }
+                    if (!process.env.MCP_SILENT_MODE) {
+                        console.error(`   Process uid: ${process.getuid?.() || 'unknown'}, gid: ${process.getgid?.() || 'unknown'}`);
+                    }
+                    if (!process.env.MCP_SILENT_MODE) {
+                        console.error(`   Error details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    }
                     
                     // Try to fix permissions if possible
                     if (parentExists && stats) {
                         try {
-                            console.warn(`⚠️ Attempting to fix permissions for: ${operation.targetPath}`);
+                            if (!process.env.MCP_SILENT_MODE) {
+                                console.warn(`⚠️ Attempting to fix permissions for: ${operation.targetPath}`);
+                            }
                             await fs.promises.chmod(operation.targetPath, 0o664);
                             await fs.promises.access(operation.targetPath, fs.constants.W_OK);
-                            console.info(`✅ Successfully fixed permissions for: ${operation.targetPath}`);
+                            if (!process.env.MCP_SILENT_MODE) {
+                                console.info(`✅ Successfully fixed permissions for: ${operation.targetPath}`);
+                            }
                         } catch (fixError) {
-                            console.error(`❌ Failed to fix permissions: ${fixError instanceof Error ? fixError.message : 'Unknown error'}`);
+                            if (!process.env.MCP_SILENT_MODE) {
+                                console.error(`❌ Failed to fix permissions: ${fixError instanceof Error ? fixError.message : 'Unknown error'}`);
+                            }
                             const errorCode = (error as any)?.code || 'unknown error';
                             throw new Error(`No write permission for file: ${operation.targetPath} (${errorCode})`);
                         }
