@@ -1,0 +1,65 @@
+{
+  "timestamp": "2025-08-17T19:10:21.969Z",
+  "benchmarkDuration": 47,
+  "results": {
+    "expertAssignment": {
+      "target": 800,
+      "average": 1.9,
+      "p95": 6,
+      "success": true,
+      "samples": 10
+    },
+    "handoffInitiation": {
+      "target": 1200,
+      "average": 6.8,
+      "concurrent": 5,
+      "success": true,
+      "samples": 5
+    },
+    "cachePerformance": {
+      "targetHitRate": 75,
+      "actualHitRate": 70,
+      "averageResponseTime": 0.03,
+      "success": false,
+      "totalRequests": 100
+    },
+    "connectionPooling": {
+      "success": false,
+      "error": "Too many connections for expert type Performance (10 max)"
+    },
+    "errorHandling": {
+      "targetOverhead": 100,
+      "actualOverhead": -49.75,
+      "averageResponseTime": 0.25,
+      "success": true,
+      "samples": 20
+    },
+    "circuitBreakers": {
+      "targetStateCheckTime": 10,
+      "averageResponseTime": 0.01,
+      "successRate": 100,
+      "totalRequests": 100,
+      "success": true,
+      "circuitState": "closed"
+    },
+    "endToEndWorkflow": {
+      "targetTotalTime": 6000,
+      "actualTotalTime": 3,
+      "success": true,
+      "assignmentSuccess": true,
+      "handoffSuccess": true,
+      "statusSuccess": true,
+      "metricsSuccess": true,
+      "overallHealthy": false
+    }
+  },
+  "summary": {
+    "successfulTests": 5,
+    "totalTests": 7,
+    "successRate": 71.42857142857143
+  },
+  "recommendations": [
+    "Improve cache hit rates by adjusting TTL and cache keys",
+    "Fine-tune connection pool size and utilization thresholds"
+  ]
+}
