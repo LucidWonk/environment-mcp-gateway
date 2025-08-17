@@ -30,6 +30,8 @@ export declare class TaskToolVETIntegration {
     initiateHandoff(request: HandoffRequest): Promise<string>;
     getHandoffStatus(handoffId: string): Promise<any>;
     completeHandoff(handoffId: string, results: any): Promise<void>;
+    getPerformanceMetrics(): Record<string, any>;
+    cleanup(): Promise<void>;
 }
 export declare const taskToolVETIntegration: TaskToolVETIntegration;
 export {};
