@@ -807,6 +807,8 @@ class EnvironmentMCPGateway {
                 stderr: process.stderr.writable
             }
         });
+        // Add STDIO connection monitoring to detect disconnection
+        this.setupStdioMonitoring();
         const transport = new StdioServerTransport();
         logger.info('📡 STDIO transport created, attempting connection...', {
             transportType: 'StdioServerTransport',
@@ -834,6 +836,64 @@ class EnvironmentMCPGateway {
                 mcpStdioMode: process.env.MCP_STDIO_MODE
             });
             throw error;
+        }
+    }
+    setupStdioMonitoring() {
+        // Monitor stdin for connection closure
+        if (process.stdin) {
+            process.stdin.on('end', () => {
+                logger.info('📪 STDIN closed - MCP client disconnected', {
+                    processId: process.pid,
+                    timestamp: new Date().toISOString()
+                });
+                process.exit(0);
+            });
+            process.stdin.on('close', () => {
+                logger.info('📪 STDIN closed event - MCP client disconnected', {
+                    processId: process.pid,
+                    timestamp: new Date().toISOString()
+                });
+                process.exit(0);
+            });
+            process.stdin.on('error', (error) => {
+                logger.warn('📪 STDIN error - possible client disconnection', {
+                    processId: process.pid,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
+                process.exit(1);
+            });
+        }
+        // Monitor stdout for write errors
+        if (process.stdout) {
+            process.stdout.on('error', (error) => {
+                logger.warn('📤 STDOUT error - client may have disconnected', {
+                    processId: process.pid,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
+                process.exit(1);
+            });
+        }
+        // Set up a heartbeat mechanism for STDIO mode
+        if (process.env.MCP_STDIO_MODE === 'true') {
+            const heartbeatInterval = setInterval(() => {
+                // Check if stdin is still readable and stdout is writable
+                if (!process.stdin.readable || !process.stdout.writable) {
+                    logger.info('💔 STDIO streams no longer available - disconnecting', {
+                        processId: process.pid,
+                        stdinReadable: process.stdin.readable,
+                        stdoutWritable: process.stdout.writable,
+                        timestamp: new Date().toISOString()
+                    });
+                    clearInterval(heartbeatInterval);
+                    process.exit(0);
+                }
+            }, 30000); // Check every 30 seconds
+            // Clean up heartbeat on exit
+            process.on('exit', () => {
+                clearInterval(heartbeatInterval);
+            });
         }
     }
     async reloadConfiguration(_args) {

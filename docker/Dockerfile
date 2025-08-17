@@ -10,14 +10,15 @@ RUN npm ci --only=production
 COPY dist/ ./dist/
 COPY .env* ./
 
-# Copy health check script
+# Copy health check script and cleanup script
 COPY docker/health-check.js ./health-check.js
+COPY docker/cleanup-processes.sh ./cleanup-processes.sh
 
 # Create non-root user and directories with proper permissions
 RUN addgroup -g 1001 -S mcpuser && \
     adduser -S mcpuser -u 1001 -G mcpuser && \
     mkdir -p /app/.semantic-cache /app/.holistic-rollback /app/.atomic-ops /app/.holistic-ops && \
-    chmod +x /app/health-check.js && \
+    chmod +x /app/health-check.js /app/cleanup-processes.sh && \
     chown -R mcpuser:mcpuser /app
 
 USER mcpuser
