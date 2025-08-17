@@ -13,6 +13,8 @@ import { expertCache, ExpertCacheKeys, cached } from '../infrastructure/expert-c
 import { expertConnectionPool } from '../infrastructure/expert-connection-pool.js';
 import { expertErrorHandler, ExpertErrorUtils } from '../infrastructure/error-handler.js';
 import { contextSynchronizer } from '../infrastructure/context-synchronizer.js';
+import { conflictResolver } from '../infrastructure/conflict-resolver.js';
+import { workflowOrchestrator } from '../infrastructure/workflow-orchestrator.js';
 import { EventEmitter } from 'events';
 const logger = createMCPLogger('multi-agent-conversation-manager.log');
 // Multi-agent Conversation Manager Service
@@ -739,6 +741,339 @@ export class MultiAgentConversationManager extends EventEmitter {
         }
         return conversationIds;
     }
+    // Workflow Orchestration Integration Methods
+    async createConversationWorkflow(conversationId, workflowType, options) {
+        return await expertErrorHandler.executeWithErrorHandling('createConversationWorkflow', 'MultiAgentConversationManager', async () => {
+            const conversation = this.conversations.get(conversationId);
+            if (!conversation) {
+                throw ExpertErrorUtils.createValidationError('MultiAgentConversationManager', 'createConversationWorkflow', `Conversation not found: ${conversationId}`);
+            }
+            logger.info('🎼 Creating conversation workflow', {
+                conversationId,
+                workflowType,
+                participantCount: conversation.participants.length
+            });
+            // Define workflow steps based on type
+            const defaultSteps = this.getWorkflowStepsForType(workflowType, conversation);
+            const finalSteps = options?.steps || defaultSteps;
+            // Get participant IDs
+            const participants = conversation.participants.map(p => p.agentId);
+            // Create workflow definition
+            const workflowId = await workflowOrchestrator.createWorkflowDefinition(`${workflowType} - ${conversationId}`, options?.coordinationType || this.getCoordinationTypeForWorkflow(workflowType), participants, finalSteps, {
+                description: `Workflow for conversation ${conversationId} of type ${workflowType}`,
+                globalTimeout: options?.globalTimeout || 300000,
+                errorHandling: options?.errorHandling || 'continue-on-error'
+            });
+            // Store workflow association
+            conversation.sharedContext.workflowId = workflowId;
+            // Emit workflow created event
+            this.emit('conversationWorkflowCreated', {
+                conversationId,
+                workflowId,
+                workflowType,
+                participantCount: participants.length
+            });
+            logger.info('✅ Conversation workflow created', {
+                conversationId,
+                workflowId,
+                workflowType
+            });
+            return workflowId;
+        });
+    }
+    async executeConversationWorkflow(conversationId, priority) {
+        return await expertErrorHandler.executeWithErrorHandling('executeConversationWorkflow', 'MultiAgentConversationManager', async () => {
+            const conversation = this.conversations.get(conversationId);
+            if (!conversation) {
+                throw ExpertErrorUtils.createValidationError('MultiAgentConversationManager', 'executeConversationWorkflow', `Conversation not found: ${conversationId}`);
+            }
+            const workflowId = conversation.sharedContext.workflowId;
+            if (!workflowId) {
+                throw ExpertErrorUtils.createValidationError('MultiAgentConversationManager', 'executeConversationWorkflow', `No workflow associated with conversation: ${conversationId}`);
+            }
+            logger.info('🚀 Executing conversation workflow', {
+                conversationId,
+                workflowId,
+                priority: priority || 'normal'
+            });
+            // Prepare initial context for workflow
+            const initialContext = {
+                conversationId,
+                taskDescription: conversation.sharedContext.taskDescription,
+                currentObjective: conversation.sharedContext.currentObjective,
+                participantCount: conversation.participants.length,
+                contextScope: conversation.contextScope,
+                coordinationPattern: conversation.coordinationPattern
+            };
+            // Execute workflow
+            const executionId = await workflowOrchestrator.executeWorkflow(workflowId, initialContext, {
+                priority: priority || 'normal'
+            });
+            // Store execution ID
+            conversation.sharedContext.executionId = executionId;
+            // Update conversation state
+            conversation.conversationState = 'active';
+            conversation.lastActivity = new Date().toISOString();
+            // Emit workflow execution started event
+            this.emit('conversationWorkflowExecutionStarted', {
+                conversationId,
+                workflowId,
+                executionId,
+                priority: priority || 'normal'
+            });
+            logger.info('✅ Conversation workflow execution started', {
+                conversationId,
+                workflowId,
+                executionId
+            });
+            return executionId;
+        });
+    }
+    async getConversationWorkflowStatus(conversationId) {
+        logger.info('📊 Getting conversation workflow status', { conversationId });
+        const conversation = this.conversations.get(conversationId);
+        if (!conversation) {
+            return null;
+        }
+        const executionId = conversation.sharedContext.executionId;
+        if (!executionId) {
+            return {
+                conversationId,
+                workflowStatus: 'no-workflow',
+                message: 'No workflow associated with this conversation'
+            };
+        }
+        // Get workflow status from orchestrator
+        const workflowStatus = await workflowOrchestrator.getWorkflowStatus(executionId);
+        if (!workflowStatus) {
+            return {
+                conversationId,
+                workflowStatus: 'execution-not-found',
+                message: 'Workflow execution not found'
+            };
+        }
+        // Combine conversation and workflow status
+        const combinedStatus = {
+            conversationId,
+            conversationState: conversation.conversationState,
+            workflowStatus: workflowStatus.status,
+            workflowProgress: workflowStatus.progress,
+            participantCount: conversation.participants.length,
+            activeParticipants: conversation.participants.filter(p => p.status === 'active').length,
+            messageCount: conversation.messageHistory.length,
+            workflowMetrics: workflowStatus.metrics,
+            coordinationPattern: conversation.coordinationPattern,
+            contextSyncEnabled: conversation.contextSyncEnabled,
+            lastActivity: conversation.lastActivity,
+            healthStatus: {
+                conversationHealth: this.calculateConversationHealth(conversation),
+                workflowHealth: workflowStatus.healthStatus
+            }
+        };
+        logger.info('✅ Conversation workflow status retrieved', {
+            conversationId,
+            workflowStatus: workflowStatus.status,
+            progress: workflowStatus.progress.progressPercentage
+        });
+        return combinedStatus;
+    }
+    async pauseConversationWorkflow(conversationId) {
+        const conversation = this.conversations.get(conversationId);
+        if (!conversation) {
+            throw new Error(`Conversation not found: ${conversationId}`);
+        }
+        const executionId = conversation.sharedContext.executionId;
+        if (!executionId) {
+            throw new Error(`No active workflow execution for conversation: ${conversationId}`);
+        }
+        await workflowOrchestrator.pauseWorkflow(executionId);
+        // Update conversation state
+        conversation.conversationState = 'paused';
+        conversation.lastActivity = new Date().toISOString();
+        this.emit('conversationWorkflowPaused', { conversationId, executionId });
+        logger.info('⏸️ Conversation workflow paused', { conversationId, executionId });
+    }
+    async resumeConversationWorkflow(conversationId) {
+        const conversation = this.conversations.get(conversationId);
+        if (!conversation) {
+            throw new Error(`Conversation not found: ${conversationId}`);
+        }
+        const executionId = conversation.sharedContext.executionId;
+        if (!executionId) {
+            throw new Error(`No workflow execution for conversation: ${conversationId}`);
+        }
+        await workflowOrchestrator.resumeWorkflow(executionId);
+        // Update conversation state
+        conversation.conversationState = 'active';
+        conversation.lastActivity = new Date().toISOString();
+        this.emit('conversationWorkflowResumed', { conversationId, executionId });
+        logger.info('▶️ Conversation workflow resumed', { conversationId, executionId });
+    }
+    async resolveConversationConflict(conversationId, conflictData) {
+        return await expertErrorHandler.executeWithErrorHandling('resolveConversationConflict', 'MultiAgentConversationManager', async () => {
+            const conversation = this.conversations.get(conversationId);
+            if (!conversation) {
+                throw ExpertErrorUtils.createValidationError('MultiAgentConversationManager', 'resolveConversationConflict', `Conversation not found: ${conversationId}`);
+            }
+            logger.info('⚖️ Initiating conversation conflict resolution', {
+                conversationId,
+                conflictType: conflictData.conflictType,
+                positionCount: conflictData.positions.length
+            });
+            // Prepare conflict resolution request
+            const participants = conflictData.positions.map(pos => ({
+                agentId: pos.agentId,
+                role: 'decision-maker',
+                expertise: [this.getAgentExpertise(pos.agentId, conversation)],
+                weight: this.calculateAgentWeight(pos.agentId, conversation),
+                position: {
+                    positionId: `pos-${pos.agentId}-${Date.now()}`,
+                    participantId: pos.agentId,
+                    proposedValue: pos.position,
+                    justification: pos.reasoning,
+                    confidence: pos.confidence,
+                    priority: 5, // Default priority
+                    timestamp: new Date().toISOString()
+                }
+            }));
+            const conflictId = `conflict-${conversationId}-${Date.now()}`;
+            // Initiate conflict resolution
+            const _resolutionRequest = await conflictResolver.initiateConflictResolution({
+                requestId: `req-${conflictId}`,
+                conversationId,
+                conflictId,
+                conflictType: conflictData.conflictType,
+                participants,
+                conflictData: {
+                    description: `Conflict in conversation ${conversationId}`,
+                    conflictingValues: conflictData.positions.map(p => p.position),
+                    contextKey: 'conversation-decision',
+                    severity: 'high',
+                    timestamp: new Date().toISOString(),
+                    metadata: {
+                        conversationId,
+                        contextScope: conversation.contextScope,
+                        coordinationPattern: conversation.coordinationPattern
+                    }
+                },
+                resolutionCriteria: {
+                    strategy: (conflictData.resolutionStrategy || 'consensus-building'),
+                    timeoutMs: (conflictData.timeoutMinutes || 15) * 60 * 1000,
+                    consensusThreshold: 0.75,
+                    fallbackStrategy: 'majority-vote'
+                }
+            });
+            // Store conflict ID in conversation context
+            conversation.sharedContext.activeConflictId = conflictId;
+            conversation.lastActivity = new Date().toISOString();
+            // Emit conflict resolution started event
+            this.emit('conversationConflictResolutionStarted', {
+                conversationId,
+                conflictId,
+                conflictType: conflictData.conflictType,
+                participantCount: participants.length
+            });
+            logger.info('✅ Conversation conflict resolution initiated', {
+                conversationId,
+                conflictId,
+                participantCount: participants.length
+            });
+            return conflictId;
+        });
+    }
+    // Private helper methods for workflow orchestration
+    getWorkflowStepsForType(workflowType, conversation) {
+        const baseSteps = [
+            { stepType: 'conversation-init', priority: 'high', maxRetries: 2 }
+        ];
+        if (conversation.contextSyncEnabled) {
+            baseSteps.push({ stepType: 'context-sync', priority: 'normal', maxRetries: 3 });
+        }
+        switch (workflowType) {
+            case 'consensus-decision':
+                return [
+                    ...baseSteps,
+                    { stepType: 'consensus-building', priority: 'critical', maxRetries: 5, dependencies: baseSteps.map(s => s.stepType) },
+                    { stepType: 'decision-finalization', priority: 'high', maxRetries: 2, dependencies: ['consensus-building'] }
+                ];
+            case 'parallel-analysis':
+                return [
+                    ...baseSteps,
+                    { stepType: 'custom', priority: 'normal', maxRetries: 3, dependencies: baseSteps.map(s => s.stepType), metadata: { analysisType: 'parallel' } },
+                    { stepType: 'consensus-building', priority: 'high', maxRetries: 3, dependencies: ['custom'] },
+                    { stepType: 'decision-finalization', priority: 'normal', maxRetries: 2, dependencies: ['consensus-building'] }
+                ];
+            case 'escalation-hierarchy':
+                return [
+                    ...baseSteps,
+                    { stepType: 'conflict-resolution', priority: 'high', maxRetries: 3, dependencies: baseSteps.map(s => s.stepType) },
+                    { stepType: 'custom', priority: 'critical', maxRetries: 2, dependencies: ['conflict-resolution'], metadata: { escalationType: 'hierarchy' } },
+                    { stepType: 'decision-finalization', priority: 'high', maxRetries: 2, dependencies: ['custom'] }
+                ];
+            default:
+                return [
+                    ...baseSteps,
+                    { stepType: 'custom', priority: 'normal', maxRetries: 3, dependencies: baseSteps.map(s => s.stepType) }
+                ];
+        }
+    }
+    getCoordinationTypeForWorkflow(workflowType) {
+        switch (workflowType) {
+            case 'consensus-decision': return 'sequential';
+            case 'parallel-analysis': return 'hybrid';
+            case 'escalation-hierarchy': return 'conditional';
+            default: return 'sequential';
+        }
+    }
+    getAgentExpertise(agentId, conversation) {
+        const agent = conversation.participants.find(p => p.agentId === agentId);
+        return agent?.expertType || 'general';
+    }
+    calculateAgentWeight(agentId, conversation) {
+        const agent = conversation.participants.find(p => p.agentId === agentId);
+        if (!agent)
+            return 1.0;
+        // Weight based on role and capabilities
+        const roleWeights = {
+            'primary': 1.5,
+            'secondary': 1.2,
+            'mediator': 1.3,
+            'observer': 0.8
+        };
+        const baseWeight = roleWeights[agent.role] || 1.0;
+        const capabilityBonus = agent.capabilities.length * 0.1;
+        return Math.min(2.0, baseWeight + capabilityBonus);
+    }
+    calculateConversationHealth(conversation) {
+        const activeParticipants = conversation.participants.filter(p => p.status === 'active').length;
+        const totalParticipants = conversation.participants.length;
+        const participationRate = activeParticipants / totalParticipants;
+        const messageCount = conversation.messageHistory.length;
+        const conversationAge = Date.now() - new Date(conversation.createdAt).getTime();
+        const messageRate = messageCount / Math.max(1, conversationAge / 60000); // Messages per minute
+        let healthScore = 100;
+        const issues = [];
+        if (participationRate < 0.7) {
+            healthScore -= 30;
+            issues.push('Low participant engagement');
+        }
+        if (messageRate < 0.5) {
+            healthScore -= 20;
+            issues.push('Low message activity');
+        }
+        if (conversation.conversationState === 'paused') {
+            healthScore -= 15;
+            issues.push('Conversation paused');
+        }
+        return {
+            overallHealth: Math.max(0, healthScore),
+            participationRate: participationRate * 100,
+            messageRate,
+            activeParticipants,
+            totalParticipants,
+            issues
+        };
+    }
     async getSystemMetrics() {
         const activeCount = this.getActiveConversations().length;
         const totalConversations = this.conversations.size;
@@ -821,6 +1156,24 @@ __decorate([
     __metadata("design:paramtypes", [String, Array]),
     __metadata("design:returntype", Promise)
 ], MultiAgentConversationManager.prototype, "syncConversationContext", null);
+__decorate([
+    performanceMonitored('workflow-creation', performanceMonitor),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], MultiAgentConversationManager.prototype, "createConversationWorkflow", null);
+__decorate([
+    performanceMonitored('workflow-execution', performanceMonitor),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], MultiAgentConversationManager.prototype, "executeConversationWorkflow", null);
+__decorate([
+    cached(expertCache, (conversationId) => `conversation-workflow-status:${conversationId}`, 30 * 1000),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], MultiAgentConversationManager.prototype, "getConversationWorkflowStatus", null);
 // Export singleton instance
 export const multiAgentConversationManager = new MultiAgentConversationManager();
 //# sourceMappingURL=multi-agent-conversation-manager.js.map

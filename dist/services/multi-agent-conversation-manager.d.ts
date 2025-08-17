@@ -41,6 +41,9 @@ export interface ConversationContext {
             timestamp: string;
             consensus: boolean;
         }>;
+        workflowId?: string;
+        executionId?: string;
+        activeConflictId?: string;
     };
     coordinationPattern: 'round-robin' | 'hierarchical' | 'collaborative' | 'consensus-driven' | 'leader-follower';
     messageHistory: ConversationMessage[];
@@ -124,6 +127,37 @@ export declare class MultiAgentConversationManager extends EventEmitter {
     private calculateCoordinationEfficiency;
     getActiveConversations(): string[];
     getConversationsByAgent(agentId: string): string[];
+    createConversationWorkflow(conversationId: string, workflowType: 'consensus-decision' | 'parallel-analysis' | 'escalation-hierarchy' | 'custom', options?: {
+        steps?: Array<{
+            stepType: string;
+            priority?: string;
+            dependencies?: string[];
+            timeout?: number;
+        }>;
+        coordinationType?: string;
+        errorHandling?: string;
+        globalTimeout?: number;
+    }): Promise<string>;
+    executeConversationWorkflow(conversationId: string, priority?: 'low' | 'normal' | 'high' | 'critical'): Promise<string>;
+    getConversationWorkflowStatus(conversationId: string): Promise<any>;
+    pauseConversationWorkflow(conversationId: string): Promise<void>;
+    resumeConversationWorkflow(conversationId: string): Promise<void>;
+    resolveConversationConflict(conversationId: string, conflictData: {
+        conflictType: string;
+        positions: Array<{
+            agentId: string;
+            position: string;
+            reasoning: string;
+            confidence: number;
+        }>;
+        resolutionStrategy?: string;
+        timeoutMinutes?: number;
+    }): Promise<string>;
+    private getWorkflowStepsForType;
+    private getCoordinationTypeForWorkflow;
+    private getAgentExpertise;
+    private calculateAgentWeight;
+    private calculateConversationHealth;
     getSystemMetrics(): Promise<Record<string, any>>;
     private calculateAverageConversationDuration;
     private calculateMessageProcessingRate;
