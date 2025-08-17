@@ -69,6 +69,7 @@ export declare class ToolRegistry {
     getDocumentLifecycleTools(): ToolDefinition[];
     getRegistryLifecycleTools(): ToolDefinition[];
     getLifecycleIntegrationTools(): ToolDefinition[];
+    getVirtualExpertTeamTools(): ToolDefinition[];
 }
 export declare const GitToolRegistry: typeof ToolRegistry;
 //# sourceMappingURL=tool-registry.d.ts.map

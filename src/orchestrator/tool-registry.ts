@@ -44,6 +44,10 @@ import {
     lifecycleIntegrationTools,
     lifecycleIntegrationHandlers
 } from '../tools/lifecycle-integration.js';
+import {
+    virtualExpertTeamTools,
+    virtualExpertTeamHandlers
+} from '../tools/virtual-expert-team.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import { createMCPLogger } from '../utils/mcp-logger.js';
 
@@ -84,7 +88,8 @@ export class ToolRegistry {
             ...this.getUpdateIntegrationTools(),
             ...this.getDocumentLifecycleTools(),
             ...this.getRegistryLifecycleTools(),
-            ...this.getLifecycleIntegrationTools()
+            ...this.getLifecycleIntegrationTools(),
+            ...this.getVirtualExpertTeamTools()
         ];
     }
 
@@ -1308,6 +1313,22 @@ export class ToolRegistry {
                         }
                     ]
                 };
+            }
+        }));
+    }
+
+    public getVirtualExpertTeamTools(): ToolDefinition[] {
+        return virtualExpertTeamTools.map(tool => ({
+            name: tool.name,
+            description: tool.description || `Virtual Expert Team tool: ${tool.name}`,
+            inputSchema: tool.inputSchema as any,
+            handler: async (args: any) => {
+                const handlerFn = virtualExpertTeamHandlers[tool.name as keyof typeof virtualExpertTeamHandlers];
+                if (!handlerFn) {
+                    throw new McpError(ErrorCode.MethodNotFound, `Handler not found for Virtual Expert Team tool: ${tool.name}`);
+                }
+                
+                return await handlerFn(args);
             }
         }));
     }
