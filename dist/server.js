@@ -24,6 +24,33 @@ catch (error) {
 }
 // Configure logging - avoid console output during MCP operations
 const logger = createMCPLogger('environment-mcp-gateway.log');
+// Log process lifecycle events
+logger.info('🎬 Process starting', {
+    processId: process.pid,
+    parentProcessId: process.ppid,
+    execPath: process.execPath,
+    argv: process.argv,
+    cwd: process.cwd(),
+    mcpStdioMode: process.env.MCP_STDIO_MODE,
+    nodeEnv: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+});
+// Handle process termination
+process.on('SIGINT', () => {
+    logger.info('⏹️ Process received SIGINT signal', { processId: process.pid });
+    process.exit(0);
+});
+process.on('SIGTERM', () => {
+    logger.info('⏹️ Process received SIGTERM signal', { processId: process.pid });
+    process.exit(0);
+});
+process.on('exit', (code) => {
+    logger.info('🛑 Process exiting', {
+        processId: process.pid,
+        exitCode: code,
+        timestamp: new Date().toISOString()
+    });
+});
 class EnvironmentMCPGateway {
     server;
     adapterManager;
@@ -769,12 +796,45 @@ class EnvironmentMCPGateway {
         };
     }
     async run() {
-        const transport = new StdioServerTransport();
-        await this.server.connect(transport);
-        logger.info('EnvironmentMCPGateway server started', {
-            name: 'lucidwonks-environment-mcp-gateway',
-            version: '1.0.0'
+        logger.info('🚀 Starting MCP server connection process', {
+            processId: process.pid,
+            parentProcessId: process.ppid,
+            mcpStdioMode: process.env.MCP_STDIO_MODE,
+            isInteractive: process.stdin.isTTY,
+            stdioInfo: {
+                stdin: process.stdin.readable,
+                stdout: process.stdout.writable,
+                stderr: process.stderr.writable
+            }
         });
+        const transport = new StdioServerTransport();
+        logger.info('📡 STDIO transport created, attempting connection...', {
+            transportType: 'StdioServerTransport',
+            processId: process.pid
+        });
+        try {
+            await this.server.connect(transport);
+            logger.info('✅ EnvironmentMCPGateway MCP server connected and ready', {
+                name: 'lucidwonks-environment-mcp-gateway',
+                version: '1.0.0',
+                transport: 'STDIO',
+                processId: process.pid,
+                parentProcessId: process.ppid,
+                timestamp: new Date().toISOString()
+            });
+        }
+        catch (error) {
+            logger.error('❌ Failed to connect MCP server', {
+                error: error instanceof Error ? {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                } : error,
+                processId: process.pid,
+                mcpStdioMode: process.env.MCP_STDIO_MODE
+            });
+            throw error;
+        }
     }
     async reloadConfiguration(_args) {
         logger.info('Force reloading configuration');
@@ -888,19 +948,34 @@ async function startServer() {
         nodeEnv: process.env.NODE_ENV,
         mcpPort: process.env.MCP_SERVER_PORT || '3001',
         projectRoot: process.env.PROJECT_ROOT,
+        mcpStdioMode: process.env.MCP_STDIO_MODE,
+        processId: process.pid,
+        parentProcessId: process.ppid,
+        argv: process.argv,
+        execPath: process.execPath,
         healthServerEnabled: process.env.NODE_ENV === 'production' || process.env.ENABLE_HEALTH_SERVER === 'true'
     });
     try {
-        // Start health server for Docker health checks
-        if (process.env.NODE_ENV === 'production' || process.env.ENABLE_HEALTH_SERVER === 'true') {
-            logger.info('🏥 Initializing health server for Docker health checks');
+        // Start health server for Docker health checks only when NOT in STDIO mode
+        if ((process.env.NODE_ENV === 'production' || process.env.ENABLE_HEALTH_SERVER === 'true') && !process.env.MCP_STDIO_MODE) {
+            logger.info('🏥 Initializing health server for Docker health checks', {
+                processId: process.pid,
+                mcpStdioMode: process.env.MCP_STDIO_MODE
+            });
             const healthPort = parseInt(process.env.MCP_SERVER_PORT || '3001');
             const healthServer = new HealthServer(healthPort);
             await healthServer.start();
-            logger.info('✅ Health server started successfully', { port: healthPort });
+            logger.info('✅ Health server started successfully', {
+                port: healthPort,
+                processId: process.pid
+            });
         }
         else {
-            logger.info('⏭️ Health server disabled - running in development mode');
+            logger.info('⏭️ Health server disabled - running in STDIO MCP mode or development', {
+                mcpStdioMode: process.env.MCP_STDIO_MODE,
+                nodeEnv: process.env.NODE_ENV,
+                processId: process.pid
+            });
         }
         // Start MCP server
         logger.info('🔧 Initializing MCP server components');

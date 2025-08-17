@@ -2,9 +2,16 @@ import { config } from 'dotenv';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
-// Get __dirname equivalent for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Get __dirname equivalent for ES modules with fallback
+let __dirname;
+try {
+    const __filename = fileURLToPath(import.meta.url);
+    __dirname = dirname(__filename);
+}
+catch {
+    // Fallback for environments that don't support import.meta (like Jest)
+    __dirname = process.cwd();
+}
 // Load environment variables from .env.development in EnvironmentMCPGateway root directory
 // Calculate path from src/domain/config back to EnvironmentMCPGateway root
 const mcpGatewayRoot = resolve(__dirname, '..', '..', '..');

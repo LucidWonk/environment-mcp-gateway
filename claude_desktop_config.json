@@ -5,12 +5,15 @@
       "args": [
         "exec", 
         "-i", 
+        "-e", "MCP_STDIO_MODE=true",
+        "-e", "NODE_ENV=production", 
         "environment-mcp-gateway",
         "node",
-        "/app/dist/server.js"
+        "dist/server.js"
       ],
       "env": {
-        "PROJECT_ROOT": "/workspace"
+        "PROJECT_ROOT": "/workspace",
+        "NODE_ENV": "production"
       }
     }
   }

@@ -28,4 +28,6 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD node /app/health-check.js
 
-CMD ["node", "dist/server.js"]
+# CRITICAL FIX: Keep container idle instead of running server
+# The server will be started fresh by Claude via docker exec
+CMD ["tail", "-f", "/dev/null"]

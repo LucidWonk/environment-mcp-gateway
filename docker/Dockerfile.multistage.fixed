@@ -1,4 +1,5 @@
 # Multi-stage Dockerfile for Environment MCP Gateway
+# FIXED VERSION - Idle container pattern for MCP STDIO communication
 # Stage 1: Build stage
 FROM node:18-alpine AS builder
 
@@ -53,19 +54,17 @@ RUN mkdir -p /app/.semantic-cache /app/.holistic-rollback /app/.atomic-ops && \
 # Switch to non-root user
 USER mcpuser
 
-# Health check
+# Simple health check that verifies container is running
+# The actual MCP server will be started on-demand by Claude
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "const http = require('http'); \
-    const options = { host: 'localhost', port: process.env.MCP_SERVER_PORT || 3001, path: '/health', timeout: 2000 }; \
-    const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); \
-    req.on('error', () => process.exit(1)); \
-    req.end();"
+    CMD echo "Container ready for MCP connections" || exit 1
 
-# Expose port
+# Expose port (for potential future HTTP health endpoint)
 EXPOSE 3001
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
+
 # CRITICAL FIX: Keep container idle instead of running server
 # The server will be started fresh by Claude via docker exec
 CMD ["tail", "-f", "/dev/null"]
