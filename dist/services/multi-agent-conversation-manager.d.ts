@@ -161,6 +161,31 @@ export declare class MultiAgentConversationManager extends EventEmitter {
     getSystemMetrics(): Promise<Record<string, any>>;
     private calculateAverageConversationDuration;
     private calculateMessageProcessingRate;
+    startCoordinationMonitoring(conversationId: string): Promise<void>;
+    updateConversationMonitoring(conversationId: string, updates: {
+        messageCount?: number;
+        activeParticipants?: number;
+        consensusLevel?: number;
+        conflictCount?: number;
+    }): Promise<void>;
+    stopConversationMonitoring(conversationId: string, finalStatus: 'completed' | 'failed' | 'cancelled'): Promise<void>;
+    getConversationMonitoringMetrics(conversationId: string): Promise<any>;
+    getConversationHealthReport(conversationId: string): Promise<any>;
+    createConversationAlert(metricType: 'response-time' | 'participation-rate' | 'consensus-level' | 'conflict-rate', threshold: number, severity: 'info' | 'warning' | 'error' | 'critical'): Promise<string>;
+    getSystemMonitoringDashboard(): Promise<any>;
+    private setupMonitoringEventHandlers;
+    private cleanupMonitoringEventHandlers;
+    private estimateConversationSteps;
+    private calculateAverageResponseTime;
+    private calculateConversationThroughput;
+    private calculateConsensusLevel;
+    private calculateConversationSuccessRate;
+    private estimateConversationCPUUsage;
+    private estimateConversationMemoryUsage;
+    private estimateConversationNetworkUsage;
+    private generateConversationRecommendations;
+    private calculateSystemHealth;
+    private generateSystemRecommendations;
 }
 export declare const multiAgentConversationManager: MultiAgentConversationManager;
 //# sourceMappingURL=multi-agent-conversation-manager.d.ts.map

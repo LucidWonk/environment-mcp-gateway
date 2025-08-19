@@ -15,6 +15,7 @@ import { expertErrorHandler, ExpertErrorUtils } from '../infrastructure/error-ha
 import { contextSynchronizer } from '../infrastructure/context-synchronizer.js';
 import { conflictResolver } from '../infrastructure/conflict-resolver.js';
 import { workflowOrchestrator } from '../infrastructure/workflow-orchestrator.js';
+import { coordinationMonitor } from '../infrastructure/coordination-monitor.js';
 import { EventEmitter } from 'events';
 const logger = createMCPLogger('multi-agent-conversation-manager.log');
 // Multi-agent Conversation Manager Service
@@ -1125,6 +1126,246 @@ export class MultiAgentConversationManager extends EventEmitter {
             return 0;
         return (totalMessages / totalDuration) * 1000 * 60; // Messages per minute
     }
+    // Real-time Coordination Monitoring Integration
+    async startCoordinationMonitoring(conversationId) {
+        return await expertErrorHandler.executeWithErrorHandling('startCoordinationMonitoring', 'MultiAgentConversationManager', async () => {
+            const conversation = this.conversations.get(conversationId);
+            if (!conversation) {
+                throw ExpertErrorUtils.createValidationError('MultiAgentConversationManager', 'startCoordinationMonitoring', `Conversation ${conversationId} not found`);
+            }
+            logger.info('🎯 Starting conversation monitoring', {
+                conversationId,
+                participantCount: conversation.participants.length,
+                contextScope: conversation.contextScope
+            });
+            await coordinationMonitor.startCoordinationMonitoring(conversationId, 'conversation', conversation.participants.length, {
+                taskDescription: conversation.sharedContext.taskDescription,
+                contextScope: conversation.contextScope,
+                totalSteps: this.estimateConversationSteps(conversation)
+            });
+            // Set up conversation event handlers for monitoring
+            this.setupMonitoringEventHandlers(conversationId);
+            logger.info('✅ Conversation monitoring started', { conversationId });
+        });
+    }
+    async updateConversationMonitoring(conversationId, updates) {
+        const conversation = this.conversations.get(conversationId);
+        if (!conversation)
+            return;
+        const metrics = {
+            completedSteps: updates.messageCount || conversation.messageHistory.length,
+            latency: this.calculateAverageResponseTime(conversation),
+            throughput: this.calculateConversationThroughput(conversation),
+            qualityMetrics: {
+                consensusRate: updates.consensusLevel || this.calculateConsensusLevel(conversation),
+                successRate: this.calculateConversationSuccessRate(conversation)
+            },
+            resourceUtilization: {
+                cpu: this.estimateConversationCPUUsage(conversation),
+                memory: this.estimateConversationMemoryUsage(conversation),
+                network: this.estimateConversationNetworkUsage(conversation)
+            }
+        };
+        if (updates.conflictCount !== undefined) {
+            metrics.errorCount = updates.conflictCount;
+        }
+        await coordinationMonitor.updateCoordinationMetrics(conversationId, metrics);
+        logger.debug('📈 Conversation monitoring updated', {
+            conversationId,
+            messageCount: metrics.completedSteps,
+            consensusRate: metrics.qualityMetrics.consensusRate
+        });
+    }
+    async stopConversationMonitoring(conversationId, finalStatus) {
+        logger.info('🏁 Stopping conversation monitoring', { conversationId, finalStatus });
+        await coordinationMonitor.stopCoordinationMonitoring(conversationId, finalStatus);
+        // Clean up event handlers
+        this.cleanupMonitoringEventHandlers(conversationId);
+        logger.info('✅ Conversation monitoring stopped', { conversationId });
+    }
+    async getConversationMonitoringMetrics(conversationId) {
+        return await coordinationMonitor.getCoordinationMetrics(conversationId);
+    }
+    async getConversationHealthReport(conversationId) {
+        const metrics = await coordinationMonitor.getCoordinationMetrics(conversationId);
+        if (!metrics)
+            return null;
+        const conversation = this.conversations.get(conversationId);
+        if (!conversation)
+            return null;
+        return {
+            conversationId,
+            overallHealth: this.calculateConversationHealth(conversation),
+            monitoringMetrics: metrics,
+            recommendations: this.generateConversationRecommendations(conversation, metrics)
+        };
+    }
+    async createConversationAlert(metricType, threshold, severity) {
+        const alertConfig = {
+            alertId: `conversation-${metricType}-${Date.now()}`,
+            metricType: metricType,
+            threshold,
+            comparison: 'greater-than',
+            severity,
+            enabled: true,
+            cooldownPeriod: 300, // 5 minutes
+            notificationChannels: ['log', 'event']
+        };
+        return await coordinationMonitor.createAlert(alertConfig);
+    }
+    async getSystemMonitoringDashboard() {
+        const systemMetrics = await coordinationMonitor.getSystemMetrics();
+        const conversationMetrics = await this.getSystemMetrics();
+        const trends = await coordinationMonitor.getPerformanceTrends();
+        return {
+            dashboardId: 'system-overview',
+            name: 'Multi-Agent Coordination System Overview',
+            timestamp: new Date().toISOString(),
+            sections: {
+                systemHealth: {
+                    coordinationMetrics: systemMetrics,
+                    conversationMetrics,
+                    overallHealth: this.calculateSystemHealth(systemMetrics, conversationMetrics)
+                },
+                performanceTrends: trends,
+                activeAlerts: await coordinationMonitor.getActiveAlerts(),
+                recommendations: this.generateSystemRecommendations(systemMetrics, conversationMetrics)
+            }
+        };
+    }
+    // Private monitoring helper methods
+    setupMonitoringEventHandlers(conversationId) {
+        // Listen for conversation events and update monitoring
+        this.on('messageProcessed', async (data) => {
+            if (data.conversationId === conversationId) {
+                await this.updateConversationMonitoring(conversationId, {
+                    messageCount: data.messageCount
+                });
+            }
+        });
+        this.on('consensusReached', async (data) => {
+            if (data.conversationId === conversationId) {
+                await this.updateConversationMonitoring(conversationId, {
+                    consensusLevel: data.consensusLevel
+                });
+            }
+        });
+        this.on('conflictDetected', async (data) => {
+            if (data.conversationId === conversationId) {
+                await this.updateConversationMonitoring(conversationId, {
+                    conflictCount: data.conflictCount
+                });
+            }
+        });
+    }
+    cleanupMonitoringEventHandlers(conversationId) {
+        // Remove specific event listeners for this conversation
+        this.removeAllListeners(`messageProcessed:${conversationId}`);
+        this.removeAllListeners(`consensusReached:${conversationId}`);
+        this.removeAllListeners(`conflictDetected:${conversationId}`);
+    }
+    estimateConversationSteps(conversation) {
+        // Estimate based on task complexity and participant count
+        const baseSteps = 5; // Minimum steps for any conversation
+        const participantSteps = conversation.participants.length * 2; // 2 steps per participant on average
+        const complexityMultiplier = conversation.contextScope === 'system-wide' ? 2 : 1;
+        return (baseSteps + participantSteps) * complexityMultiplier;
+    }
+    calculateAverageResponseTime(conversation) {
+        if (conversation.messageHistory.length < 2)
+            return 0;
+        const responseTimes = [];
+        for (let i = 1; i < conversation.messageHistory.length; i++) {
+            const prevTime = new Date(conversation.messageHistory[i - 1].timestamp).getTime();
+            const currTime = new Date(conversation.messageHistory[i].timestamp).getTime();
+            responseTimes.push(currTime - prevTime);
+        }
+        return responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
+    }
+    calculateConversationThroughput(conversation) {
+        const duration = Date.now() - new Date(conversation.createdAt).getTime();
+        if (duration === 0)
+            return 0;
+        return (conversation.messageHistory.length / duration) * 1000 * 60; // Messages per minute
+    }
+    calculateConsensusLevel(conversation) {
+        // Simplified consensus calculation based on message agreement patterns
+        const agreementMessages = conversation.messageHistory.filter(m => m.content.text.toLowerCase().includes('agree') ||
+            m.content.text.toLowerCase().includes('consensus') ||
+            m.content.text.toLowerCase().includes('approved'));
+        return conversation.messageHistory.length > 0
+            ? (agreementMessages.length / conversation.messageHistory.length) * 100
+            : 0;
+    }
+    calculateConversationSuccessRate(conversation) {
+        // Success rate based on conversation state and completion criteria
+        switch (conversation.conversationState) {
+            case 'completed': return 100;
+            case 'active': return 70; // Ongoing conversations get partial credit
+            case 'paused': return 50;
+            case 'failed': return 0;
+            default: return 30;
+        }
+    }
+    estimateConversationCPUUsage(conversation) {
+        // Estimate CPU usage based on conversation activity
+        const baseUsage = 10; // Base CPU usage for any conversation
+        const participantUsage = conversation.participants.length * 5;
+        const messageUsage = Math.min(conversation.messageHistory.length * 0.5, 30);
+        return Math.min(100, baseUsage + participantUsage + messageUsage);
+    }
+    estimateConversationMemoryUsage(conversation) {
+        // Estimate memory usage based on conversation data
+        const baseMemory = 15; // Base memory for conversation structure
+        const contextMemory = Object.keys(conversation.sharedContext).length * 2;
+        const messageMemory = conversation.messageHistory.length * 1.5;
+        return Math.min(100, baseMemory + contextMemory + messageMemory);
+    }
+    estimateConversationNetworkUsage(conversation) {
+        // Estimate network usage based on communication patterns
+        const recentMessages = conversation.messageHistory.filter(m => Date.now() - new Date(m.timestamp).getTime() < 300000 // Last 5 minutes
+        );
+        return Math.min(100, recentMessages.length * 8); // Rough network usage estimate
+    }
+    generateConversationRecommendations(conversation, metrics) {
+        const recommendations = [];
+        if (metrics.latency > 5000) {
+            recommendations.push('Consider reducing response time requirements or adding more agents');
+        }
+        if (metrics.qualityMetrics?.consensusRate < 60) {
+            recommendations.push('Improve consensus-building mechanisms or add a mediator agent');
+        }
+        if (conversation.participants.length > 8) {
+            recommendations.push('Consider breaking down into smaller conversation groups');
+        }
+        if (metrics.resourceUtilization?.memory > 80) {
+            recommendations.push('Optimize conversation context to reduce memory usage');
+        }
+        return recommendations;
+    }
+    calculateSystemHealth(systemMetrics, conversationMetrics) {
+        const systemHealthScore = (systemMetrics.errorRate < 5 ? 25 : 0) +
+            (systemMetrics.averageLatency < 3000 ? 25 : 0) +
+            (systemMetrics.capacityMetrics.currentUtilization < 80 ? 25 : 0) +
+            (conversationMetrics.conversations.completionRate > 70 ? 25 : 0);
+        return systemHealthScore;
+    }
+    generateSystemRecommendations(systemMetrics, conversationMetrics) {
+        const recommendations = [];
+        if (systemMetrics.capacityMetrics.currentUtilization > 80) {
+            recommendations.push('Consider scaling up system resources');
+        }
+        if (conversationMetrics.conversations.completionRate < 70) {
+            recommendations.push('Review conversation workflows for bottlenecks');
+        }
+        if (systemMetrics.errorRate > 10) {
+            recommendations.push('Investigate and fix recurring system errors');
+        }
+        if (systemMetrics.averageLatency > 5000) {
+            recommendations.push('Optimize system performance and network latency');
+        }
+        return recommendations;
+    }
 }
 __decorate([
     performanceMonitored('conversation-initialization', performanceMonitor),
@@ -1174,6 +1415,24 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], MultiAgentConversationManager.prototype, "getConversationWorkflowStatus", null);
+__decorate([
+    performanceMonitored('conversation-monitoring-start', performanceMonitor),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], MultiAgentConversationManager.prototype, "startCoordinationMonitoring", null);
+__decorate([
+    performanceMonitored('conversation-monitoring-update', performanceMonitor),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MultiAgentConversationManager.prototype, "updateConversationMonitoring", null);
+__decorate([
+    performanceMonitored('conversation-monitoring-stop', performanceMonitor),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], MultiAgentConversationManager.prototype, "stopConversationMonitoring", null);
 // Export singleton instance
 export const multiAgentConversationManager = new MultiAgentConversationManager();
 //# sourceMappingURL=multi-agent-conversation-manager.js.map
