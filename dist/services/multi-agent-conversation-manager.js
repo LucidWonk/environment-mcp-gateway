@@ -24,14 +24,59 @@ export class MultiAgentConversationManager extends EventEmitter {
     conversationRules = [];
     activeAgents = new Map();
     messageQueue = new Map();
+    // Performance optimization: Pre-computed indexes for faster lookups
+    conversationsByState = new Map();
+    messagesByUrgency = new Map();
+    agentsByStatus = new Map();
     constructor() {
         super();
         this.initializeDefaultRules();
         this.startConversationMonitoring();
+        this.initializePerformanceIndexes();
         logger.info('🗣️ Multi-Agent Conversation Manager initialized', {
             defaultRules: this.conversationRules.length,
-            monitoringEnabled: true
+            monitoringEnabled: true,
+            performanceOptimized: true
         });
+    }
+    // Performance optimization: Initialize indexes for faster lookups
+    initializePerformanceIndexes() {
+        // Initialize conversation state indexes
+        ['initializing', 'active', 'paused', 'completing', 'completed', 'failed'].forEach(state => {
+            this.conversationsByState.set(state, new Set());
+        });
+        // Initialize message urgency indexes
+        ['low', 'medium', 'high', 'critical'].forEach(urgency => {
+            this.messagesByUrgency.set(urgency, new Set());
+        });
+        // Initialize agent status indexes
+        ['active', 'idle', 'busy', 'offline'].forEach(status => {
+            this.agentsByStatus.set(status, new Set());
+        });
+    }
+    // Performance optimization: Update conversation state index
+    updateConversationStateIndex(conversationId, oldState, newState) {
+        if (oldState && this.conversationsByState.has(oldState)) {
+            this.conversationsByState.get(oldState).delete(conversationId);
+        }
+        if (newState && this.conversationsByState.has(newState)) {
+            this.conversationsByState.get(newState).add(conversationId);
+        }
+    }
+    // Performance optimization: Update agent status index
+    updateAgentStatusIndex(agentId, oldStatus, newStatus) {
+        if (oldStatus && this.agentsByStatus.has(oldStatus)) {
+            this.agentsByStatus.get(oldStatus).delete(agentId);
+        }
+        if (newStatus && this.agentsByStatus.has(newStatus)) {
+            this.agentsByStatus.get(newStatus).add(agentId);
+        }
+    }
+    // Performance optimization: Helper to update conversation state with index maintenance
+    setConversationState(conversation, newState) {
+        const oldState = conversation.conversationState;
+        conversation.conversationState = newState;
+        this.updateConversationStateIndex(conversation.conversationId, oldState, newState);
     }
     async initiateConversation(taskId, initiatorAgentId, participants, options) {
         return await expertErrorHandler.executeWithErrorHandling('initiateConversation', 'ConversationManager', async () => {
@@ -138,7 +183,7 @@ export class MultiAgentConversationManager extends EventEmitter {
             const cacheKey = ExpertCacheKeys.contextTransfer(conversationId, 'conversation-context');
             expertCache.set(cacheKey, conversationContext, 60 * 60 * 1000); // Cache for 1 hour
             // Transition to active state
-            conversationContext.conversationState = 'active';
+            this.setConversationState(conversationContext, 'active');
             // Emit conversation initiated event
             this.emit('conversationInitiated', {
                 conversationId,
@@ -338,7 +383,7 @@ export class MultiAgentConversationManager extends EventEmitter {
         if (!conversation) {
             throw new Error(`Conversation ${conversationId} not found`);
         }
-        conversation.conversationState = 'completed';
+        this.setConversationState(conversation, 'completed');
         conversation.lastActivity = new Date().toISOString();
         // Release connections for all participants
         for (const participant of conversation.participants) {
@@ -727,11 +772,10 @@ export class MultiAgentConversationManager extends EventEmitter {
         return Math.max(0, Math.min(100, adjustedEfficiency));
     }
     // Public utility methods
+    // Performance optimized: Use pre-computed index instead of filtering
     getActiveConversations() {
-        return Array.from(this.conversations.keys()).filter(id => {
-            const conversation = this.conversations.get(id);
-            return conversation && conversation.conversationState === 'active';
-        });
+        const activeIds = this.conversationsByState.get('active');
+        return activeIds ? Array.from(activeIds) : [];
     }
     getConversationsByAgent(agentId) {
         const conversationIds = [];

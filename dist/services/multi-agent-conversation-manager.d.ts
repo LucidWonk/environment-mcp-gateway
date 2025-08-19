@@ -89,7 +89,14 @@ export declare class MultiAgentConversationManager extends EventEmitter {
     private conversationRules;
     private activeAgents;
     private messageQueue;
+    private conversationsByState;
+    private messagesByUrgency;
+    private agentsByStatus;
     constructor();
+    private initializePerformanceIndexes;
+    private updateConversationStateIndex;
+    private updateAgentStatusIndex;
+    private setConversationState;
     initiateConversation(taskId: string, initiatorAgentId: string, participants: Omit<ConversationAgent, 'status' | 'connectionId'>[], options: {
         contextScope?: 'focused' | 'comprehensive' | 'cross-domain' | 'system-wide';
         coordinationPattern?: 'round-robin' | 'hierarchical' | 'collaborative' | 'consensus-driven' | 'leader-follower';

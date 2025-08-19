@@ -109,16 +109,68 @@ export class MultiAgentConversationManager extends EventEmitter {
     private conversationRules: ConversationRule[] = [];
     private activeAgents: Map<string, ConversationAgent> = new Map();
     private messageQueue: Map<string, ConversationMessage[]> = new Map();
+    
+    // Performance optimization: Pre-computed indexes for faster lookups
+    private conversationsByState = new Map<string, Set<string>>();
+    private messagesByUrgency = new Map<string, Set<string>>();
+    private agentsByStatus = new Map<string, Set<string>>();
 
     constructor() {
         super();
         this.initializeDefaultRules();
         this.startConversationMonitoring();
+        this.initializePerformanceIndexes();
         
         logger.info('🗣️ Multi-Agent Conversation Manager initialized', {
             defaultRules: this.conversationRules.length,
-            monitoringEnabled: true
+            monitoringEnabled: true,
+            performanceOptimized: true
         });
+    }
+
+    // Performance optimization: Initialize indexes for faster lookups
+    private initializePerformanceIndexes(): void {
+        // Initialize conversation state indexes
+        ['initializing', 'active', 'paused', 'completing', 'completed', 'failed'].forEach(state => {
+            this.conversationsByState.set(state, new Set());
+        });
+
+        // Initialize message urgency indexes
+        ['low', 'medium', 'high', 'critical'].forEach(urgency => {
+            this.messagesByUrgency.set(urgency, new Set());
+        });
+
+        // Initialize agent status indexes
+        ['active', 'idle', 'busy', 'offline'].forEach(status => {
+            this.agentsByStatus.set(status, new Set());
+        });
+    }
+
+    // Performance optimization: Update conversation state index
+    private updateConversationStateIndex(conversationId: string, oldState?: string, newState?: string): void {
+        if (oldState && this.conversationsByState.has(oldState)) {
+            this.conversationsByState.get(oldState)!.delete(conversationId);
+        }
+        if (newState && this.conversationsByState.has(newState)) {
+            this.conversationsByState.get(newState)!.add(conversationId);
+        }
+    }
+
+    // Performance optimization: Update agent status index
+    private updateAgentStatusIndex(agentId: string, oldStatus?: string, newStatus?: string): void {
+        if (oldStatus && this.agentsByStatus.has(oldStatus)) {
+            this.agentsByStatus.get(oldStatus)!.delete(agentId);
+        }
+        if (newStatus && this.agentsByStatus.has(newStatus)) {
+            this.agentsByStatus.get(newStatus)!.add(agentId);
+        }
+    }
+
+    // Performance optimization: Helper to update conversation state with index maintenance
+    private setConversationState(conversation: ConversationContext, newState: string): void {
+        const oldState = conversation.conversationState;
+        conversation.conversationState = newState as any;
+        this.updateConversationStateIndex(conversation.conversationId, oldState, newState);
     }
 
     @performanceMonitored('conversation-initialization', performanceMonitor)
@@ -262,7 +314,7 @@ export class MultiAgentConversationManager extends EventEmitter {
                 expertCache.set(cacheKey, conversationContext, 60 * 60 * 1000); // Cache for 1 hour
 
                 // Transition to active state
-                conversationContext.conversationState = 'active';
+                this.setConversationState(conversationContext, 'active');
 
                 // Emit conversation initiated event
                 this.emit('conversationInitiated', {
@@ -511,7 +563,7 @@ export class MultiAgentConversationManager extends EventEmitter {
             throw new Error(`Conversation ${conversationId} not found`);
         }
 
-        conversation.conversationState = 'completed';
+        this.setConversationState(conversation, 'completed');
         conversation.lastActivity = new Date().toISOString();
 
         // Release connections for all participants
@@ -985,11 +1037,10 @@ export class MultiAgentConversationManager extends EventEmitter {
     }
 
     // Public utility methods
+    // Performance optimized: Use pre-computed index instead of filtering
     public getActiveConversations(): string[] {
-        return Array.from(this.conversations.keys()).filter(id => {
-            const conversation = this.conversations.get(id);
-            return conversation && conversation.conversationState === 'active';
-        });
+        const activeIds = this.conversationsByState.get('active');
+        return activeIds ? Array.from(activeIds) : [];
     }
 
     public getConversationsByAgent(agentId: string): string[] {
