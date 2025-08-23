@@ -11,12 +11,12 @@ This project follows Lucidwonks testing standards which mandate the use of XUnit
 2. **NEVER** add Jest dependencies to package.json  
 3. **NEVER** create test files using Jest syntax (`describe`, `test`, `expect` from @jest/globals)
 4. **ALWAYS** use XUnit testing patterns and frameworks
-5. **ALWAYS** refer to `/mnt/m/Projects/Lucidwonks/Documentation/Overview/Testing-Standards.md` for approved testing approaches
+5. **ALWAYS** refer to `/mnt/m/Projects/Lucidwonks/Documentation/Architecture/testing-standards.domain.req.md` for approved testing approaches
 
 ## Approved Testing Framework
 
 - **Primary**: XUnit for .NET components
-- **Secondary**: Approved frameworks as specified in Documentation/Overview/Testing-Standards.md
+- **Secondary**: Approved frameworks as specified in Documentation/Architecture/testing-standards.domain.req.md
 - **Integration**: Comprehensive integration testing following established patterns
 
 ## What Jest Configuration Would Look Like (DO NOT USE)

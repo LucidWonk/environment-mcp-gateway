@@ -108,13 +108,13 @@ export class NewConceptsMigrationOrchestrator {
     async discoverNewConcepts(): Promise<NewConceptsDiscoveryResult> {
         logger.info('Starting NewConcepts discovery');
 
-        const _newConceptsPath = path.join(this.projectRoot, 'Documentation', 'NewConcepts');
+        const _newConceptsPath = path.join(this.projectRoot, 'Documentation', 'ContextEngineering', 'NewConcepts');
         
         // Placeholder implementation - in real scenario would scan filesystem
         const conceptPaths = [
-            'Documentation/NewConcepts/fractal-analysis-enhancement.md',
-            'Documentation/NewConcepts/multi-timeframe-correlation.md',
-            'Documentation/NewConcepts/context-awareness-system.md'
+            'Documentation/ContextEngineering/NewConcepts/fractal-analysis-enhancement.md',
+            'Documentation/ContextEngineering/NewConcepts/multi-timeframe-correlation.md',
+            'Documentation/ContextEngineering/NewConcepts/context-awareness-system.md'
         ];
 
         const placeholderCandidates: string[] = [];
