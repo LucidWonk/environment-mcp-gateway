@@ -4,6 +4,7 @@ process.env.MCP_SILENT_MODE = 'true';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import http from 'http';
+import { SessionManager } from './session/session-manager.js';
 import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError } from '@modelcontextprotocol/sdk/types.js';
 import { Environment } from './domain/config/environment.js';
 import { SolutionParser } from './infrastructure/solution-parser.js';
@@ -56,6 +57,7 @@ class EnvironmentMCPGateway {
     server;
     adapterManager;
     toolRegistry;
+    sessionManager;
     constructor() {
         logger.info('🔧 Initializing EnvironmentMCPGateway components');
         try {
@@ -78,6 +80,14 @@ class EnvironmentMCPGateway {
             logger.debug('Creating ToolRegistry instance');
             this.toolRegistry = new ToolRegistry();
             logger.debug('✅ ToolRegistry created');
+            // Initialize Session Manager
+            logger.debug('Creating SessionManager instance');
+            this.sessionManager = new SessionManager({
+                maxSessions: 10,
+                sessionTimeout: 5 * 60 * 1000, // 5 minutes
+                cleanupInterval: 60 * 1000 // 1 minute
+            });
+            logger.debug('✅ SessionManager created');
             // Setup request handlers
             logger.debug('Setting up MCP request handlers');
             this.setupHandlers();
@@ -841,21 +851,48 @@ class EnvironmentMCPGateway {
      * Handle MCP SSE connection from a client
      */
     async handleMCPConnection(req, res) {
+        let sessionId;
         try {
+            // Generate unique session ID for this connection
+            sessionId = this.sessionManager.generateSessionId();
             logger.info('🔌 New MCP client connection', {
+                sessionId,
                 userAgent: req.headers['user-agent'],
-                remoteAddress: req.connection?.remoteAddress
+                remoteAddress: req.socket?.remoteAddress
             });
+            // Create session for this client connection
+            this.sessionManager.addSession(sessionId, req.headers['user-agent'], req.socket?.remoteAddress);
             // Create SSE transport for this specific connection
             const transport = new SSEServerTransport('/mcp', res);
+            // Update session state to connecting
+            this.sessionManager.updateSessionState(sessionId, 'connecting');
             // Connect the MCP server to this transport
             await this.server.connect(transport);
-            logger.info('✅ MCP client connected via SSE transport');
+            // Update session state to connected
+            this.sessionManager.updateSessionState(sessionId, 'connected');
+            logger.info('✅ MCP client connected via SSE transport', {
+                sessionId,
+                totalSessions: this.sessionManager.getMetrics().totalSessions,
+                activeSessions: this.sessionManager.getMetrics().activeSessions
+            });
+            // Handle connection cleanup when client disconnects
+            res.on('close', () => {
+                if (sessionId) {
+                    logger.info('🔌 MCP client disconnected', { sessionId });
+                    this.sessionManager.updateSessionState(sessionId, 'disconnected');
+                    this.sessionManager.removeSession(sessionId);
+                }
+            });
         }
         catch (error) {
             logger.error('❌ Failed to establish MCP connection', {
+                sessionId,
                 error: error instanceof Error ? error.message : String(error)
             });
+            // Cleanup session if created
+            if (sessionId) {
+                this.sessionManager.removeSession(sessionId);
+            }
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Failed to establish MCP connection' }));
         }
@@ -880,6 +917,7 @@ class EnvironmentMCPGateway {
      * Handle status check endpoint
      */
     handleStatusCheck(res) {
+        const sessionMetrics = this.sessionManager.getMetrics();
         const statusInfo = {
             server: 'lucidwonks-environment-mcp-gateway',
             version: '1.0.0',
@@ -888,6 +926,12 @@ class EnvironmentMCPGateway {
                 type: 'HTTP/SSE',
                 endpoint: '/mcp',
                 port: parseInt(process.env.MCP_SERVER_PORT || '3001')
+            },
+            sessions: {
+                total: sessionMetrics.totalSessions,
+                active: sessionMetrics.activeSessions,
+                firstConnection: sessionMetrics.connectionTime,
+                lastActivity: sessionMetrics.lastActivity
             },
             tools: {
                 total: 43, // Total MCP tools available
