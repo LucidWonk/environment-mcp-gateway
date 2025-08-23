@@ -5,6 +5,8 @@ process.env.MCP_SILENT_MODE = 'true';
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+// TODO: import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import http from 'http';
 import {
     CallToolRequestSchema,
     ErrorCode,
@@ -894,6 +896,89 @@ class EnvironmentMCPGateway {
         };
     }
     
+    /**
+     * Create unified HTTP server handling both MCP and health endpoints
+     */
+    private createUnifiedHttpServer(): http.Server {
+        return http.createServer((req, res) => {
+            // Set CORS headers for development
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+            if (req.method === 'OPTIONS') {
+                res.writeHead(200);
+                res.end();
+                return;
+            }
+
+            // Handle health endpoints
+            if (req.url === '/health' && req.method === 'GET') {
+                this.handleHealthCheck(res);
+            } else if (req.url === '/status' && req.method === 'GET') {
+                this.handleStatusCheck(res);
+            } else if (req.url?.startsWith('/mcp')) {
+                // SSE transport will handle /mcp endpoints automatically
+                // This is just for logging non-SSE requests to /mcp
+                logger.info('MCP endpoint accessed', { 
+                    method: req.method, 
+                    url: req.url,
+                    userAgent: req.headers['user-agent'] 
+                });
+            } else {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Not Found' }));
+            }
+        });
+    }
+
+    /**
+     * Handle health check endpoint
+     */
+    private handleHealthCheck(res: http.ServerResponse): void {
+        const healthStatus = {
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            environment: process.env.NODE_ENV || 'development',
+            version: '1.0.0',
+            transport: 'HTTP/SSE',
+            mcpEndpoint: '/mcp'
+        };
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(healthStatus, null, 2));
+    }
+
+    /**
+     * Handle status check endpoint  
+     */
+    private handleStatusCheck(res: http.ServerResponse): void {
+        const statusInfo = {
+            server: 'lucidwonks-environment-mcp-gateway',
+            version: '1.0.0',
+            status: 'running',
+            transport: {
+                type: 'HTTP/SSE',
+                endpoint: '/mcp',
+                port: parseInt(process.env.MCP_SERVER_PORT || '3001')
+            },
+            tools: {
+                total: 43, // Total MCP tools available
+                categories: ['Context Engineering', 'Infrastructure', 'Git Workflow', 'Azure DevOps']
+            },
+            process: {
+                pid: process.pid,
+                uptime: process.uptime(),
+                memory: process.memoryUsage()
+            },
+            timestamp: new Date().toISOString()
+        };
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(statusInfo, null, 2));
+    }
+    
     async run(): Promise<void> {
         logger.info('🚀 Starting MCP server connection process', {
             processId: process.pid,
@@ -910,19 +995,26 @@ class EnvironmentMCPGateway {
         // Add STDIO connection monitoring to detect disconnection
         this.setupStdioMonitoring();
         
+        // TODO: Implement HTTP/SSE transport - requires per-connection transport handling
+        // For now, maintaining STDIO transport while we figure out proper SSE implementation
         const transport = new StdioServerTransport();
-        logger.info('📡 STDIO transport created, attempting connection...', {
+        
+        logger.info('📡 STDIO transport created (HTTP implementation pending)...', {
             transportType: 'StdioServerTransport',
-            processId: process.pid
+            processId: process.pid,
+            note: 'SSE transport requires per-connection handling - more complex than expected'
         });
         
         try {
             await this.server.connect(transport);
             
+            // TODO: Start HTTP server when SSE transport is implemented
+            // For now, keeping STDIO transport operational
+            
             logger.info('✅ EnvironmentMCPGateway MCP server connected and ready', {
                 name: 'lucidwonks-environment-mcp-gateway',
                 version: '1.0.0',
-                transport: 'STDIO',
+                transport: 'STDIO (HTTP pending)',
                 processId: process.pid,
                 parentProcessId: process.ppid,
                 timestamp: new Date().toISOString()
