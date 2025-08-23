@@ -2,8 +2,7 @@
 // Set silent mode for MCP operations to prevent console output contamination
 process.env.MCP_SILENT_MODE = 'true';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-// TODO: import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import http from 'http';
 import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError } from '@modelcontextprotocol/sdk/types.js';
 import { Environment } from './domain/config/environment.js';
@@ -798,10 +797,10 @@ class EnvironmentMCPGateway {
         };
     }
     /**
-     * Create unified HTTP server handling both MCP and health endpoints
+     * Create HTTP server that handles MCP SSE connections and health endpoints
      */
-    createUnifiedHttpServer() {
-        return http.createServer((req, res) => {
+    createMCPHttpServer(port) {
+        const httpServer = http.createServer((req, res) => {
             // Set CORS headers for development
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -811,27 +810,55 @@ class EnvironmentMCPGateway {
                 res.end();
                 return;
             }
+            // Handle MCP SSE connections
+            if (req.url === '/mcp' && req.method === 'GET') {
+                this.handleMCPConnection(req, res);
+            }
             // Handle health endpoints
-            if (req.url === '/health' && req.method === 'GET') {
+            else if (req.url === '/health' && req.method === 'GET') {
                 this.handleHealthCheck(res);
             }
             else if (req.url === '/status' && req.method === 'GET') {
                 this.handleStatusCheck(res);
-            }
-            else if (req.url?.startsWith('/mcp')) {
-                // SSE transport will handle /mcp endpoints automatically
-                // This is just for logging non-SSE requests to /mcp
-                logger.info('MCP endpoint accessed', {
-                    method: req.method,
-                    url: req.url,
-                    userAgent: req.headers['user-agent']
-                });
             }
             else {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Not Found' }));
             }
         });
+        // Start the HTTP server  
+        httpServer.listen(port, '0.0.0.0', () => {
+            logger.info('🌐 HTTP server started for MCP and health endpoints', {
+                port: port,
+                host: '0.0.0.0',
+                mcpEndpoint: '/mcp',
+                healthEndpoints: ['/health', '/status']
+            });
+        });
+        return httpServer;
+    }
+    /**
+     * Handle MCP SSE connection from a client
+     */
+    async handleMCPConnection(req, res) {
+        try {
+            logger.info('🔌 New MCP client connection', {
+                userAgent: req.headers['user-agent'],
+                remoteAddress: req.connection?.remoteAddress
+            });
+            // Create SSE transport for this specific connection
+            const transport = new SSEServerTransport('/mcp', res);
+            // Connect the MCP server to this transport
+            await this.server.connect(transport);
+            logger.info('✅ MCP client connected via SSE transport');
+        }
+        catch (error) {
+            logger.error('❌ Failed to establish MCP connection', {
+                error: error instanceof Error ? error.message : String(error)
+            });
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to establish MCP connection' }));
+        }
     }
     /**
      * Handle health check endpoint
@@ -888,24 +915,22 @@ class EnvironmentMCPGateway {
                 stderr: process.stderr.writable
             }
         });
-        // Add STDIO connection monitoring to detect disconnection
-        this.setupStdioMonitoring();
-        // TODO: Implement HTTP/SSE transport - requires per-connection transport handling
-        // For now, maintaining STDIO transport while we figure out proper SSE implementation
-        const transport = new StdioServerTransport();
-        logger.info('📡 STDIO transport created (HTTP implementation pending)...', {
-            transportType: 'StdioServerTransport',
-            processId: process.pid,
-            note: 'SSE transport requires per-connection handling - more complex than expected'
+        // HTTP/SSE transport doesn't need STDIO monitoring
+        // Start HTTP server that will handle SSE connections per client
+        const port = parseInt(process.env.MCP_SERVER_PORT || '3001');
+        const httpServer = this.createMCPHttpServer(port);
+        logger.info('🌐 HTTP server created for MCP SSE connections', {
+            transportType: 'HTTP/SSE',
+            port: port,
+            endpoint: '/mcp',
+            processId: process.pid
         });
         try {
-            await this.server.connect(transport);
-            // TODO: Start HTTP server when SSE transport is implemented
-            // For now, keeping STDIO transport operational
-            logger.info('✅ EnvironmentMCPGateway MCP server connected and ready', {
+            // HTTP server starts immediately - connections handled per client
+            logger.info('✅ EnvironmentMCPGateway HTTP server ready for connections', {
                 name: 'lucidwonks-environment-mcp-gateway',
                 version: '1.0.0',
-                transport: 'STDIO (HTTP pending)',
+                transport: 'HTTP/SSE',
                 processId: process.pid,
                 parentProcessId: process.ppid,
                 timestamp: new Date().toISOString()
