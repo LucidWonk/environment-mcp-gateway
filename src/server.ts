@@ -1031,7 +1031,7 @@ class EnvironmentMCPGateway {
         
         // Start HTTP server that will handle SSE connections per client
         const port = parseInt(process.env.MCP_SERVER_PORT || '3001');
-        const httpServer = this.createMCPHttpServer(port);
+        this.createMCPHttpServer(port);
         
         logger.info('🌐 HTTP server created for MCP SSE connections', {
             transportType: 'HTTP/SSE',
