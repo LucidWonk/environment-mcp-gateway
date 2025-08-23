@@ -53,7 +53,7 @@ RUN mkdir -p /app/.semantic-cache /app/.holistic-rollback /app/.atomic-ops && \
 # Switch to non-root user
 USER mcpuser
 
-# Health check
+# Health check for unified HTTP server (supports both STDIO health server and HTTP transport)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "const http = require('http'); \
     const options = { host: 'localhost', port: process.env.MCP_SERVER_PORT || 3001, path: '/health', timeout: 2000 }; \
@@ -66,6 +66,6 @@ EXPOSE 3001
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
-# CRITICAL FIX: Keep container idle instead of running server
-# The server will be started fresh by Claude via docker exec
-CMD ["tail", "-f", "/dev/null"]
+# HTTP Transport Mode: Run MCP server directly for multi-client access
+# Environment variable MCP_TRANSPORT_MODE controls STDIO vs HTTP mode
+CMD ["node", "dist/server.js"]

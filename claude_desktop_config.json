@@ -1,19 +1,14 @@
 {
   "mcpServers": {
     "lucidwonks-environment-gateway": {
-      "command": "docker",
-      "args": [
-        "exec", 
-        "-i", 
-        "-e", "MCP_STDIO_MODE=true",
-        "-e", "NODE_ENV=production", 
-        "environment-mcp-gateway",
-        "node",
-        "dist/server.js"
-      ],
+      "transport": {
+        "type": "sse",
+        "url": "http://localhost:3001/mcp"
+      },
       "env": {
         "PROJECT_ROOT": "/workspace",
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "MCP_TRANSPORT_MODE": "http"
       }
     }
   }
