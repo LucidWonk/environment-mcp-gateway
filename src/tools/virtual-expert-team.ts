@@ -1,6 +1,7 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { createMCPLogger } from '../utils/mcp-logger.js';
 import { taskToolVETIntegration } from '../services/task-tool-vet-integration.js';
+import { projectDocumentationLoader } from '../services/project-documentation-loader.js';
 
 const logger = createMCPLogger('virtual-expert-team.log');
 
@@ -184,6 +185,27 @@ export const expertValidateImplementationTool: Tool = {
     }
 };
 
+export const expertGetProjectStandardsTool: Tool = {
+    name: 'expert-get-project-standards',
+    description: 'Get project-specific standards and guidelines for expert consultation, including Architecture, Testing, DevOps, and Context Engineering standards',
+    inputSchema: {
+        type: 'object',
+        properties: {
+            expertType: {
+                type: 'string',
+                enum: ['Architecture', 'QA', 'DevOps', 'Context Engineering Compliance', 'All'],
+                description: 'Type of expert standards to retrieve, or "All" for complete project standards'
+            },
+            subtask: {
+                type: 'string',
+                description: 'Specific subtask or area of focus to get targeted guidance for'
+            }
+        },
+        required: ['expertType'],
+        additionalProperties: false
+    }
+};
+
 // Collect all tools
 export const virtualExpertTeamTools = [
     expertSelectWorkflowTool,
@@ -191,7 +213,8 @@ export const virtualExpertTeamTools = [
     workflowClassifyTool,
     expertStatusMonitorTool,
     expertConflictResolveTool,
-    expertValidateImplementationTool
+    expertValidateImplementationTool,
+    expertGetProjectStandardsTool
 ];
 
 // Expert Selection Algorithm Implementation
@@ -533,7 +556,7 @@ export class AgentCoordinationManager {
         }
 
         // Generate coordination instructions based on expert type
-        const coordinationInstructions = this.generateCoordinationInstructions(secondaryExpertType, subtaskDescription);
+        const coordinationInstructions = await this.generateCoordinationInstructions(secondaryExpertType, subtaskDescription);
         
         // Estimate duration based on complexity
         const estimatedDuration = this.estimateDuration(secondaryExpertType, subtaskDescription, contextScope);
@@ -583,21 +606,40 @@ export class AgentCoordinationManager {
         return lines.slice(0, 3).join('. ') + (lines.length > 3 ? '...' : '');
     }
 
-    private static generateCoordinationInstructions(expertType: string, subtask: string): string {
-        const baseInstructions = `Coordinate with ${expertType} expert for specialized consultation on: ${subtask}`;
-        
-        const expertSpecificInstructions: { [key: string]: string } = {
-            'Financial Quant': 'Focus on trading algorithm validation, risk assessment, and quantitative analysis accuracy.',
-            'Cybersecurity': 'Emphasize security vulnerability assessment, threat modeling, and secure implementation patterns.',
-            'Architecture': 'Concentrate on system design coherence, integration patterns, and scalability considerations.',
-            'Performance': 'Prioritize performance optimization, resource utilization, and bottleneck identification.',
-            'QA': 'Focus on test strategy design, coverage analysis, and quality validation frameworks.',
-            'DevOps': 'Emphasize deployment strategies, infrastructure automation, and CI/CD optimization.',
-            'Process Engineer': 'Focus on workflow optimization, process compliance, and efficiency improvements.',
-            'Context Engineering Compliance': 'Ensure process compliance, template adherence, and validation requirements.'
-        };
+    private static async generateCoordinationInstructions(expertType: string, subtask: string): Promise<string> {
+        try {
+            // Get project-specific enhanced guidance
+            const enhancedGuidance = await projectDocumentationLoader.getExpertGuidance(expertType, subtask);
+            
+            logger.info('📚 Generated project-aware coordination instructions', {
+                expertType,
+                subtaskLength: subtask.length,
+                guidanceLength: enhancedGuidance.length
+            });
 
-        return `${baseInstructions}\n\nExpert-specific guidance: ${expertSpecificInstructions[expertType] || 'Apply domain expertise to the specified subtask.'}`;
+            return enhancedGuidance;
+        } catch (error) {
+            logger.warn('⚠️ Failed to load project-specific guidance, using fallback', {
+                expertType,
+                error: error instanceof Error ? error.message : String(error)
+            });
+
+            // Fallback to original guidance if documentation loading fails
+            const baseInstructions = `Coordinate with ${expertType} expert for specialized consultation on: ${subtask}`;
+            
+            const expertSpecificInstructions: { [key: string]: string } = {
+                'Financial Quant': 'Focus on trading algorithm validation, risk assessment, and quantitative analysis accuracy.',
+                'Cybersecurity': 'Emphasize security vulnerability assessment, threat modeling, and secure implementation patterns.',
+                'Architecture': 'Concentrate on system design coherence, integration patterns, and scalability considerations.',
+                'Performance': 'Prioritize performance optimization, resource utilization, and bottleneck identification.',
+                'QA': 'Focus on test strategy design, coverage analysis, and quality validation frameworks.',
+                'DevOps': 'Emphasize deployment strategies, infrastructure automation, and CI/CD optimization.',
+                'Process Engineer': 'Focus on workflow optimization, process compliance, and efficiency improvements.',
+                'Context Engineering Compliance': 'Ensure process compliance, template adherence, and validation requirements.'
+            };
+
+            return `${baseInstructions}\n\nExpert-specific guidance: ${expertSpecificInstructions[expertType] || 'Apply domain expertise to the specified subtask.'}`;
+        }
     }
 
     private static estimateDuration(expertType: string, subtask: string, contextScope: string): string {
@@ -981,6 +1023,105 @@ export const virtualExpertTeamHandlers = {
         } catch (error) {
             logger.error('❌ Implementation validation failed', { error: error instanceof Error ? error.message : String(error) });
             throw error;
+        }
+    },
+
+    'expert-get-project-standards': async (args: any) => {
+        try {
+            logger.info('📚 Handling expert-get-project-standards request', {
+                expertType: args.expertType,
+                hasSubtask: !!args.subtask
+            });
+
+            const projectStandards = await projectDocumentationLoader.loadProjectStandards();
+            
+            let response: any = {
+                success: true,
+                projectStandards: {},
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                    expertType: args.expertType,
+                    subtask: args.subtask
+                }
+            };
+
+            // Return specific expert standards or all standards
+            switch (args.expertType) {
+            case 'Architecture':
+                response.projectStandards = {
+                    architectureGuidelines: projectStandards.architectureGuidelines
+                };
+                if (args.subtask) {
+                    response.expertGuidance = await projectDocumentationLoader.getExpertGuidance('Architecture', args.subtask);
+                }
+                break;
+                    
+            case 'QA':
+                response.projectStandards = {
+                    testingStandards: projectStandards.testingStandards
+                };
+                if (args.subtask) {
+                    response.expertGuidance = await projectDocumentationLoader.getExpertGuidance('QA', args.subtask);
+                }
+                break;
+                    
+            case 'DevOps':
+                response.projectStandards = {
+                    devOpsInfrastructure: projectStandards.devOpsInfrastructure
+                };
+                if (args.subtask) {
+                    response.expertGuidance = await projectDocumentationLoader.getExpertGuidance('DevOps', args.subtask);
+                }
+                break;
+                    
+            case 'Context Engineering Compliance':
+                response.projectStandards = {
+                    contextEngineering: projectStandards.contextEngineering
+                };
+                if (args.subtask) {
+                    response.expertGuidance = await projectDocumentationLoader.getExpertGuidance('Context Engineering Compliance', args.subtask);
+                }
+                break;
+                    
+            case 'All':
+            default:
+                response.projectStandards = projectStandards;
+                break;
+            }
+
+            // Add cache statistics
+            response.cacheInfo = projectDocumentationLoader.getCacheStats();
+
+            logger.info('✅ Project standards retrieved successfully', {
+                expertType: args.expertType,
+                hasArchitecture: !!projectStandards.architectureGuidelines,
+                hasTesting: !!projectStandards.testingStandards,
+                hasDevOps: !!projectStandards.devOpsInfrastructure,
+                hasContextEngineering: !!projectStandards.contextEngineering,
+                cacheEntries: response.cacheInfo.entries
+            });
+
+            return { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
+        } catch (error) {
+            logger.error('❌ Project standards retrieval failed', { 
+                error: error instanceof Error ? error.message : String(error),
+                expertType: args.expertType 
+            });
+            
+            // Return graceful fallback
+            const fallbackResponse = {
+                success: false,
+                error: 'Project standards temporarily unavailable',
+                fallback: true,
+                message: 'Virtual experts will operate with base guidance only',
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                    expertType: args.expertType,
+                    errorType: error instanceof Error ? error.constructor.name : 'UnknownError'
+                }
+            };
+            
+            return { content: [{ type: 'text', text: JSON.stringify(fallbackResponse, null, 2) }] };
         }
     }
 };

@@ -5,6 +5,7 @@ export declare const workflowClassifyTool: Tool;
 export declare const expertStatusMonitorTool: Tool;
 export declare const expertConflictResolveTool: Tool;
 export declare const expertValidateImplementationTool: Tool;
+export declare const expertGetProjectStandardsTool: Tool;
 export declare const virtualExpertTeamTools: import("zod").objectOutputType<{
     name: import("zod").ZodString;
     description: import("zod").ZodOptional<import("zod").ZodString>;
@@ -81,6 +82,12 @@ export declare const virtualExpertTeamHandlers: {
         }[];
     }>;
     'expert-validate-implementation': (args: any) => Promise<{
+        content: {
+            type: string;
+            text: string;
+        }[];
+    }>;
+    'expert-get-project-standards': (args: any) => Promise<{
         content: {
             type: string;
             text: string;
