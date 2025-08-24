@@ -29,8 +29,8 @@ export class ConfigurationManager {
     private isWatching: boolean = false;
 
     private constructor() {
-        // Use CommonJS __dirname
-        this.envFilePath = join(__dirname, '../../../.env.development');
+        // Use process.cwd() for more reliable path resolution across different execution contexts
+        this.envFilePath = join(process.cwd(), '.env.development');
         this.captureCurrentEnvironment();
         this.captureEnvFileContent();
     }

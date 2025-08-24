@@ -92,8 +92,15 @@ export class HttpTransportHandler implements TransportHandler {
         this.httpServer = http.createServer();
         
         this.httpServer.on('request', (req, res) => {
-            if (req.url === '/mcp' && req.method === 'GET') {
-                this.handleMCPConnection(req, res);
+            if (req.url === '/mcp') {
+                if (req.method === 'GET') {
+                    this.handleMCPConnection(req, res);
+                } else if (req.method === 'POST') {
+                    this.handleMCPHTTPRequest(req, res);
+                } else {
+                    res.writeHead(405, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Method Not Allowed' }));
+                }
             } else if (req.url === '/health' && req.method === 'GET') {
                 this.handleHealthCheck(res);
             } else if (req.url === '/metrics' && req.method === 'GET') {
@@ -105,7 +112,21 @@ export class HttpTransportHandler implements TransportHandler {
         });
 
         return new Promise((resolve, reject) => {
-            this.httpServer!.listen(this.port, (err?: Error) => {
+            // Handle server errors (like EADDRINUSE) before attempting to listen
+            this.httpServer!.on('error', (err: Error) => {
+                if ((err as any).code === 'EADDRINUSE') {
+                    logger.error(`❌ Port ${this.port} is already in use. Please stop the existing process or use a different port.`, { 
+                        port: this.port, 
+                        error: err.message,
+                        suggestion: `Run: lsof -i :${this.port} to find the process using this port`
+                    });
+                } else {
+                    logger.error('HTTP server error', { port: this.port, error: err });
+                }
+                reject(err);
+            });
+
+            this.httpServer!.listen(this.port, '0.0.0.0', (err?: Error) => {
                 if (err) {
                     logger.error('Failed to start HTTP server', { port: this.port, error: err });
                     reject(err);
@@ -254,6 +275,160 @@ export class HttpTransportHandler implements TransportHandler {
         const metrics = this.getMetrics();
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(metrics, null, 2));
+    }
+
+    private async handleMCPHTTPRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+        let sessionId: string | undefined;
+        
+        try {
+            // Set CORS headers
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+            // Generate unique session ID for this request
+            sessionId = this.sessionManager.generateSessionId();
+            
+            logger.info('🔌 New MCP HTTP request', {
+                sessionId,
+                userAgent: req.headers['user-agent'],
+                remoteAddress: req.socket?.remoteAddress
+            });
+
+            // Read request body
+            let body = '';
+            req.on('data', (chunk) => {
+                body += chunk.toString();
+            });
+
+            req.on('end', async () => {
+                try {
+                    const jsonRpcRequest = JSON.parse(body);
+                    
+                    logger.debug('Received JSON-RPC request', {
+                        sessionId,
+                        method: jsonRpcRequest.method,
+                        id: jsonRpcRequest.id
+                    });
+
+                    // Create session context for this request
+                    const sessionContext: SessionContext = {
+                        sessionId: sessionId!,
+                        userAgent: req.headers['user-agent'] || 'unknown',
+                        remoteAddress: req.socket?.remoteAddress,
+                        startedAt: new Date()
+                    };
+
+                    // Process the JSON-RPC request 
+                    let response: any;
+                    let hasError = false;
+
+                    if (jsonRpcRequest.method === 'initialize') {
+                        response = {
+                            protocolVersion: '2024-11-05',
+                            capabilities: {
+                                tools: {}
+                            },
+                            serverInfo: {
+                                name: 'lucidwonks-environment-mcp-gateway',
+                                version: '1.0.0'
+                            }
+                        };
+                    } else if (jsonRpcRequest.method === 'tools/list') {
+                        // Return tools list directly (simplified for HTTP transport)
+                        response = {
+                            tools: [
+                                {
+                                    name: 'analyze-solution-structure',
+                                    description: 'Parse and analyze the Lucidwonks solution structure, dependencies, and projects',
+                                    inputSchema: {
+                                        type: 'object',
+                                        properties: {
+                                            includeDependencies: {
+                                                type: 'boolean',
+                                                description: 'Include dependency analysis',
+                                                default: true
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    name: 'get-development-environment-status',
+                                    description: 'Get comprehensive status of development environment (database, docker, git, solution)',
+                                    inputSchema: {
+                                        type: 'object',
+                                        properties: {
+                                            checkDatabase: { type: 'boolean', default: true },
+                                            checkDocker: { type: 'boolean', default: true },
+                                            checkGit: { type: 'boolean', default: true }
+                                        }
+                                    }
+                                }
+                            ]
+                        };
+                    } else if (jsonRpcRequest.method === 'tools/call') {
+                        // For now, return a simple success response for tools/call
+                        hasError = true;
+                        response = {
+                            error: {
+                                code: -32603,
+                                message: 'Tool execution not yet implemented for HTTP transport'
+                            }
+                        };
+                    } else {
+                        hasError = true;
+                        response = {
+                            error: {
+                                code: -32601,
+                                message: `Method not found: ${jsonRpcRequest.method}`
+                            }
+                        };
+                    }
+
+                    const jsonRpcResponse = {
+                        jsonrpc: '2.0',
+                        id: jsonRpcRequest.id,
+                        ...(hasError || response.error ? { error: response.error || response } : { result: response })
+                    };
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(jsonRpcResponse));
+
+                    logger.info('✅ MCP HTTP request completed', {
+                        sessionId,
+                        method: jsonRpcRequest.method,
+                        success: !hasError && !response.error
+                    });
+
+                } catch (parseError) {
+                    logger.error('❌ Failed to parse JSON-RPC request', {
+                        sessionId,
+                        error: parseError instanceof Error ? parseError.message : String(parseError)
+                    });
+
+                    const errorResponse = {
+                        jsonrpc: '2.0',
+                        id: null,
+                        error: {
+                            code: -32700,
+                            message: 'Parse error'
+                        }
+                    };
+
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(errorResponse));
+                }
+            });
+
+        } catch (error) {
+            logger.error('❌ Failed to handle MCP HTTP request', {
+                sessionId,
+                error: error instanceof Error ? error.message : String(error)
+            });
+
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Internal Server Error' }));
+        }
     }
 
     getMetrics(): any {

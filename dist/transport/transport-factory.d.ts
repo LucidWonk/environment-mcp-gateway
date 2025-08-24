@@ -46,6 +46,7 @@ export declare class HttpTransportHandler implements TransportHandler {
     private createSessionServer;
     private handleHealthCheck;
     private handleMetrics;
+    private handleMCPHTTPRequest;
     getMetrics(): any;
 }
 /**

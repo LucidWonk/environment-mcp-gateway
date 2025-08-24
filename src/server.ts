@@ -21,6 +21,109 @@ import { AdapterManager } from './adapters/adapter-manager.js';
 import { ToolRegistry } from './orchestrator/tool-registry.js';
 import { HealthServer } from './health-server.js';
 import { createMCPLogger } from './utils/mcp-logger.js';
+import fs from 'fs';
+import os from 'os';
+
+// Startup protection - prevent multiple instances with enhanced container support
+const STARTUP_LOCK_FILE = '/tmp/mcp-gateway-startup.lock';
+
+async function cleanupStaleProcesses(): Promise<void> {
+    // In a clean Docker container environment, we don't need aggressive process cleanup
+    // The container restart and lock file cleanup should be sufficient
+    logger.info('Container startup - relying on clean container state');
+}
+
+async function acquireStartupLock(): Promise<boolean> {
+    try {
+        logger.info('🔒 Attempting to acquire startup lock', { 
+            pid: process.pid, 
+            lockFile: STARTUP_LOCK_FILE,
+            containerEnv: !!process.env.HOSTNAME // Docker containers usually have this
+        });
+        
+        // Clean up any stale processes first
+        await cleanupStaleProcesses();
+        
+        if (fs.existsSync(STARTUP_LOCK_FILE)) {
+            const lockContent = fs.readFileSync(STARTUP_LOCK_FILE, 'utf8');
+            const { pid: lockPid, timestamp, hostname } = JSON.parse(lockContent);
+            
+            logger.info('🔍 Found existing lock', { 
+                pid: process.pid, 
+                lockPid, 
+                age: Date.now() - timestamp,
+                lockHostname: hostname,
+                currentHostname: process.env.HOSTNAME || os.hostname()
+            });
+            
+            // In container environment, be more aggressive about stale locks
+            // Also check if hostname matches (different containers = different hostnames)
+            const lockAge = Date.now() - timestamp;
+            const isLockStale = lockAge > 3000; // 3 seconds for containers
+            const isDifferentContainer = hostname && hostname !== (process.env.HOSTNAME || os.hostname());
+            
+            if (!isLockStale && !isDifferentContainer) {
+                try {
+                    // Check if process is still running
+                    process.kill(lockPid, 0); // Signal 0 checks if process exists
+                    logger.error('⚠️ Another MCP Gateway instance is active', { 
+                        pid: process.pid, 
+                        lockPid, 
+                        lockAge,
+                        reason: 'Process still running and lock not stale'
+                    });
+                    return false;
+                } catch {
+                    // Process doesn't exist, lock is stale
+                    logger.info('⚰️ Lock process is dead, removing stale lock', { pid: process.pid, lockPid });
+                    fs.unlinkSync(STARTUP_LOCK_FILE);
+                }
+            } else {
+                // Lock is old or from different container, remove it
+                const reason = isDifferentContainer ? 'different container' : 'stale lock';
+                logger.info(`🧹 Removing ${reason}`, { 
+                    pid: process.pid, 
+                    lockAge,
+                    isDifferentContainer,
+                    lockHostname: hostname,
+                    currentHostname: process.env.HOSTNAME || os.hostname()
+                });
+                fs.unlinkSync(STARTUP_LOCK_FILE);
+            }
+        } else {
+            logger.info('✅ No existing lock file found - clean startup', { pid: process.pid });
+        }
+        
+        // Acquire lock with container information
+        logger.info('🔒 Acquiring startup lock', { pid: process.pid });
+        fs.writeFileSync(STARTUP_LOCK_FILE, JSON.stringify({
+            pid: process.pid,
+            timestamp: Date.now(),
+            hostname: process.env.HOSTNAME || os.hostname(),
+            container: !!process.env.HOSTNAME
+        }));
+        
+        logger.info('✅ Startup lock acquired successfully', { 
+            pid: process.pid,
+            hostname: process.env.HOSTNAME || os.hostname()
+        });
+        return true;
+    } catch (error) {
+        logger.error('❌ Failed to acquire startup lock', { pid: process.pid, error });
+        return false;
+    }
+}
+
+function releaseStartupLock(): void {
+    try {
+        if (fs.existsSync(STARTUP_LOCK_FILE)) {
+            fs.unlinkSync(STARTUP_LOCK_FILE);
+        }
+    } catch (error) {
+        // Note: This is in a cleanup function where logger might not be available
+        console.error('Failed to release startup lock:', error);
+    }
+}
 
 // Initialize environment and logging
 try {
@@ -29,6 +132,7 @@ try {
     // Only log in development mode, not during MCP operations
     const isDevelopment = process.env.NODE_ENV === 'development' && !process.env.MCP_SILENT_MODE;
     if (isDevelopment) {
+        // Note: This is during environment initialization where logger might not be available yet
         console.error('Environment validation failed:', error);
     }
     process.exit(1);
@@ -1149,9 +1253,18 @@ class EnvironmentMCPGateway {
                 return;
             }
 
-            // Handle MCP SSE connections
-            if (req.url === '/mcp' && req.method === 'GET') {
-                this.handleMCPConnection(req, res);
+            // Handle MCP connections
+            if (req.url === '/mcp') {
+                if (req.method === 'GET') {
+                    // SSE transport
+                    this.handleMCPConnection(req, res);
+                } else if (req.method === 'POST') {
+                    // HTTP transport
+                    this.handleMCPHTTPRequest(req, res);
+                } else {
+                    res.writeHead(405, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Method Not Allowed' }));
+                }
             } 
             // Handle health endpoints
             else if (req.url === '/health' && req.method === 'GET') {
@@ -1262,6 +1375,161 @@ class EnvironmentMCPGateway {
             
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Failed to establish MCP connection' }));
+        }
+    }
+
+    /**
+     * Handle MCP HTTP POST request for JSON-RPC communication
+     */
+    private async handleMCPHTTPRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+        let sessionId: string | undefined;
+        
+        try {
+            // Set CORS headers
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+            // Generate unique session ID for this request
+            sessionId = this.sessionManager.generateSessionId();
+            
+            logger.info('🔌 New MCP HTTP request', {
+                sessionId,
+                userAgent: req.headers['user-agent'],
+                remoteAddress: req.socket?.remoteAddress
+            });
+
+            // Read request body
+            let body = '';
+            req.on('data', (chunk) => {
+                body += chunk.toString();
+            });
+
+            req.on('end', async () => {
+                try {
+                    const jsonRpcRequest = JSON.parse(body);
+                    
+                    logger.debug('Received JSON-RPC request', {
+                        sessionId,
+                        method: jsonRpcRequest.method,
+                        id: jsonRpcRequest.id
+                    });
+
+                    // Create session context for this request
+                    const sessionContext: SessionContext = {
+                        sessionId: sessionId!,
+                        userAgent: req.headers['user-agent'] || 'unknown',
+                        remoteAddress: req.socket?.remoteAddress,
+                        startedAt: new Date()
+                    };
+
+                    // Use existing handlers directly instead of creating session server
+                    let response: any;
+                    let hasError = false;
+
+                    if (jsonRpcRequest.method === 'initialize') {
+                        response = {
+                            protocolVersion: '2024-11-05',
+                            capabilities: {
+                                tools: {}
+                            },
+                            serverInfo: {
+                                name: 'lucidwonks-environment-mcp-gateway',
+                                version: '1.0.0'
+                            }
+                        };
+                    } else if (jsonRpcRequest.method === 'tools/list') {
+                        const allTools = this.toolRegistry.getAllTools();
+                        response = {
+                            tools: [
+                                ...allTools.map(tool => ({
+                                    name: tool.name,
+                                    description: tool.description,
+                                    inputSchema: tool.inputSchema
+                                })),
+                                // Add infrastructure tools
+                                {
+                                    name: 'analyze-solution-structure',
+                                    description: 'Parse and analyze the Lucidwonks solution structure, dependencies, and projects',
+                                    inputSchema: {
+                                        type: 'object',
+                                        properties: {
+                                            includeDependencies: {
+                                                type: 'boolean',
+                                                description: 'Include dependency analysis',
+                                                default: true
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        };
+                    } else if (jsonRpcRequest.method === 'tools/call') {
+                        try {
+                            const { name, arguments: args } = jsonRpcRequest.params;
+                            response = await this.executeToolWithSessionContext(name, args, sessionContext);
+                        } catch (toolError) {
+                            hasError = true;
+                            response = {
+                                error: {
+                                    code: -32603,
+                                    message: toolError instanceof Error ? toolError.message : 'Tool execution failed'
+                                }
+                            };
+                        }
+                    } else {
+                        hasError = true;
+                        response = {
+                            error: {
+                                code: -32601,
+                                message: `Method not found: ${jsonRpcRequest.method}`
+                            }
+                        };
+                    }
+
+                    const jsonRpcResponse = {
+                        jsonrpc: '2.0',
+                        id: jsonRpcRequest.id,
+                        ...(hasError || response.error ? { error: response.error || response } : { result: response })
+                    };
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(jsonRpcResponse));
+
+                    logger.info('✅ MCP HTTP request completed', {
+                        sessionId,
+                        method: jsonRpcRequest.method,
+                        success: !hasError && !response.error
+                    });
+
+                } catch (parseError) {
+                    logger.error('❌ Failed to parse JSON-RPC request', {
+                        sessionId,
+                        error: parseError instanceof Error ? parseError.message : String(parseError)
+                    });
+
+                    const errorResponse = {
+                        jsonrpc: '2.0',
+                        id: null,
+                        error: {
+                            code: -32700,
+                            message: 'Parse error'
+                        }
+                    };
+
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(errorResponse));
+                }
+            });
+
+        } catch (error) {
+            logger.error('❌ Failed to handle MCP HTTP request', {
+                sessionId,
+                error: error instanceof Error ? error.message : String(error)
+            });
+
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Internal Server Error' }));
         }
     }
 
@@ -1579,6 +1847,22 @@ class EnvironmentMCPGateway {
  * Handles both health server (for Docker) and main MCP server startup
  */
 async function startServer() {
+    // Acquire startup lock to prevent multiple instances
+    if (!(await acquireStartupLock())) {
+        process.exit(0); // Exit cleanly without restart
+    }
+
+    // Cleanup lock on exit
+    process.on('exit', releaseStartupLock);
+    process.on('SIGINT', () => {
+        releaseStartupLock();
+        process.exit(0);
+    });
+    process.on('SIGTERM', () => {
+        releaseStartupLock();
+        process.exit(0);
+    });
+
     logger.info('🚀 Starting Environment MCP Gateway server initialization', {
         nodeEnv: process.env.NODE_ENV,
         mcpPort: process.env.MCP_SERVER_PORT || '3001',
@@ -1592,18 +1876,39 @@ async function startServer() {
     });
 
     try {
+        // Debug environment variables for health server condition
+        logger.info('🔍 Health server condition debug', {
+            NODE_ENV: process.env.NODE_ENV,
+            ENABLE_HEALTH_SERVER: process.env.ENABLE_HEALTH_SERVER,
+            MCP_STDIO_MODE: process.env.MCP_STDIO_MODE,
+            condition1: process.env.NODE_ENV === 'production',
+            condition2: process.env.ENABLE_HEALTH_SERVER === 'true',
+            condition3: !process.env.MCP_STDIO_MODE,
+            shouldStartHealthServer: ((process.env.NODE_ENV === 'production' || process.env.ENABLE_HEALTH_SERVER === 'true') && !process.env.MCP_STDIO_MODE)
+        });
+
         // Start health server for Docker health checks only when NOT in STDIO mode
+        // Use separate port for health checks to avoid conflicts with MCP server
         if ((process.env.NODE_ENV === 'production' || process.env.ENABLE_HEALTH_SERVER === 'true') && !process.env.MCP_STDIO_MODE) {
             logger.info('🏥 Initializing health server for Docker health checks', {
                 processId: process.pid,
                 mcpStdioMode: process.env.MCP_STDIO_MODE
             });
-            const healthPort = parseInt(process.env.MCP_SERVER_PORT || '3001');
+            // Use a different port for health server to avoid conflicts (3001 + 1000 = 4001)
+            const mcpPort = parseInt(process.env.MCP_SERVER_PORT || '3001');
+            const healthPort = mcpPort + 1000; // Health server on port 4001 by default
             const healthServer = new HealthServer(healthPort);
+            
+            logger.info('🏥 Starting health server on separate port to avoid MCP server conflicts', {
+                healthPort,
+                mcpPort,
+                processId: process.pid
+            });
             
             await healthServer.start();
             logger.info('✅ Health server started successfully', { 
                 port: healthPort,
+                mcpPort,
                 processId: process.pid 
             });
         } else {
@@ -1614,26 +1919,60 @@ async function startServer() {
             });
         }
 
-        // Start MCP server
-        logger.info('🔧 Initializing MCP server components');
+        // Start MCP server with detailed logging
+        logger.info('🔧 Initializing MCP server components', {
+            phase: 'mcp_server_init',
+            processId: process.pid,
+            timestamp: new Date().toISOString()
+        });
+        
         const server = new EnvironmentMCPGateway();
         
+        logger.info('🚀 Starting MCP server run phase', {
+            phase: 'mcp_server_start',
+            processId: process.pid
+        });
+        
         await server.run();
+        
         logger.info('✅ Environment MCP Gateway started successfully', {
+            phase: 'startup_complete',
             status: 'ready',
+            processId: process.pid,
             timestamp: new Date().toISOString()
         });
     } catch (error) {
+        const isPortConflict = error instanceof Error && (error as any).code === 'EADDRINUSE';
+        
         logger.error('❌ Server failed to start - critical error during initialization', {
             error: error instanceof Error ? {
                 name: error.name,
                 message: error.message,
+                code: (error as any).code,
                 stack: error.stack
             } : error,
             timestamp: new Date().toISOString(),
             nodeEnv: process.env.NODE_ENV,
-            projectRoot: process.env.PROJECT_ROOT
+            projectRoot: process.env.PROJECT_ROOT,
+            isPortConflict: isPortConflict,
+            containerInfo: {
+                hostname: os.hostname(),
+                platform: os.platform(),
+                pid: process.pid,
+                ppid: process.ppid
+            }
         });
+        
+        if (isPortConflict) {
+            logger.error('🔍 Port conflict detected - investigating...', {
+                port: process.env.MCP_SERVER_PORT || 3001,
+                suggestion: 'Check for multiple server instances or conflicting services. Health server should be on port 4001, MCP on 3001.'
+            });
+        }
+        
+        // Release startup lock before exiting to prevent lock file pollution
+        logger.info('🧹 Releasing startup lock before exit due to startup failure');
+        releaseStartupLock();
         
         // Give logs time to flush before exiting
         setTimeout(() => process.exit(1), 100);
