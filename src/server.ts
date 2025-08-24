@@ -7,6 +7,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import http from 'http';
 import { SessionManager } from './session/session-manager.js';
+import { SessionAwareToolExecutor, SessionContext } from './session/session-context.js';
 import {
     CallToolRequestSchema,
     ErrorCode,
@@ -67,18 +68,20 @@ process.on('exit', (code) => {
 });
 
 class EnvironmentMCPGateway {
-    private server: Server;
+    private baseServer: Server;
     private adapterManager: AdapterManager;
     private toolRegistry: ToolRegistry;
     private sessionManager: SessionManager;
+    private sessionAwareExecutor: SessionAwareToolExecutor;
+    private sessionServers = new Map<string, Server>();
     
     constructor() {
         logger.info('🔧 Initializing EnvironmentMCPGateway components');
         
         try {
-            // Initialize MCP Server
-            logger.debug('Creating MCP Server instance');
-            this.server = new Server(
+            // Initialize Base MCP Server (template for sessions)
+            logger.debug('Creating Base MCP Server instance');
+            this.baseServer = new Server(
                 {
                     name: 'lucidwonks-environment-mcp-gateway',
                     version: '1.0.0'
@@ -89,7 +92,7 @@ class EnvironmentMCPGateway {
                     }
                 }
             );
-            logger.debug('✅ MCP Server instance created');
+            logger.debug('✅ Base MCP Server instance created');
             
             // Initialize Adapter Manager
             logger.debug('Getting AdapterManager singleton instance');
@@ -110,6 +113,11 @@ class EnvironmentMCPGateway {
             });
             logger.debug('✅ SessionManager created');
             
+            // Initialize Session-Aware Tool Executor
+            logger.debug('Creating SessionAwareToolExecutor instance');
+            this.sessionAwareExecutor = new SessionAwareToolExecutor();
+            logger.debug('✅ SessionAwareToolExecutor created');
+            
             // Setup request handlers
             logger.debug('Setting up MCP request handlers');
             this.setupHandlers();
@@ -128,7 +136,7 @@ class EnvironmentMCPGateway {
     }
     
     private setupHandlers(): void {
-        this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+        this.baseServer.setRequestHandler(ListToolsRequestSchema, async () => {
             const allTools = this.toolRegistry.getAllTools();
             return {
                 tools: [
@@ -326,7 +334,7 @@ class EnvironmentMCPGateway {
             };
         });
         
-        this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+        this.baseServer.setRequestHandler(CallToolRequestSchema, async (request) => {
             const { name, arguments: args } = request.params;
             const startTime = Date.now();
             
@@ -438,6 +446,223 @@ class EnvironmentMCPGateway {
                 throw error;
             }
         });
+    }
+    
+    /**
+     * Create a session-specific MCP server with isolated context
+     * Each client gets their own server instance for proper multi-client support
+     */
+    private createSessionServer(sessionContext: SessionContext): Server {
+        logger.debug('Creating session-specific MCP server', { sessionId: sessionContext.sessionId });
+        
+        const sessionServer = new Server(
+            {
+                name: 'lucidwonks-environment-mcp-gateway',
+                version: '1.0.0'
+            },
+            {
+                capabilities: {
+                    tools: {}
+                }
+            }
+        );
+        
+        // Setup handlers for this session server with session context
+        this.setupSessionHandlers(sessionServer, sessionContext);
+        
+        logger.debug('Session-specific MCP server created', { sessionId: sessionContext.sessionId });
+        return sessionServer;
+    }
+    
+    /**
+     * Setup request handlers for a session-specific server with session context
+     */
+    private setupSessionHandlers(server: Server, sessionContext: SessionContext): void {
+        logger.debug('Setting up session-specific handlers', { sessionId: sessionContext.sessionId });
+        
+        // List tools handler (same for all sessions)
+        server.setRequestHandler(ListToolsRequestSchema, async () => {
+            const allTools = this.toolRegistry.getAllTools();
+            return {
+                tools: [
+                    // Git workflow and Azure DevOps tools
+                    ...allTools.map(tool => ({
+                        name: tool.name,
+                        description: tool.description,
+                        inputSchema: tool.inputSchema
+                    })),
+                    // Existing infrastructure tools
+                    {
+                        name: 'analyze-solution-structure',
+                        description: 'Parse and analyze the Lucidwonks solution structure, dependencies, and projects',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                includeDependencies: {
+                                    type: 'boolean',
+                                    description: 'Include project dependencies analysis'
+                                },
+                                projectType: {
+                                    type: 'string',
+                                    enum: ['All', 'Library', 'Console', 'Web', 'Service', 'Test'],
+                                    description: 'Filter by project type'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        name: 'get-development-environment-status',
+                        description: 'Get comprehensive development environment status including Docker, database, and solution health',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                checkDocker: {
+                                    type: 'boolean',
+                                    description: 'Check Docker services status'
+                                },
+                                checkDatabase: {
+                                    type: 'boolean',
+                                    description: 'Check database connectivity'
+                                },
+                                checkGit: {
+                                    type: 'boolean',
+                                    description: 'Check Git repository status'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        name: 'validate-build-configuration',
+                        description: 'Validate solution build configuration and project consistency',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                projectName: {
+                                    type: 'string',
+                                    description: 'Specific project to validate (optional)'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        name: 'get-project-dependencies',
+                        description: 'Analyze project dependencies and package references',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                projectName: {
+                                    type: 'string',
+                                    description: 'Specific project to analyze'
+                                },
+                                includeTransitive: {
+                                    type: 'boolean',
+                                    description: 'Include transitive dependencies'
+                                }
+                            }
+                        }
+                    }
+                ]
+            };
+        });
+        
+        // Session-aware tool execution handler
+        server.setRequestHandler(CallToolRequestSchema, async (request) => {
+            const { name, arguments: args } = request.params;
+            const startTime = Date.now();
+            
+            logger.info(`🔧 Tool execution started (Session: ${sessionContext.sessionId}): ${name}`, { 
+                tool: name, 
+                args: Object.keys(args || {}),
+                sessionId: sessionContext.sessionId,
+                timestamp: new Date().toISOString()
+            });
+            
+            return this.sessionAwareExecutor.executeWithSession(
+                sessionContext,
+                name,
+                args,
+                async (params, context) => {
+                    try {
+                        // Execute tool with session context
+                        const result = await this.executeToolWithSessionContext(name, params, context);
+                        const duration = Date.now() - startTime;
+                        
+                        logger.info(`✅ Tool completed (Session: ${context.sessionId}): ${name}`, { 
+                            duration, 
+                            success: true,
+                            sessionId: context.sessionId
+                        });
+                        
+                        return result;
+                    } catch (error) {
+                        const duration = Date.now() - startTime;
+                        logger.error(`❌ Tool failed (Session: ${context.sessionId}): ${name}`, { 
+                            duration, 
+                            error: error instanceof Error ? error.message : String(error),
+                            sessionId: context.sessionId
+                        });
+                        throw error;
+                    }
+                }
+            );
+        });
+    }
+    
+    /**
+     * Execute tool with session context for proper multi-client isolation
+     */
+    private async executeToolWithSessionContext(name: string, args: any, sessionContext: SessionContext): Promise<any> {
+        // Check if it's a tool from the tool registry (Git or Azure DevOps)
+        const allTools = this.toolRegistry.getAllTools();
+        const registryTool = allTools.find(tool => tool.name === name);
+        if (registryTool) {
+            logger.debug(`📋 Executing registry tool with session context: ${name}`, { 
+                sessionId: sessionContext.sessionId 
+            });
+            return await registryTool.handler(args);
+        }
+
+        // Handle infrastructure tools with session context
+        switch (name) {
+        case 'analyze-solution-structure':
+            return await this.analyzeSolutionStructure(args);
+                
+        case 'get-development-environment-status':
+            return await this.getDevelopmentEnvironmentStatus(args);
+                
+        case 'validate-build-configuration':
+            return await this.validateBuildConfiguration(args);
+                
+        case 'get-project-dependencies':
+            return await this.getProjectDependencies(args);
+                
+        default:
+            throw new McpError(
+                ErrorCode.MethodNotFound,
+                `Unknown tool: ${name}`
+            );
+        }
+    }
+    
+    /**
+     * Get comprehensive multi-client session metrics
+     */
+    public getMultiClientMetrics() {
+        const sessionMetrics = this.sessionManager.getMetrics();
+        const activeRequests = this.sessionAwareExecutor.getAllActiveRequests();
+        
+        return {
+            sessions: sessionMetrics,
+            activeServers: this.sessionServers.size,
+            activeRequests: {
+                total: activeRequests.length,
+                bySession: activeRequests.reduce((acc, req) => {
+                    acc[req.sessionContext.sessionId] = (acc[req.sessionContext.sessionId] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>)
+            },
+            timestamp: new Date().toISOString()
+        };
     }
     
     private async analyzeSolutionStructure(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
@@ -973,14 +1198,26 @@ class EnvironmentMCPGateway {
                 req.socket?.remoteAddress
             );
             
+            // Create session context for this connection
+            const sessionContext: SessionContext = {
+                sessionId,
+                userAgent: req.headers['user-agent'],
+                remoteAddress: req.socket?.remoteAddress,
+                startedAt: new Date()
+            };
+            
+            // Create session-specific MCP server for isolated multi-client support
+            const sessionServer = this.createSessionServer(sessionContext);
+            this.sessionServers.set(sessionId, sessionServer);
+            
             // Create SSE transport for this specific connection
             const transport = new SSEServerTransport('/mcp', res);
             
             // Update session state to connecting
             this.sessionManager.updateSessionState(sessionId, 'connecting');
             
-            // Connect the MCP server to this transport
-            await this.server.connect(transport);
+            // Connect the session-specific MCP server to this transport
+            await sessionServer.connect(transport);
             
             // Update session state to connected
             this.sessionManager.updateSessionState(sessionId, 'connected');
@@ -997,6 +1234,16 @@ class EnvironmentMCPGateway {
                     logger.info('🔌 MCP client disconnected', { sessionId });
                     this.sessionManager.updateSessionState(sessionId, 'disconnected');
                     this.sessionManager.removeSession(sessionId);
+                    
+                    // Clean up session-specific server and cancel active requests
+                    this.sessionServers.delete(sessionId);
+                    const canceledRequests = this.sessionAwareExecutor.cancelSessionRequests(sessionId);
+                    if (canceledRequests > 0) {
+                        logger.info('Canceled active requests for disconnected session', {
+                            sessionId,
+                            canceledRequests
+                        });
+                    }
                 }
             });
             
