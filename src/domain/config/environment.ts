@@ -53,9 +53,6 @@ export class Environment {
     public static get gitUserName(): string | undefined { return process.env.GIT_USER_NAME; }
     public static get gitUserEmail(): string | undefined { return process.env.GIT_USER_EMAIL; }
     
-    // MCP server configuration
-    public static get mcpServerPort(): number { return parseInt(process.env.MCP_SERVER_PORT ?? '3001'); }
-    public static get mcpLogLevel(): string { return process.env.MCP_LOG_LEVEL ?? 'info'; }
     
     // Solution and project paths
     public static get solutionPath(): string { return join(this.projectRoot, 'Lucidwonks.sln'); }
@@ -88,6 +85,24 @@ export class Environment {
     public static get vmNetworkSwitch(): string { return process.env.VM_NETWORK_SWITCH ?? 'Default Switch'; }
     public static get vmBootTimeout(): number { return parseInt(process.env.VM_BOOT_TIMEOUT ?? '300'); }
     public static get sshTimeout(): number { return parseInt(process.env.SSH_TIMEOUT ?? '30'); }
+    
+    // MCP Transport configuration
+    public static get mcpTransportType(): 'stdio' | 'http' { 
+        const transportType = process.env.MCP_TRANSPORT_TYPE?.toLowerCase();
+        return transportType === 'stdio' ? 'stdio' : 'http'; // Default to HTTP
+    }
+    
+    public static get mcpServerPort(): number { 
+        return parseInt(process.env.MCP_SERVER_PORT ?? '3001'); 
+    }
+    
+    public static get mcpLogLevel(): string { 
+        return process.env.MCP_LOG_LEVEL ?? 'info'; 
+    }
+    
+    public static get mcpEnableDualTransport(): boolean {
+        return process.env.MCP_ENABLE_DUAL_TRANSPORT === 'true';
+    }
     
     // Hyper-V Host configuration
     public static get hyperVHostIP(): string { return process.env.HYPER_V_HOST_IP ?? 'localhost'; }
@@ -172,8 +187,10 @@ export class Environment {
             gitRepoPath: this.gitRepoPath,
             gitUserName: this.gitUserName,
             gitUserEmail: this.gitUserEmail,
+            mcpTransportType: this.mcpTransportType,
             mcpServerPort: this.mcpServerPort,
             mcpLogLevel: this.mcpLogLevel,
+            mcpEnableDualTransport: this.mcpEnableDualTransport,
             solutionPath: this.solutionPath,
             projectRoot: this.projectRoot,
             dockerComposeFile: this.dockerComposeFile,

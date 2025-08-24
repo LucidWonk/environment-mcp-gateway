@@ -47,9 +47,6 @@ export class Environment {
     }
     static get gitUserName() { return process.env.GIT_USER_NAME; }
     static get gitUserEmail() { return process.env.GIT_USER_EMAIL; }
-    // MCP server configuration
-    static get mcpServerPort() { return parseInt(process.env.MCP_SERVER_PORT ?? '3001'); }
-    static get mcpLogLevel() { return process.env.MCP_LOG_LEVEL ?? 'info'; }
     // Solution and project paths
     static get solutionPath() { return join(this.projectRoot, 'Lucidwonks.sln'); }
     static get projectRoot() {
@@ -78,6 +75,20 @@ export class Environment {
     static get vmNetworkSwitch() { return process.env.VM_NETWORK_SWITCH ?? 'Default Switch'; }
     static get vmBootTimeout() { return parseInt(process.env.VM_BOOT_TIMEOUT ?? '300'); }
     static get sshTimeout() { return parseInt(process.env.SSH_TIMEOUT ?? '30'); }
+    // MCP Transport configuration
+    static get mcpTransportType() {
+        const transportType = process.env.MCP_TRANSPORT_TYPE?.toLowerCase();
+        return transportType === 'stdio' ? 'stdio' : 'http'; // Default to HTTP
+    }
+    static get mcpServerPort() {
+        return parseInt(process.env.MCP_SERVER_PORT ?? '3001');
+    }
+    static get mcpLogLevel() {
+        return process.env.MCP_LOG_LEVEL ?? 'info';
+    }
+    static get mcpEnableDualTransport() {
+        return process.env.MCP_ENABLE_DUAL_TRANSPORT === 'true';
+    }
     // Hyper-V Host configuration
     static get hyperVHostIP() { return process.env.HYPER_V_HOST_IP ?? 'localhost'; }
     static get hyperVHostUser() { return process.env.HYPER_V_HOST_USER ?? 'Administrator'; }
@@ -148,8 +159,10 @@ export class Environment {
             gitRepoPath: this.gitRepoPath,
             gitUserName: this.gitUserName,
             gitUserEmail: this.gitUserEmail,
+            mcpTransportType: this.mcpTransportType,
             mcpServerPort: this.mcpServerPort,
             mcpLogLevel: this.mcpLogLevel,
+            mcpEnableDualTransport: this.mcpEnableDualTransport,
             solutionPath: this.solutionPath,
             projectRoot: this.projectRoot,
             dockerComposeFile: this.dockerComposeFile,

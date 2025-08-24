@@ -7,8 +7,6 @@ export declare class Environment {
     static get gitRepoPath(): string;
     static get gitUserName(): string | undefined;
     static get gitUserEmail(): string | undefined;
-    static get mcpServerPort(): number;
-    static get mcpLogLevel(): string;
     static get solutionPath(): string;
     static get projectRoot(): string;
     static get dockerComposeFile(): string;
@@ -24,6 +22,10 @@ export declare class Environment {
     static get vmNetworkSwitch(): string;
     static get vmBootTimeout(): number;
     static get sshTimeout(): number;
+    static get mcpTransportType(): 'stdio' | 'http';
+    static get mcpServerPort(): number;
+    static get mcpLogLevel(): string;
+    static get mcpEnableDualTransport(): boolean;
     static get hyperVHostIP(): string;
     static get hyperVHostUser(): string;
     static get hyperVHostAuthMethod(): string;

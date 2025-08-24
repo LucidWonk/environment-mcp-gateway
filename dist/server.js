@@ -6,6 +6,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import http from 'http';
 import { SessionManager } from './session/session-manager.js';
 import { SessionAwareToolExecutor } from './session/session-context.js';
+import { TransportFactory } from './transport/transport-factory.js';
 import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError } from '@modelcontextprotocol/sdk/types.js';
 import { Environment } from './domain/config/environment.js';
 import { SolutionParser } from './infrastructure/solution-parser.js';
@@ -61,6 +62,7 @@ class EnvironmentMCPGateway {
     sessionManager;
     sessionAwareExecutor;
     sessionServers = new Map();
+    transportHandler;
     constructor() {
         logger.info('🔧 Initializing EnvironmentMCPGateway components');
         try {
@@ -1162,7 +1164,12 @@ class EnvironmentMCPGateway {
         res.end(JSON.stringify(statusInfo, null, 2));
     }
     async run() {
-        logger.info('🚀 Starting MCP server connection process', {
+        const transportFactory = TransportFactory.getInstance();
+        const transportConfig = transportFactory.getTransportConfigFromEnvironment();
+        logger.info('🚀 Starting MCP server with transport configuration', {
+            transportType: transportConfig.type,
+            port: transportConfig.port,
+            dualMode: transportConfig.enableDualMode,
             processId: process.pid,
             parentProcessId: process.ppid,
             mcpStdioMode: process.env.MCP_STDIO_MODE,
@@ -1173,39 +1180,45 @@ class EnvironmentMCPGateway {
                 stderr: process.stderr.writable
             }
         });
-        // HTTP/SSE transport doesn't need STDIO monitoring
-        // Start HTTP server that will handle SSE connections per client
-        const port = parseInt(process.env.MCP_SERVER_PORT || '3001');
-        this.createMCPHttpServer(port);
-        logger.info('🌐 HTTP server created for MCP SSE connections', {
-            transportType: 'HTTP/SSE',
-            port: port,
-            endpoint: '/mcp',
-            processId: process.pid
-        });
         try {
-            // HTTP server starts immediately - connections handled per client
-            logger.info('✅ EnvironmentMCPGateway HTTP server ready for connections', {
+            // Create appropriate transport handler
+            this.transportHandler = transportFactory.createTransportHandler(transportConfig, this.baseServer, this.sessionManager, this.sessionAwareExecutor);
+            // Set as current handler for metrics
+            transportFactory.setCurrentHandler(this.transportHandler);
+            // Start the transport handler
+            await this.transportHandler.start();
+            logger.info('✅ EnvironmentMCPGateway started successfully', {
                 name: 'lucidwonks-environment-mcp-gateway',
                 version: '1.0.0',
-                transport: 'HTTP/SSE',
+                transportType: transportConfig.type,
+                port: transportConfig.port,
                 processId: process.pid,
                 parentProcessId: process.ppid,
                 timestamp: new Date().toISOString()
             });
         }
         catch (error) {
-            logger.error('❌ Failed to connect MCP server', {
+            logger.error('❌ Failed to start MCP server', {
                 error: error instanceof Error ? {
                     name: error.name,
                     message: error.message,
                     stack: error.stack
                 } : error,
-                processId: process.pid,
-                mcpStdioMode: process.env.MCP_STDIO_MODE
+                transportType: transportConfig.type,
+                processId: process.pid
             });
             throw error;
         }
+    }
+    async stop() {
+        logger.info('🛑 Stopping EnvironmentMCPGateway');
+        if (this.transportHandler) {
+            await this.transportHandler.stop();
+        }
+        if (this.sessionManager) {
+            this.sessionManager.stop();
+        }
+        logger.info('✅ EnvironmentMCPGateway stopped successfully');
     }
     setupStdioMonitoring() {
         // Monitor stdin for connection closure

@@ -11,6 +11,7 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "test": "echo 'TypeScript tests are handled by XUnit in EnvironmentMCPGateway.Tests project'",
+    "migrate:transport": "node scripts/migrate-transport.js",
     "clean": "node scripts/clean.cjs",
     "clean:all": "node scripts/clean.cjs && npm run clean:modules",
     "clean:modules": "npx rimraf node_modules",
