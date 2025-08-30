@@ -1,0 +1,31 @@
+# Prevent Claude Code from auto-starting MCP server locally
+# MCP server should only run in Docker containers
+
+# Startup scripts
+start-stable.sh
+npm run dev
+npm run dev:local
+tsx watch src/server.ts
+
+# Local development commands
+dev
+dev:local
+start
+
+# Node modules and build artifacts 
+node_modules/
+dist/
+*.log
+
+# Lock and cache files
+package-lock.json
+.npm/
+*.pid
+
+# Development environment files
+.env*
+!.env.example
+
+# Prevent local execution hints
+**/server.ts
+src/server.ts
