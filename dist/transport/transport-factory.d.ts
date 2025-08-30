@@ -45,6 +45,29 @@ export declare class HttpTransportHandler implements TransportHandler {
     stop(): Promise<void>;
     private handleMCPConnection;
     private createSessionServer;
+    /**
+     * Setup request handlers for session-specific server with session context
+     */
+    private setupSessionHandlers;
+    /**
+     * Execute tool with session context for proper multi-client isolation
+     */
+    private executeToolWithSessionContext;
+    /**
+     * Analyze solution structure tool implementation
+     */
+    private analyzeSolutionStructure;
+    /**
+     * Get development environment status tool implementation
+     */
+    private getDevelopmentEnvironmentStatus;
+    /**
+     * Helper methods for tool implementations
+     */
+    private checkDatabaseStatus;
+    private checkDockerStatus;
+    private checkGitStatus;
+    private checkSolutionStatus;
     private handleHealthCheck;
     private handleStatusCheck;
     private handleCORSPreflight;

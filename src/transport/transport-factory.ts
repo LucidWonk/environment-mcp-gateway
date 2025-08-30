@@ -6,10 +6,14 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { ListToolsRequestSchema, CallToolRequestSchema, McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import http from 'http';
 import { Environment } from '../domain/config/environment.js';
 import { SessionManager } from '../session/session-manager.js';
 import { SessionAwareToolExecutor, SessionContext } from '../session/session-context.js';
+import { ToolRegistry } from '../orchestrator/tool-registry.js';
+import { AdapterManager } from '../adapters/adapter-manager.js';
+import { SolutionParser } from '../infrastructure/solution-parser.js';
 import { createMCPLogger } from '../utils/mcp-logger.js';
 
 const logger = createMCPLogger('transport-factory.log');
@@ -297,12 +301,307 @@ export class HttpTransportHandler implements TransportHandler {
             }
         );
         
-        // For now, copy handlers from base server
-        // In a full implementation, this would use the same handler setup as the main server
-        // But with session-aware execution context
+        // Copy tool handlers from base server with session context
+        this.setupSessionHandlers(sessionServer, sessionContext);
         
-        logger.debug('Session-specific MCP server created', { sessionId: sessionContext.sessionId });
+        logger.debug('Session-specific MCP server created with handlers', { sessionId: sessionContext.sessionId });
         return sessionServer;
+    }
+
+    /**
+     * Setup request handlers for session-specific server with session context
+     */
+    private setupSessionHandlers(server: Server, sessionContext: SessionContext): void {
+        logger.debug('Setting up session-specific handlers', { sessionId: sessionContext.sessionId });
+        
+        const toolRegistry = new ToolRegistry();
+        const adapterManager = AdapterManager.getInstance();
+        
+        // List tools handler (same for all sessions)
+        server.setRequestHandler(ListToolsRequestSchema, async () => {
+            const allTools = toolRegistry.getAllTools();
+            return {
+                tools: [
+                    // Git workflow and Azure DevOps tools
+                    ...allTools.map(tool => ({
+                        name: tool.name,
+                        description: tool.description,
+                        inputSchema: tool.inputSchema
+                    })),
+                    // Infrastructure tools
+                    {
+                        name: 'analyze-solution-structure',
+                        description: 'Parse and analyze the Lucidwonks solution structure, dependencies, and projects',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                includeDependencies: { type: 'boolean', description: 'Include dependency analysis', default: true },
+                                projectType: { type: 'string', enum: ['C#', 'Python', 'Other', 'All'], description: 'Filter projects by type', default: 'All' }
+                            }
+                        }
+                    },
+                    {
+                        name: 'get-development-environment-status',
+                        description: 'Get comprehensive status of development environment (database, docker, git, solution)',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                checkDatabase: { type: 'boolean', description: 'Check database connectivity', default: true },
+                                checkDocker: { type: 'boolean', description: 'Check Docker services', default: true },
+                                checkGit: { type: 'boolean', description: 'Check Git status', default: true }
+                            }
+                        }
+                    }
+                ]
+            };
+        });
+        
+        // Session-aware tool execution handler
+        server.setRequestHandler(CallToolRequestSchema, async (request) => {
+            const { name, arguments: args } = request.params;
+            const startTime = Date.now();
+            
+            logger.info(`🔧 Tool execution started (Session: ${sessionContext.sessionId}): ${name}`, { 
+                tool: name, 
+                args: Object.keys(args || {}),
+                sessionId: sessionContext.sessionId,
+                timestamp: new Date().toISOString()
+            });
+            
+            return this.sessionExecutor.executeWithSession(
+                sessionContext,
+                name,
+                args,
+                async (params, context) => {
+                    try {
+                        // Execute tool with session context
+                        const result = await this.executeToolWithSessionContext(name, params, context, toolRegistry, adapterManager);
+                        const duration = Date.now() - startTime;
+                        
+                        logger.info(`✅ Tool completed (Session: ${context.sessionId}): ${name}`, { 
+                            duration, 
+                            success: true,
+                            sessionId: context.sessionId
+                        });
+                        
+                        return result;
+                    } catch (error) {
+                        const duration = Date.now() - startTime;
+                        logger.error(`❌ Tool failed (Session: ${context.sessionId}): ${name}`, { 
+                            duration, 
+                            error: error instanceof Error ? error.message : String(error),
+                            sessionId: context.sessionId
+                        });
+                        throw error;
+                    }
+                }
+            );
+        });
+    }
+
+    /**
+     * Execute tool with session context for proper multi-client isolation
+     */
+    private async executeToolWithSessionContext(
+        name: string, 
+        args: any, 
+        sessionContext: SessionContext, 
+        toolRegistry: any, 
+        adapterManager: any
+    ): Promise<any> {
+        
+        // Check if it's a tool from the tool registry (Git or Azure DevOps)
+        const allTools = toolRegistry.getAllTools();
+        const registryTool = allTools.find((tool: any) => tool.name === name);
+        if (registryTool) {
+            logger.debug(`📋 Executing registry tool with session context: ${name}`, { 
+                sessionId: sessionContext.sessionId 
+            });
+            return await registryTool.handler(args);
+        }
+
+        // Handle infrastructure tools with session context
+        switch (name) {
+        case 'analyze-solution-structure':
+            return await this.analyzeSolutionStructure(args);
+                
+        case 'get-development-environment-status':
+            return await this.getDevelopmentEnvironmentStatus(args, adapterManager);
+                
+        default:
+            throw new McpError(
+                ErrorCode.MethodNotFound,
+                `Unknown tool: ${name}`
+            );
+        }
+    }
+
+    /**
+     * Analyze solution structure tool implementation
+     */
+    private async analyzeSolutionStructure(args: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+        
+        const { includeDependencies = true, projectType = 'All' } = args;
+        
+        logger.info('Analyzing solution structure', { includeDependencies, projectType });
+        
+        const solution = SolutionParser.parseSolution(Environment.solutionPath);
+        const validation = SolutionParser.validateSolution(solution);
+        
+        let projects = solution.projects;
+        if (projectType !== 'All') {
+            projects = SolutionParser.getProjectsByType(solution, projectType as any);
+        }
+        
+        const result = {
+            solution: {
+                name: solution.name,
+                path: solution.path,
+                totalProjects: solution.projects.length,
+                solutionFolders: solution.solutionFolders
+            },
+            projects: projects.map((p: any) => ({
+                name: p.name,
+                type: p.type,
+                path: p.path,
+                dependencies: includeDependencies ? p.dependencies : undefined
+            })),
+            validation: {
+                valid: validation.valid,
+                errors: validation.errors
+            }
+        };
+        
+        if (includeDependencies) {
+            result.projects.forEach((p: any) => {
+                const chain = SolutionParser.getProjectDependencyChain(solution, p.name);
+                (p as any).buildOrder = chain.indexOf(p.name) + 1;
+            });
+        }
+        
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: JSON.stringify(result, null, 2)
+                }
+            ]
+        };
+    }
+
+    /**
+     * Get development environment status tool implementation
+     */
+    private async getDevelopmentEnvironmentStatus(args: any, adapterManager: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+        
+        const { checkDatabase = true, checkDocker = true, checkGit = true } = args;
+        
+        logger.info('Getting development environment status', { checkDatabase, checkDocker, checkGit });
+        
+        const status = {
+            timestamp: new Date().toISOString(),
+            environment: Environment.getEnvironmentInfo(),
+            database: checkDatabase ? await this.checkDatabaseStatus() : null,
+            docker: checkDocker ? await this.checkDockerStatus(adapterManager) : null,
+            git: checkGit ? await this.checkGitStatus() : null,
+            solution: await this.checkSolutionStatus()
+        };
+        
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: JSON.stringify(status, null, 2)
+                }
+            ]
+        };
+    }
+
+    /**
+     * Helper methods for tool implementations
+     */
+    private async checkDatabaseStatus(): Promise<any> {
+        try {
+            const connectionString = Environment.getDevelopmentDatabaseConnectionString();
+            return {
+                connected: true,
+                connectionString: connectionString.replace(/:([^:@]+)@/, ':***@'), // Hide password
+                database: Environment.database,
+                host: Environment.dbHost,
+                port: Environment.dbPort
+            };
+        } catch (error) {
+            return {
+                connected: false,
+                error: error instanceof Error ? error.message : 'Unknown error'
+            };
+        }
+    }
+
+    private async checkDockerStatus(adapterManager: any): Promise<any> {
+        try {
+            const dockerAdapter = adapterManager.getDockerAdapter();
+            const [containers, composeServices, environmentHealth] = await Promise.all([
+                dockerAdapter.listDevelopmentContainers(),
+                dockerAdapter.getComposeServices(),
+                dockerAdapter.getDevelopmentEnvironmentHealth()
+            ]);
+
+            const { Environment } = await import('../domain/config/environment.js');
+            return {
+                dockerComposeFile: Environment.dockerComposeFile,
+                containers: containers.map((c: any) => ({
+                    id: c.id.substring(0, 12),
+                    name: c.name,
+                    image: c.image,
+                    status: c.status,
+                    health: c.health,
+                    ports: c.ports,
+                    uptime: c.uptime
+                })),
+                services: composeServices,
+                infrastructure: environmentHealth,
+                status: 'implemented'
+            };
+        } catch (error) {
+            logger.error('Failed to check Docker status', { error });
+            return {
+                dockerComposeFile: Environment.dockerComposeFile,
+                services: [],
+                status: 'error',
+                error: error instanceof Error ? error.message : 'Unknown error'
+            };
+        }
+    }
+
+    private async checkGitStatus(): Promise<any> {
+        return {
+            repository: Environment.gitRepoPath,
+            configured: !!Environment.gitUserName && !!Environment.gitUserEmail,
+            user: Environment.gitUserName,
+            email: Environment.gitUserEmail
+        };
+    }
+
+    private async checkSolutionStatus(): Promise<any> {
+        try {
+            
+            const solution = SolutionParser.parseSolution(Environment.solutionPath);
+            const validation = SolutionParser.validateSolution(solution);
+            
+            return {
+                path: Environment.solutionPath,
+                name: solution.name,
+                projects: solution.projects.length,
+                valid: validation.valid,
+                errors: validation.errors
+            };
+        } catch (error) {
+            return {
+                path: Environment.solutionPath,
+                error: error instanceof Error ? error.message : 'Unknown error'
+            };
+        }
     }
 
     private handleHealthCheck(res: http.ServerResponse): void {
@@ -487,14 +786,22 @@ export class HttpTransportHandler implements TransportHandler {
                             ]
                         };
                     } else if (jsonRpcRequest.method === 'tools/call') {
-                        // For now, return a simple success response for tools/call
-                        hasError = true;
-                        response = {
-                            error: {
-                                code: -32603,
-                                message: 'Tool execution not yet implemented for HTTP transport'
-                            }
-                        };
+                        try {
+                            const { name, arguments: args } = jsonRpcRequest.params;
+                            // Create temporary tool registry and adapter manager instances for HTTP requests
+                            const toolRegistry = new ToolRegistry();
+                            const adapterManager = AdapterManager.getInstance();
+                            
+                            response = await this.executeToolWithSessionContext(name, args, sessionContext, toolRegistry, adapterManager);
+                        } catch (toolError) {
+                            hasError = true;
+                            response = {
+                                error: {
+                                    code: -32603,
+                                    message: toolError instanceof Error ? toolError.message : 'Tool execution failed'
+                                }
+                            };
+                        }
                     } else if (jsonRpcRequest.method === 'notifications/initialized') {
                         // Handle the initialized notification - this is sent after successful initialize
                         // Notifications don't expect a response (no id field), just return success
