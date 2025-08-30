@@ -39,14 +39,25 @@ export declare class HttpTransportHandler implements TransportHandler {
     private port;
     private httpServer?;
     private sessionServers;
+    private sseTransports;
     constructor(baseServer: Server, sessionManager: SessionManager, sessionExecutor: SessionAwareToolExecutor, port?: number);
     start(): Promise<void>;
     stop(): Promise<void>;
     private handleMCPConnection;
     private createSessionServer;
     private handleHealthCheck;
+    private handleStatusCheck;
+    private handleCORSPreflight;
     private handleMetrics;
     private handleMCPHTTPRequest;
+    /**
+     * Handle MCP POST requests - could be for SSE session or standalone HTTP
+     */
+    private handleMCPPOSTRequest;
+    /**
+     * Extract session ID from request for SSE POST message routing
+     */
+    private extractSessionIdFromRequest;
     getMetrics(): any;
 }
 /**

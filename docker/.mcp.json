@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "environment-gateway": {
-      "type": "http",
+      "type": "sse",
       "url": "http://localhost:3002/mcp"
     }
   }

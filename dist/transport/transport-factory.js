@@ -54,6 +54,7 @@ export class HttpTransportHandler {
     port;
     httpServer;
     sessionServers = new Map();
+    sseTransports = new Map();
     constructor(baseServer, sessionManager, sessionExecutor, port = 3001) {
         this.baseServer = baseServer;
         this.sessionManager = sessionManager;
@@ -64,12 +65,18 @@ export class HttpTransportHandler {
         logger.info('Starting HTTP transport handler', { port: this.port });
         this.httpServer = http.createServer();
         this.httpServer.on('request', (req, res) => {
+            // Handle CORS preflight for all endpoints
+            if (req.method === 'OPTIONS') {
+                this.handleCORSPreflight(res);
+                return;
+            }
             if (req.url === '/mcp') {
                 if (req.method === 'GET') {
                     this.handleMCPConnection(req, res);
                 }
                 else if (req.method === 'POST') {
-                    this.handleMCPHTTPRequest(req, res);
+                    // Check if this POST is for an existing SSE session
+                    this.handleMCPPOSTRequest(req, res);
                 }
                 else {
                     res.writeHead(405, { 'Content-Type': 'application/json' });
@@ -78,6 +85,9 @@ export class HttpTransportHandler {
             }
             else if (req.url === '/health' && req.method === 'GET') {
                 this.handleHealthCheck(res);
+            }
+            else if (req.url === '/status' && req.method === 'GET') {
+                this.handleStatusCheck(res);
             }
             else if (req.url === '/metrics' && req.method === 'GET') {
                 this.handleMetrics(res);
@@ -149,17 +159,45 @@ export class HttpTransportHandler {
             this.sessionServers.set(sessionId, sessionServer);
             // Create SSE transport for this specific connection
             const transport = new SSEServerTransport('/mcp', res);
+            // The SSE transport generates its own session ID - we need to use that
+            const sseSessionId = transport.sessionId;
+            logger.debug('SSE transport created', {
+                ourSessionId: sessionId,
+                sseSessionId: sseSessionId
+            });
+            // Store the SSE transport using its own session ID for POST message routing
+            this.sseTransports.set(sseSessionId, transport);
+            // Also store it using our session ID for cleanup
+            this.sseTransports.set(sessionId, transport);
             // Update session state to connecting
             this.sessionManager.updateSessionState(sessionId, 'connecting');
             // Connect the session-specific MCP server to this transport
-            await sessionServer.connect(transport);
-            // Update session state to connected
-            this.sessionManager.updateSessionState(sessionId, 'connected');
-            logger.info('✅ MCP client connected via HTTP/SSE transport', {
-                sessionId,
-                totalSessions: this.sessionManager.getMetrics().totalSessions,
-                activeSessions: this.sessionManager.getMetrics().activeSessions
-            });
+            try {
+                logger.debug('Attempting to connect MCP server to SSE transport', { sessionId });
+                await sessionServer.connect(transport);
+                // Update session state to connected
+                this.sessionManager.updateSessionState(sessionId, 'connected');
+                logger.info('✅ MCP client connected via HTTP/SSE transport', {
+                    sessionId,
+                    totalSessions: this.sessionManager.getMetrics().totalSessions,
+                    activeSessions: this.sessionManager.getMetrics().activeSessions
+                });
+            }
+            catch (connectError) {
+                logger.error('❌ Failed to connect MCP server to SSE transport', {
+                    sessionId,
+                    error: connectError instanceof Error ? connectError.message : String(connectError),
+                    stack: connectError instanceof Error ? connectError.stack : undefined
+                });
+                // Clean up on connection failure
+                this.sessionManager.updateSessionState(sessionId, 'disconnected');
+                this.sessionManager.removeSession(sessionId);
+                this.sessionServers.delete(sessionId);
+                // Close the response with error
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Failed to establish MCP connection' }));
+                return;
+            }
             // Handle connection cleanup when client disconnects
             res.on('close', () => {
                 if (sessionId) {
@@ -168,6 +206,7 @@ export class HttpTransportHandler {
                     this.sessionManager.removeSession(sessionId);
                     // Clean up session-specific server and cancel active requests
                     this.sessionServers.delete(sessionId);
+                    this.sseTransports.delete(sessionId);
                     const canceledRequests = this.sessionExecutor.cancelSessionRequests(sessionId);
                     if (canceledRequests > 0) {
                         logger.info('Canceled active requests for disconnected session', {
@@ -214,9 +253,51 @@ export class HttpTransportHandler {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             status: 'healthy',
-            transport: 'http',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            environment: process.env.NODE_ENV || 'development',
+            version: '1.0.0',
+            transport: 'HTTP/SSE',
+            mcpEndpoint: '/mcp'
         }));
+    }
+    handleStatusCheck(res) {
+        const sessionMetrics = this.sessionManager.getMetrics();
+        const statusInfo = {
+            server: 'lucidwonks-environment-mcp-gateway',
+            version: '1.0.0',
+            status: 'running',
+            transport: {
+                type: 'HTTP/SSE',
+                endpoint: '/mcp',
+                port: this.port
+            },
+            sessions: {
+                total: sessionMetrics.totalSessions,
+                active: sessionMetrics.activeSessions,
+                firstConnection: sessionMetrics.connectionTime,
+                lastActivity: sessionMetrics.lastActivity
+            },
+            tools: {
+                total: 2, // Current tools available
+                categories: ['Infrastructure Analysis', 'Development Environment']
+            },
+            process: {
+                pid: process.pid,
+                uptime: process.uptime(),
+                memory: process.memoryUsage()
+            },
+            timestamp: new Date().toISOString()
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(statusInfo, null, 2));
+    }
+    handleCORSPreflight(res) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        res.writeHead(200);
+        res.end();
     }
     handleMetrics(res) {
         const metrics = this.getMetrics();
@@ -226,16 +307,39 @@ export class HttpTransportHandler {
     async handleMCPHTTPRequest(req, res) {
         let sessionId;
         try {
+            // Validate Origin header as required by MCP spec
+            const origin = req.headers['origin'];
+            const allowedOrigins = [
+                'null', // For local file:// origins
+                'http://localhost:3002',
+                'http://127.0.0.1:3002'
+            ];
             // Set CORS headers
-            res.setHeader('Access-Control-Allow-Origin', '*');
+            if (!origin || origin === 'null' || allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+            }
+            else {
+                logger.warn('❌ Rejected request from unauthorized origin', {
+                    sessionId,
+                    origin,
+                    allowedOrigins
+                });
+                res.writeHead(403, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Forbidden origin' }));
+                return;
+            }
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
             // Generate unique session ID for this request
             sessionId = this.sessionManager.generateSessionId();
             logger.info('🔌 New MCP HTTP request', {
                 sessionId,
                 userAgent: req.headers['user-agent'],
-                remoteAddress: req.socket?.remoteAddress
+                remoteAddress: req.socket?.remoteAddress,
+                origin: req.headers['origin'],
+                accept: req.headers['accept'],
+                contentType: req.headers['content-type'],
+                contentLength: req.headers['content-length']
             });
             // Read request body
             let body = '';
@@ -244,8 +348,14 @@ export class HttpTransportHandler {
             });
             req.on('end', async () => {
                 try {
+                    logger.debug('Raw request body received', {
+                        sessionId,
+                        bodyLength: body.length,
+                        bodyPreview: body.substring(0, 100),
+                        contentType: req.headers['content-type']
+                    });
                     const jsonRpcRequest = JSON.parse(body);
-                    logger.debug('Received JSON-RPC request', {
+                    logger.debug('Parsed JSON-RPC request', {
                         sessionId,
                         method: jsonRpcRequest.method,
                         id: jsonRpcRequest.id
@@ -315,6 +425,13 @@ export class HttpTransportHandler {
                             }
                         };
                     }
+                    else if (jsonRpcRequest.method === 'notifications/initialized') {
+                        // Handle the initialized notification - this is sent after successful initialize
+                        // Notifications don't expect a response (no id field), just return success
+                        logger.info('✅ MCP client sent initialized notification', { sessionId });
+                        response = null; // No response needed for notifications
+                        hasError = false;
+                    }
                     else {
                         hasError = true;
                         response = {
@@ -324,17 +441,26 @@ export class HttpTransportHandler {
                             }
                         };
                     }
-                    const jsonRpcResponse = {
-                        jsonrpc: '2.0',
-                        id: jsonRpcRequest.id,
-                        ...(hasError || response.error ? { error: response.error || response } : { result: response })
-                    };
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify(jsonRpcResponse));
+                    // Handle notifications (no response needed)
+                    if (response === null && !hasError) {
+                        // Notification - send empty 200 response
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end();
+                    }
+                    else {
+                        // Regular request - send JSON-RPC response
+                        const jsonRpcResponse = {
+                            jsonrpc: '2.0',
+                            id: jsonRpcRequest.id,
+                            ...(hasError || (response && response.error) ? { error: (response && response.error) || response } : { result: response })
+                        };
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify(jsonRpcResponse));
+                    }
                     logger.info('✅ MCP HTTP request completed', {
                         sessionId,
                         method: jsonRpcRequest.method,
-                        success: !hasError && !response.error
+                        success: !hasError && !(response && response.error)
                     });
                 }
                 catch (parseError) {
@@ -363,6 +489,56 @@ export class HttpTransportHandler {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Internal Server Error' }));
         }
+    }
+    /**
+     * Handle MCP POST requests - could be for SSE session or standalone HTTP
+     */
+    async handleMCPPOSTRequest(req, res) {
+        try {
+            // Check if this POST is for an existing SSE session
+            const sessionId = this.extractSessionIdFromRequest(req);
+            if (sessionId && this.sseTransports.has(sessionId)) {
+                // Route to existing SSE transport
+                const sseTransport = this.sseTransports.get(sessionId);
+                if (sseTransport) {
+                    logger.debug('Routing POST to SSE transport', { sessionId });
+                    await sseTransport.handlePostMessage(req, res);
+                    return;
+                }
+            }
+            // Otherwise handle as regular HTTP request
+            logger.debug('Handling POST as standalone HTTP request', {
+                sessionId,
+                hasSession: sessionId ? this.sseTransports.has(sessionId) : false
+            });
+            await this.handleMCPHTTPRequest(req, res);
+        }
+        catch (error) {
+            logger.error('❌ Failed to handle MCP POST request', {
+                error: error instanceof Error ? error.message : String(error)
+            });
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Internal Server Error' }));
+        }
+    }
+    /**
+     * Extract session ID from request for SSE POST message routing
+     */
+    extractSessionIdFromRequest(req) {
+        // Try to extract session ID from query parameters
+        const url = new URL(req.url || '', `http://localhost:${this.port}`);
+        const sessionId = url.searchParams.get('sessionId');
+        if (sessionId) {
+            return sessionId;
+        }
+        // Try to extract from headers
+        const sessionHeader = req.headers['x-mcp-session-id'];
+        if (sessionHeader) {
+            return sessionHeader;
+        }
+        // For SSE transport, the session ID should be in the URL or headers
+        // If not found, this POST request is likely a standalone HTTP request
+        return null;
     }
     getMetrics() {
         const sessionMetrics = this.sessionManager.getMetrics();
