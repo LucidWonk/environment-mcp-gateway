@@ -45,118 +45,270 @@ export declare function handleGetNewConceptsMigrationStatus(args: any): Promise<
 export declare const listActiveCoordinations: Tool;
 export declare function handleListActiveCoordinations(args: any): Promise<any>;
 export declare const lifecycleIntegrationTools: {
-    'create-lifecycle-coordination-plan': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'execute-coordinated-operation': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'get-coordination-status': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'rollback-coordinated-operation': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'discover-newconcepts': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'initiate-newconcepts-migration': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'get-newconcepts-migration-status': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'list-active-coordinations': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
+    'create-lifecycle-coordination-plan': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'execute-coordinated-operation': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'get-coordination-status': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'rollback-coordinated-operation': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'discover-newconcepts': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'initiate-newconcepts-migration': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'get-newconcepts-migration-status': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'list-active-coordinations': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
 };
 export declare const lifecycleIntegrationHandlers: {
     'create-lifecycle-coordination-plan': typeof handleCreateLifecycleCoordinationPlan;

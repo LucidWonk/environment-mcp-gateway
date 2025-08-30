@@ -15,14 +15,20 @@ RUN apk add --no-cache curl
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies (will install correct platform binaries)
-RUN npm ci --only=production
+# Install TypeScript globally for building
+RUN npm install -g typescript
+
+# Install ALL dependencies first (including devDependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY src/ ./src/
 
-# Build the application
-RUN npm run build
+# Build the application using global tsc
+RUN tsc
+
+# Clean up dev dependencies to reduce image size
+RUN npm prune --omit=dev
 
 # Copy environment files and health check scripts
 COPY .env* ./

@@ -40,104 +40,237 @@ export declare function handleSearchArchivedDocuments(args: any): Promise<any>;
 export declare const retrieveArchivedDocument: Tool;
 export declare function handleRetrieveArchivedDocument(args: any): Promise<any>;
 export declare const documentLifecycleTools: {
-    'analyze-document-migration-readiness': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'generate-migration-proposal': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'execute-migration-if-approved': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'get-approval-workflow-status': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'submit-approval-response': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'search-archived-documents': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'retrieve-archived-document': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
+    'analyze-document-migration-readiness': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'generate-migration-proposal': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'execute-migration-if-approved': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'get-approval-workflow-status': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'submit-approval-response': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'search-archived-documents': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'retrieve-archived-document': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
 };
 export declare const documentLifecycleHandlers: {
     'analyze-document-migration-readiness': typeof handleAnalyzeDocumentMigrationReadiness;

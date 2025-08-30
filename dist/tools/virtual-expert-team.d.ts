@@ -6,20 +6,39 @@ export declare const expertStatusMonitorTool: Tool;
 export declare const expertConflictResolveTool: Tool;
 export declare const expertValidateImplementationTool: Tool;
 export declare const expertGetProjectStandardsTool: Tool;
-export declare const virtualExpertTeamTools: import("zod").objectOutputType<{
-    name: import("zod").ZodString;
-    description: import("zod").ZodOptional<import("zod").ZodString>;
-    inputSchema: import("zod").ZodObject<{
-        type: import("zod").ZodLiteral<"object">;
-        properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-        type: import("zod").ZodLiteral<"object">;
-        properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-        type: import("zod").ZodLiteral<"object">;
-        properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-    }, import("zod").ZodTypeAny, "passthrough">>;
-}, import("zod").ZodTypeAny, "passthrough">[];
+export declare const virtualExpertTeamTools: {
+    [x: string]: unknown;
+    name: string;
+    inputSchema: {
+        [x: string]: unknown;
+        type: "object";
+        required?: string[] | undefined;
+        properties?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    description?: string | undefined;
+    title?: string | undefined;
+    outputSchema?: {
+        [x: string]: unknown;
+        type: "object";
+        required?: string[] | undefined;
+        properties?: {
+            [x: string]: unknown;
+        } | undefined;
+    } | undefined;
+    annotations?: {
+        [x: string]: unknown;
+        title?: string | undefined;
+        readOnlyHint?: boolean | undefined;
+        destructiveHint?: boolean | undefined;
+        idempotentHint?: boolean | undefined;
+        openWorldHint?: boolean | undefined;
+    } | undefined;
+    _meta?: {
+        [x: string]: unknown;
+    } | undefined;
+}[];
 interface ExpertSelection {
     primaryExpert: string;
     secondaryExperts: string[];

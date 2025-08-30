@@ -111,6 +111,23 @@ function releaseStartupLock() {
         console.error('Failed to release startup lock:', error);
     }
 }
+// Container-only execution guard - prevent local WSL/Linux execution
+const isContainer = process.env.CONTAINER === 'true' ||
+    process.env.DOCKER === 'true' ||
+    process.env.KUBERNETES_SERVICE_HOST ||
+    fs.existsSync('/.dockerenv');
+const isClaudeCodeContext = process.env.ANTHROPIC_CLAUDE_CODE === 'true' ||
+    process.env.CLAUDE_CODE === 'true' ||
+    process.env.CLIENT_NAME?.includes('claude') ||
+    process.argv.some(arg => arg.includes('claude'));
+// If not in container and not explicitly forced, exit gracefully
+if (!isContainer && !process.env.FORCE_LOCAL_MCP && !isClaudeCodeContext) {
+    console.log('🐳 MCP server is configured for container-only execution.');
+    console.log('📋 To run locally for development, use: FORCE_LOCAL_MCP=true npm run dev');
+    console.log('🚀 To run in Docker: docker-compose up -d mcp-gateway');
+    console.log('');
+    process.exit(0);
+}
 // Initialize environment and logging
 try {
     Environment.validateEnvironment();

@@ -40,104 +40,237 @@ export declare function handleGetRegistryStatistics(args: any): Promise<any>;
 export declare const getPlaceholderInfo: Tool;
 export declare function handleGetPlaceholderInfo(args: any): Promise<any>;
 export declare const registryLifecycleTools: {
-    'generate-placeholder-id': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'transition-placeholder-lifecycle': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'propose-capability-conversion': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'execute-capability-conversion': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'validate-registry-consistency': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'get-registry-statistics': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
-    'get-placeholder-info': import("zod").objectOutputType<{
-        name: import("zod").ZodString;
-        description: import("zod").ZodOptional<import("zod").ZodString>;
-        inputSchema: import("zod").ZodObject<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
-            type: import("zod").ZodLiteral<"object">;
-            properties: import("zod").ZodOptional<import("zod").ZodObject<{}, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{}, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{}, import("zod").ZodTypeAny, "passthrough">>>;
-        }, import("zod").ZodTypeAny, "passthrough">>;
-    }, import("zod").ZodTypeAny, "passthrough">;
+    'generate-placeholder-id': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'transition-placeholder-lifecycle': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'propose-capability-conversion': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'execute-capability-conversion': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'validate-registry-consistency': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'get-registry-statistics': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
+    'get-placeholder-info': {
+        [x: string]: unknown;
+        name: string;
+        inputSchema: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        };
+        description?: string | undefined;
+        title?: string | undefined;
+        outputSchema?: {
+            [x: string]: unknown;
+            type: "object";
+            required?: string[] | undefined;
+            properties?: {
+                [x: string]: unknown;
+            } | undefined;
+        } | undefined;
+        annotations?: {
+            [x: string]: unknown;
+            title?: string | undefined;
+            readOnlyHint?: boolean | undefined;
+            destructiveHint?: boolean | undefined;
+            idempotentHint?: boolean | undefined;
+            openWorldHint?: boolean | undefined;
+        } | undefined;
+        _meta?: {
+            [x: string]: unknown;
+        } | undefined;
+    };
 };
 export declare const registryLifecycleHandlers: {
     'generate-placeholder-id': typeof handleGeneratePlaceholderID;
