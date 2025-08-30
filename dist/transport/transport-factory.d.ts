@@ -68,6 +68,43 @@ export declare class HttpTransportHandler implements TransportHandler {
     private checkDockerStatus;
     private checkGitStatus;
     private checkSolutionStatus;
+    /**
+     * MCP Server Self-Diagnostic tool implementation
+     * Comprehensive validation of all MCP capabilities and system health
+     */
+    private mcpServerSelfDiagnostic;
+    /**
+     * Test MCP protocol compliance
+     */
+    private testMcpProtocolCompliance;
+    /**
+     * Test tool registry functionality
+     */
+    private testToolRegistryFunctionality;
+    /**
+     * Test session management functionality
+     */
+    private testSessionManagement;
+    /**
+     * Test infrastructure tools functionality
+     */
+    private testInfrastructureTools;
+    /**
+     * Test environment configuration
+     */
+    private testEnvironmentConfiguration;
+    /**
+     * Test transport layer functionality
+     */
+    private testTransportLayer;
+    /**
+     * Performance benchmarks (optional)
+     */
+    private performPerformanceTests;
+    /**
+     * Generate recommendations for failed components
+     */
+    private generateRecommendation;
     private handleHealthCheck;
     private handleStatusCheck;
     private handleCORSPreflight;

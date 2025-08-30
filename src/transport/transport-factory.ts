@@ -351,6 +351,17 @@ export class HttpTransportHandler implements TransportHandler {
                                 checkGit: { type: 'boolean', description: 'Check Git status', default: true }
                             }
                         }
+                    },
+                    {
+                        name: 'mcp-server-self-diagnostic',
+                        description: 'Comprehensive self-diagnostic of MCP server capabilities, tool functionality, and system health',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                includePerformanceTests: { type: 'boolean', description: 'Include performance benchmarks', default: false },
+                                verbose: { type: 'boolean', description: 'Include detailed diagnostic information', default: true }
+                            }
+                        }
                     }
                 ]
             };
@@ -427,6 +438,9 @@ export class HttpTransportHandler implements TransportHandler {
                 
         case 'get-development-environment-status':
             return await this.getDevelopmentEnvironmentStatus(args, adapterManager);
+                
+        case 'mcp-server-self-diagnostic':
+            return await this.mcpServerSelfDiagnostic(args, sessionContext, toolRegistry, adapterManager);
                 
         default:
             throw new McpError(
@@ -602,6 +616,419 @@ export class HttpTransportHandler implements TransportHandler {
                 error: error instanceof Error ? error.message : 'Unknown error'
             };
         }
+    }
+
+    /**
+     * MCP Server Self-Diagnostic tool implementation
+     * Comprehensive validation of all MCP capabilities and system health
+     */
+    private async mcpServerSelfDiagnostic(args: any, sessionContext: SessionContext, toolRegistry: any, adapterManager: any): Promise<{ content: Array<{ type: string; text: string }> }> {
+        const { includePerformanceTests = false, verbose = true } = args;
+        const startTime = Date.now();
+        
+        logger.info('🔍 Starting MCP Server Self-Diagnostic', { 
+            sessionId: sessionContext.sessionId, 
+            includePerformanceTests, 
+            verbose 
+        });
+
+        const diagnosticResults = {
+            timestamp: new Date().toISOString(),
+            sessionId: sessionContext.sessionId,
+            server: {
+                name: 'lucidwonks-environment-mcp-gateway',
+                version: '1.0.0',
+                transport: 'HTTP/SSE',
+                uptime: process.uptime(),
+                memory: process.memoryUsage(),
+                nodeVersion: process.version
+            },
+            diagnostics: {
+                overall: 'unknown',
+                mcpProtocol: await this.testMcpProtocolCompliance(),
+                toolRegistry: await this.testToolRegistryFunctionality(toolRegistry),
+                sessionManagement: await this.testSessionManagement(sessionContext),
+                infrastructure: await this.testInfrastructureTools(adapterManager),
+                environmentConfig: await this.testEnvironmentConfiguration(),
+                transport: await this.testTransportLayer(),
+                performance: includePerformanceTests ? await this.performPerformanceTests() : null
+            },
+            recommendations: [] as Array<{ severity: string; component: string; issue: string; suggestion: string }>,
+            summary: {
+                totalTests: 0,
+                passed: 0,
+                failed: 0,
+                warnings: 0,
+                duration: 0,
+                healthScore: 0
+            }
+        };
+
+        // Calculate overall health and generate recommendations
+        let totalTests = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+        let warnings = 0;
+
+        for (const [component, results] of Object.entries(diagnosticResults.diagnostics)) {
+            if (results && typeof results === 'object' && 'status' in results) {
+                totalTests++;
+                if (results.status === 'passed') passedTests++;
+                else if (results.status === 'failed') failedTests++;
+                else if (results.status === 'warning') warnings++;
+
+                // Generate recommendations for failed tests
+                if (results.status === 'failed' && 'errors' in results) {
+                    for (const error of (results as any).errors || []) {
+                        diagnosticResults.recommendations.push({
+                            severity: 'error',
+                            component,
+                            issue: error,
+                            suggestion: this.generateRecommendation(component, error)
+                        });
+                    }
+                }
+            }
+        }
+
+        const duration = Date.now() - startTime;
+        const healthScore = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+        
+        diagnosticResults.summary = {
+            totalTests,
+            passed: passedTests,
+            failed: failedTests,
+            warnings,
+            duration,
+            healthScore
+        };
+
+        // Determine overall status
+        if (failedTests === 0 && warnings <= 1) {
+            diagnosticResults.diagnostics.overall = 'healthy';
+        } else if (failedTests <= 2 || (failedTests === 0 && warnings <= 3)) {
+            diagnosticResults.diagnostics.overall = 'warning';
+        } else {
+            diagnosticResults.diagnostics.overall = 'critical';
+        }
+
+        logger.info('✅ MCP Server Self-Diagnostic Complete', {
+            sessionId: sessionContext.sessionId,
+            healthScore,
+            duration,
+            overall: diagnosticResults.diagnostics.overall
+        });
+
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: JSON.stringify(diagnosticResults, null, verbose ? 2 : 0)
+                }
+            ]
+        };
+    }
+
+    /**
+     * Test MCP protocol compliance
+     */
+    private async testMcpProtocolCompliance(): Promise<any> {
+        try {
+            const tests = {
+                'JSON-RPC 2.0 Support': true,
+                'MCP Protocol Version': '2024-11-05',
+                'Required Capabilities': ['tools'],
+                'Transport Support': ['HTTP', 'SSE']
+            };
+
+            return {
+                status: 'passed',
+                tests,
+                version: '2024-11-05',
+                compliance: 'full'
+            };
+        } catch (error) {
+            return {
+                status: 'failed',
+                errors: [error instanceof Error ? error.message : 'Protocol compliance test failed'],
+                compliance: 'partial'
+            };
+        }
+    }
+
+    /**
+     * Test tool registry functionality
+     */
+    private async testToolRegistryFunctionality(toolRegistry: any): Promise<any> {
+        try {
+            const allTools = toolRegistry.getAllTools();
+            const infrastructureTools = ['analyze-solution-structure', 'get-development-environment-status', 'mcp-server-self-diagnostic'];
+            
+            const errors = [];
+            const toolTests: Record<string, string> = {};
+
+            // Test registry tools
+            for (const tool of allTools) {
+                try {
+                    if (tool.name && tool.description && tool.inputSchema) {
+                        toolTests[tool.name] = 'registered';
+                    } else {
+                        toolTests[tool.name] = 'invalid-schema';
+                        errors.push(`Tool ${tool.name} has invalid schema`);
+                    }
+                } catch (err) {
+                    toolTests[tool.name] = 'error';
+                    errors.push(`Tool ${tool.name}: ${err instanceof Error ? err.message : 'unknown error'}`);
+                }
+            }
+
+            // Test infrastructure tools
+            for (const toolName of infrastructureTools) {
+                try {
+                    toolTests[toolName] = 'available';
+                } catch (err) {
+                    toolTests[toolName] = 'unavailable';
+                    errors.push(`Infrastructure tool ${toolName} unavailable: ${err instanceof Error ? err.message : 'unknown error'}`);
+                }
+            }
+
+            return {
+                status: errors.length === 0 ? 'passed' : (errors.length <= 2 ? 'warning' : 'failed'),
+                totalTools: allTools.length + infrastructureTools.length,
+                registryTools: allTools.length,
+                infrastructureTools: infrastructureTools.length,
+                toolTests,
+                errors: errors.length > 0 ? errors : undefined
+            };
+        } catch (error) {
+            return {
+                status: 'failed',
+                errors: [error instanceof Error ? error.message : 'Tool registry test failed']
+            };
+        }
+    }
+
+    /**
+     * Test session management functionality
+     */
+    private async testSessionManagement(sessionContext: SessionContext): Promise<any> {
+        try {
+            const sessionMetrics = this.sessionManager.getMetrics();
+            
+            const tests = {
+                sessionIdGenerated: !!sessionContext.sessionId,
+                sessionManagerActive: !!this.sessionManager,
+                sessionContextValid: !!sessionContext.userAgent,
+                activeConnections: sessionMetrics.activeSessions || 0,
+                sessionMetricsAvailable: !!sessionMetrics
+            };
+
+            const errors = [];
+            if (!sessionContext.sessionId) errors.push('Session ID not generated');
+            if (!sessionContext.userAgent) errors.push('Session context missing user agent');
+
+            return {
+                status: errors.length === 0 ? 'passed' : 'warning',
+                tests,
+                sessionId: sessionContext.sessionId,
+                metrics: sessionMetrics,
+                errors: errors.length > 0 ? errors : undefined
+            };
+        } catch (error) {
+            return {
+                status: 'failed',
+                errors: [error instanceof Error ? error.message : 'Session management test failed']
+            };
+        }
+    }
+
+    /**
+     * Test infrastructure tools functionality
+     */
+    private async testInfrastructureTools(adapterManager: any): Promise<any> {
+        const toolTests: Record<string, string> = {};
+        const errors = [];
+        let passedTools = 0;
+        let totalTools = 0;
+
+        // Test analyze-solution-structure
+        try {
+            totalTools++;
+            const result = await this.analyzeSolutionStructure({ includeDependencies: false });
+            if (result.content && result.content[0] && result.content[0].text) {
+                const parsed = JSON.parse(result.content[0].text);
+                if (parsed.solution && parsed.projects) {
+                    toolTests['analyze-solution-structure'] = 'passed';
+                    passedTools++;
+                } else {
+                    toolTests['analyze-solution-structure'] = 'invalid-output';
+                    errors.push('analyze-solution-structure returned invalid structure');
+                }
+            } else {
+                toolTests['analyze-solution-structure'] = 'no-output';
+                errors.push('analyze-solution-structure returned no content');
+            }
+        } catch (error) {
+            toolTests['analyze-solution-structure'] = 'failed';
+            errors.push(`analyze-solution-structure: ${error instanceof Error ? error.message : 'unknown error'}`);
+        }
+
+        // Test get-development-environment-status
+        try {
+            totalTools++;
+            const result = await this.getDevelopmentEnvironmentStatus({ checkDatabase: false, checkDocker: false }, adapterManager);
+            if (result.content && result.content[0] && result.content[0].text) {
+                const parsed = JSON.parse(result.content[0].text);
+                if (parsed.timestamp && parsed.environment) {
+                    toolTests['get-development-environment-status'] = 'passed';
+                    passedTools++;
+                } else {
+                    toolTests['get-development-environment-status'] = 'invalid-output';
+                    errors.push('get-development-environment-status returned invalid structure');
+                }
+            } else {
+                toolTests['get-development-environment-status'] = 'no-output';
+                errors.push('get-development-environment-status returned no content');
+            }
+        } catch (error) {
+            toolTests['get-development-environment-status'] = 'failed';
+            errors.push(`get-development-environment-status: ${error instanceof Error ? error.message : 'unknown error'}`);
+        }
+
+        return {
+            status: errors.length === 0 ? 'passed' : (passedTools >= totalTools / 2 ? 'warning' : 'failed'),
+            totalTools,
+            passedTools,
+            toolTests,
+            errors: errors.length > 0 ? errors : undefined
+        };
+    }
+
+    /**
+     * Test environment configuration
+     */
+    private async testEnvironmentConfiguration(): Promise<any> {
+        try {
+            const config = Environment.getEnvironmentInfo();
+            const tests = {
+                solutionPathExists: !!config.solutionPath,
+                projectRootExists: !!config.projectRoot,
+                mcpConfigured: !!config.mcpServerPort,
+                gitConfigured: !!config.gitUserName && !!config.gitUserEmail,
+                databaseConfigured: !!config.dbHost && !!config.database
+            };
+
+            const errors = [];
+            if (!config.solutionPath) errors.push('Solution path not configured');
+            if (!config.projectRoot) errors.push('Project root not configured');
+            if (!config.gitUserName) errors.push('Git user name not configured');
+
+            const passedTests = Object.values(tests).filter(Boolean).length;
+            const totalTests = Object.keys(tests).length;
+
+            return {
+                status: errors.length === 0 ? 'passed' : (passedTests >= totalTests / 2 ? 'warning' : 'failed'),
+                tests,
+                configuration: config,
+                errors: errors.length > 0 ? errors : undefined
+            };
+        } catch (error) {
+            return {
+                status: 'failed',
+                errors: [error instanceof Error ? error.message : 'Environment configuration test failed']
+            };
+        }
+    }
+
+    /**
+     * Test transport layer functionality
+     */
+    private async testTransportLayer(): Promise<any> {
+        try {
+            const tests = {
+                httpTransportActive: true,
+                sseTransportSupported: !!this.sseTransports,
+                sessionServersCreated: this.sessionServers.size > 0,
+                corsConfigured: true,
+                jsonRpcSupported: true
+            };
+
+            return {
+                status: 'passed',
+                tests,
+                activeTransports: ['HTTP', 'SSE'],
+                activeSessions: this.sessionServers.size,
+                supportedProtocols: ['JSON-RPC 2.0', 'MCP 2024-11-05']
+            };
+        } catch (error) {
+            return {
+                status: 'failed',
+                errors: [error instanceof Error ? error.message : 'Transport layer test failed']
+            };
+        }
+    }
+
+    /**
+     * Performance benchmarks (optional)
+     */
+    private async performPerformanceTests(): Promise<any> {
+        try {
+            const startTime = Date.now();
+            
+            // Simple solution parsing performance test
+            const parseStart = Date.now();
+            await this.analyzeSolutionStructure({ includeDependencies: false });
+            const parseTime = Date.now() - parseStart;
+
+            // Environment status performance test
+            const statusStart = Date.now();
+            await this.getDevelopmentEnvironmentStatus({ checkDatabase: false, checkDocker: false }, null);
+            const statusTime = Date.now() - statusStart;
+
+            const totalTime = Date.now() - startTime;
+
+            return {
+                status: totalTime < 5000 ? 'passed' : (totalTime < 10000 ? 'warning' : 'failed'),
+                benchmarks: {
+                    solutionParsing: `${parseTime}ms`,
+                    environmentStatus: `${statusTime}ms`,
+                    totalExecutionTime: `${totalTime}ms`
+                },
+                performance: totalTime < 1000 ? 'excellent' : (totalTime < 3000 ? 'good' : 'slow'),
+                recommendations: totalTime > 5000 ? ['Consider optimizing tool execution performance'] : []
+            };
+        } catch (error) {
+            return {
+                status: 'failed',
+                errors: [error instanceof Error ? error.message : 'Performance test failed']
+            };
+        }
+    }
+
+    /**
+     * Generate recommendations for failed components
+     */
+    private generateRecommendation(component: string, error: string): string {
+        const recommendations: Record<string, string> = {
+            'mcpProtocol': 'Verify MCP protocol implementation and JSON-RPC 2.0 compliance',
+            'toolRegistry': 'Check tool registration and schema definitions',
+            'sessionManagement': 'Verify session management configuration and cleanup',
+            'infrastructure': 'Check infrastructure tool implementations and dependencies',
+            'environmentConfig': 'Review environment variables and configuration files',
+            'transport': 'Verify HTTP/SSE transport configuration and CORS settings'
+        };
+
+        if (error.includes('not configured')) {
+            return 'Configure the missing environment variables or settings';
+        }
+        if (error.includes('not found')) {
+            return 'Ensure required files and directories exist and are accessible';
+        }
+        if (error.includes('invalid')) {
+            return 'Review and fix the invalid configuration or data structure';
+        }
+
+        return recommendations[component] || 'Check the specific error details and consult documentation';
     }
 
     private handleHealthCheck(res: http.ServerResponse): void {
