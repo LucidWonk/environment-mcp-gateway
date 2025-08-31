@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  environment-mcp-gateway:
+    image: mcp-gateway:latest
+    container_name: environment-mcp-gateway
+    ports:
+      - "3002:3001"
+    environment:
+      - CONTAINER=true
+      - DOCKER=true
+      - NODE_ENV=production
+      - MCP_SERVER_PORT=3001
+      - MCP_TRANSPORT_TYPE=http
+      - MCP_LOG_LEVEL=info
+      - PROJECT_ROOT=/workspace
+      # Database connection to your local PostgreSQL server
+      - DATABASE_URL=${DATABASE_URL}
+      # Set data directories to mounted volumes
+      - ATOMIC_OPS_DIR=/app/.atomic-ops
+      - HOLISTIC_ROLLBACK_DIR=/app/.holistic-rollback
+      - HOLISTIC_OPS_DIR=/app/.holistic-ops
+      - SEMANTIC_CACHE_DIR=/app/.semantic-cache
+      # Required environment variables
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GIT_USER_NAME=Environment MCP Gateway
+      - GIT_USER_EMAIL=noreply@lucidwonks.com
+      # Enhanced timeout configurations (in milliseconds)
+      - SEMANTIC_ANALYSIS_TIMEOUT=90000
+      - DOMAIN_ANALYSIS_TIMEOUT=60000
+      - CONTEXT_GENERATION_TIMEOUT=75000
+      - FILE_OPERATIONS_TIMEOUT=45000
+      - FULL_REINDEX_TIMEOUT=600000
+      - SINGLE_FILE_TIMEOUT=15000
+      # Rollback cleanup configuration
+      - ROLLBACK_MAX_AGE_HOURS=24
+      - ROLLBACK_MAX_COUNT=10
+      # Path resolution debugging
+      - PATH_RESOLUTION_DEBUG=false
+    env_file:
+      - .env.production
+    volumes:
+      # Persistent storage for MCP server data
+      - mcp_cache:/app/.semantic-cache
+      - mcp_rollback:/app/.holistic-rollback  
+      - mcp_atomic:/app/.atomic-ops
+      - mcp_holistic_ops:/app/.holistic-ops
+      # Log storage
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - devops-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.lucidwonks.service=environment-mcp-gateway"
+      - "com.lucidwonks.version=1.0"
+      - "com.lucidwonks.environment=production"
+
+  bytebase:
+    image: bytebase/bytebase:latest
+    container_name: bytebase
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - PG_URL=${DATABASE_URL}
+    volumes:
+      # Bytebase data persistence
+      - bytebase_data:/var/opt/bytebase
+    restart: unless-stopped
+    networks:
+      - devops-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.lucidwonks.service=bytebase"
+      - "com.lucidwonks.environment=production"
+
+volumes:
+  mcp_cache:
+    driver: local
+    name: mcp_cache_prod
+  mcp_rollback:
+    driver: local
+    name: mcp_rollback_prod
+  mcp_atomic:
+    driver: local
+    name: mcp_atomic_prod
+  mcp_holistic_ops:
+    driver: local
+    name: mcp_holistic_ops_prod
+  bytebase_data:
+    driver: local
+    name: bytebase_data_prod
+
+networks:
+  devops-network:
+    driver: bridge
+    name: lucidwonks-devops-network

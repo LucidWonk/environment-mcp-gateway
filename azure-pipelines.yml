@@ -1,0 +1,151 @@
+# MCP Gateway CI/CD Pipeline
+# Automatically builds, tests, and deploys MCP server + DevOps tools to ubuntu-devops.lan
+
+trigger:
+  branches:
+    include:
+    - master
+    - main
+  paths:
+    include:
+    - EnvironmentMCPGateway/*
+    - docker-compose*
+    - devops/*
+    exclude:
+    - README.md
+    - docs/*
+
+variables:
+  DEVOPS_SERVER: 'ubuntu-devops.lan'
+  DEVOPS_USER: 'devops'  # Update this to your SSH user
+  CONTAINER_REGISTRY: 'your-registry'  # Update if using custom registry
+
+stages:
+- stage: BuildAndTest
+  displayName: 'Build and Test MCP Server'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build MCP Gateway'
+    pool:
+      vmImage: 'ubuntu-latest'
+    
+    steps:
+    - checkout: self
+      displayName: 'Checkout Repository'
+      
+    - task: NodeTool@0
+      displayName: 'Setup Node.js'
+      inputs:
+        versionSpec: '20.x'
+        
+    - script: |
+        cd EnvironmentMCPGateway
+        npm ci
+        npm run build
+        npm run lint
+      displayName: 'Build TypeScript MCP Server'
+      
+    - task: UseDotNet@2
+      displayName: 'Setup .NET'
+      inputs:
+        packageType: 'sdk'
+        version: '8.x'
+        
+    - script: |
+        dotnet build LucidwonksMCPGateway.sln
+        dotnet test EnvironmentMCPGateway.Tests/ --logger trx --results-directory TestResults
+      displayName: 'Build and Test .NET Components'
+      
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results'
+      inputs:
+        testResultsFormat: 'VSTest'
+        testResultsFiles: '**/TestResults/*.trx'
+      condition: always()
+      
+    - script: |
+        docker build -f docker/Dockerfile.mcp-gateway -t mcp-gateway:$(Build.BuildId) .
+      displayName: 'Build Docker Image'
+      
+    - script: |
+        docker save mcp-gateway:$(Build.BuildId) | gzip > mcp-gateway-$(Build.BuildId).tar.gz
+      displayName: 'Export Docker Image'
+      
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Docker Image'
+      inputs:
+        pathtoPublish: 'mcp-gateway-$(Build.BuildId).tar.gz'
+        artifactName: 'docker-image'
+
+- stage: Deploy
+  displayName: 'Deploy to ubuntu-devops.lan'
+  dependsOn: BuildAndTest
+  condition: succeeded()
+  jobs:
+  - deployment: DeployJob
+    displayName: 'Deploy MCP Server and Update DevOps Tools'
+    environment: 'ubuntu-devops-lan'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: docker-image
+            
+          - task: CopyFilesOverSSH@0
+            displayName: 'Copy Docker Image to Server'
+            inputs:
+              sshEndpoint: 'ubuntu-devops-ssh'  # Configure this service connection
+              sourceFolder: '$(Pipeline.Workspace)/docker-image'
+              contents: '*.tar.gz'
+              targetFolder: '/tmp/mcp-deploy'
+              
+          - task: CopyFilesOverSSH@0
+            displayName: 'Copy Deployment Files'
+            inputs:
+              sshEndpoint: 'ubuntu-devops-ssh'
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: |
+                docker-compose.production.yml
+                .env.production
+                devops/scripts/deploy/*.sh
+              targetFolder: '/opt/mcp-gateway'
+              
+          - task: SSH@0
+            displayName: 'Deploy MCP Server and Update Bytebase'
+            inputs:
+              sshEndpoint: 'ubuntu-devops-ssh'
+              runOptions: 'commands'
+              commands: |
+                cd /opt/mcp-gateway
+                
+                # Load new MCP server image
+                docker load < /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
+                
+                # Update Bytebase to latest version
+                docker-compose -f docker-compose.production.yml pull bytebase
+                
+                # Deploy with rolling restart
+                docker-compose -f docker-compose.production.yml up -d
+                
+                # Clean up
+                rm -f /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
+                
+          - task: SSH@0
+            displayName: 'Health Check Services'
+            inputs:
+              sshEndpoint: 'ubuntu-devops-ssh'
+              runOptions: 'commands'
+              commands: |
+                # Wait for services to be ready
+                sleep 30
+                
+                # Check MCP Gateway health
+                curl -f http://localhost:3002/health || exit 1
+                
+                # Check Bytebase health  
+                curl -f http://localhost:8080/api/ping || exit 1
+                
+                echo "All services healthy"
