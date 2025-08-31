@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  environment-mcp-gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mcp-gateway
+    container_name: lucidwonks-mcp-gateway
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - CONTAINER=true
+      - MCP_SERVER_PORT=3002
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  default:
+    name: lucidwonks-mcp-network
+    driver: bridge
