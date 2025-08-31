@@ -1,0 +1,32 @@
+{
+  "test_suites": {
+    "unit": {
+      "enabled": true,
+      "timeout_minutes": 5,
+      "parallel_execution": true,
+      "categories": ["Unit", "UnitTest"]
+    },
+    "integration": {
+      "enabled": true, 
+      "timeout_minutes": 15,
+      "parallel_execution": false,
+      "categories": ["Integration", "IntegrationTest"]
+    },
+    "performance": {
+      "enabled": true,
+      "timeout_minutes": 30,
+      "parallel_execution": false,
+      "categories": ["Performance", "Benchmark"]
+    }
+  },
+  "infrastructure": {
+    "docker_compose": true,
+    "test_database": true,
+    "golden_image_restore": true
+  },
+  "reporting": {
+    "formats": ["html", "json", "junit"],
+    "output_directory": "TestResults",
+    "archive_results": true
+  }
+}

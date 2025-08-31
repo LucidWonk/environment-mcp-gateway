@@ -58,7 +58,7 @@ namespace EnvironmentMCPGateway.Tests.Unit
             // Assert
             ((object)result.architectureGuidelines).Should().NotBeNull();
             ((object)result.architectureGuidelines.buildSystemIntegration).Should().NotBeNull();
-            Assert.Contains("dotnet build Lucidwonks.sln", result.architectureGuidelines.buildSystemIntegration.dotnetCommands[0]);
+            Assert.Contains("dotnet build LucidwonksMCPGateway.sln", result.architectureGuidelines.buildSystemIntegration.dotnetCommands[0]);
             Assert.Contains("npm run lint && npm run build && npm test", result.architectureGuidelines.buildSystemIntegration.typescriptValidation[0]);
         }
 
@@ -151,7 +151,7 @@ namespace EnvironmentMCPGateway.Tests.Unit
             // Assert
             Assert.Contains("Project-Specific Architecture Standards", result);
             Assert.Contains("Build System", result);
-            Assert.Contains("dotnet build Lucidwonks.sln", result);
+            Assert.Contains("dotnet build LucidwonksMCPGateway.sln", result);
             Assert.Contains("Quality Standards", result);
             Assert.Contains("DDD Principles", result);
         }
@@ -426,7 +426,7 @@ namespace EnvironmentMCPGateway.Tests.Unit
                     {
                         buildSystemIntegration = new
                         {
-                            dotnetCommands = new[] { "dotnet build Lucidwonks.sln", "Complete solution build validation" },
+                            dotnetCommands = new[] { "dotnet build LucidwonksMCPGateway.sln", "Complete solution build validation" },
                             typescriptValidation = new[] { "cd EnvironmentMCPGateway && npm run lint && npm run build && npm test && cd .." },
                             qualityStandards = new[] { "Zero-warning build standards across all platform components" }
                         }
@@ -468,7 +468,7 @@ namespace EnvironmentMCPGateway.Tests.Unit
                     {
                         case "Architecture":
                             return baseGuidance + "\n\n**Project-Specific Architecture Standards:**\n" +
-                                   "- **Build System**: dotnet build Lucidwonks.sln\n" +
+                                   "- **Build System**: dotnet build LucidwonksMCPGateway.sln\n" +
                                    "- **Quality Standards**: Zero-warning build standards\n" +
                                    "- **DDD Principles**: Domain-Driven Design principles";
 

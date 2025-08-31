@@ -43,7 +43,7 @@ namespace EnvironmentMCPGateway.Tests.Unit
             var directory = new DirectoryInfo(startPath);
             while (directory != null)
             {
-                if (File.Exists(Path.Combine(directory.FullName, "Lucidwonks.sln")))
+                if (File.Exists(Path.Combine(directory.FullName, "LucidwonksMCPGateway.sln")))
                 {
                     return directory.FullName;
                 }

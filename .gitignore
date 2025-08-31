@@ -119,4 +119,4 @@ obj/
 .mcp-server.pid
 
 # Local docker volumes
-docker-data/
+docker-data/.vs/

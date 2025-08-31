@@ -1,0 +1,20 @@
+{
+  "azure_storage": {
+    "account_name": "mcpgateway",
+    "container_name": "golden-images", 
+    "backup_retention_days": 30,
+    "blob_prefix": "mcp-gateway-backups",
+    "connection_string_env": "AZURE_STORAGE_CONNECTION_STRING"
+  },
+  "backup_settings": {
+    "compress": true,
+    "encrypt": false,
+    "checksum_validation": true,
+    "parallel_uploads": 4
+  },
+  "restore_settings": {
+    "verify_checksums": true,
+    "timeout_minutes": 30,
+    "retry_attempts": 3
+  }
+}

@@ -196,7 +196,7 @@ namespace EnvironmentMCPGateway.Tests.Unit
             
             Assert.Contains("Project-Specific Architecture Standards", instructions);
             Assert.Contains("Build System", instructions);
-            Assert.Contains("dotnet build Lucidwonks.sln", instructions);
+            Assert.Contains("dotnet build LucidwonksMCPGateway.sln", instructions);
             Assert.Contains("DDD Principles", instructions);
         }
 
@@ -602,7 +602,7 @@ namespace EnvironmentMCPGateway.Tests.Unit
             {
                 case "Architecture":
                     return baseGuidance + "\n\n**Project-Specific Architecture Standards:**\n" +
-                           "- **Build System**: dotnet build Lucidwonks.sln, Complete solution build validation\n" +
+                           "- **Build System**: dotnet build LucidwonksMCPGateway.sln, Complete solution build validation\n" +
                            "- **TypeScript Integration**: cd EnvironmentMCPGateway && npm run lint && npm run build && npm test\n" +
                            "- **Quality Standards**: Zero-warning build standards across all platform components\n" +
                            "- **Testing Framework**: Reqnroll BDD framework integration for business logic validation\n" +
@@ -696,7 +696,7 @@ namespace EnvironmentMCPGateway.Tests.Unit
             {
                 ["buildSystemIntegration"] = new Dictionary<string, object>
                 {
-                    ["dotnetCommands"] = new[] { "dotnet build Lucidwonks.sln" },
+                    ["dotnetCommands"] = new[] { "dotnet build LucidwonksMCPGateway.sln" },
                     ["typescriptValidation"] = new[] { "npm run lint && npm run build && npm test" },
                     ["qualityStandards"] = new[] { "Zero-warning build standards" }
                 },

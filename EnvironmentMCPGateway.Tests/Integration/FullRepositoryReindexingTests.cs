@@ -231,14 +231,14 @@ namespace EnvironmentMCPGateway.Tests.Integration
             
             // Navigate up from test bin directory to find the solution root
             // Typical path: /solution/EnvironmentMCPGateway.Tests/bin/Debug/net9.0
-            while (projectRoot != null && !File.Exists(Path.Combine(projectRoot, "Lucidwonks.sln")))
+            while (projectRoot != null && !File.Exists(Path.Combine(projectRoot, "LucidwonksMCPGateway.sln")))
             {
                 var parent = Directory.GetParent(projectRoot);
                 if (parent == null) break;
                 projectRoot = parent.FullName;
             }
             
-            if (projectRoot == null || !File.Exists(Path.Combine(projectRoot, "Lucidwonks.sln")))
+            if (projectRoot == null || !File.Exists(Path.Combine(projectRoot, "LucidwonksMCPGateway.sln")))
             {
                 // Fallback: if we can't find the solution, use the test directory's parent structure
                 var currentDir = new DirectoryInfo(testDirectory);
