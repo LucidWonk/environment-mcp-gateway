@@ -33,6 +33,7 @@ cat > "$BACKUP_DIR/${BACKUP_NAME}_manifest.json" << EOF
     "backup_name": "$BACKUP_NAME",
     "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
     "backup_type": "golden_image",
+    "environment": "${ENVIRONMENT:-development}",
     "components": [
         "context_cache",
         "configuration"
@@ -41,5 +42,11 @@ cat > "$BACKUP_DIR/${BACKUP_NAME}_manifest.json" << EOF
 }
 EOF
 
+# Create checksum file for backup integrity validation
+echo "Creating backup checksums..."
+CHECKSUM_FILE="$BACKUP_DIR/${BACKUP_NAME}_checksums.md5"
+(cd "$BACKUP_DIR" && find "${BACKUP_NAME}_context_cache" "${BACKUP_NAME}_manifest.json" -type f 2>/dev/null | xargs md5sum > "$CHECKSUM_FILE" 2>/dev/null || true)
+
 echo "Backup completed: $BACKUP_DIR/${BACKUP_NAME}"
 echo "Manifest: $BACKUP_DIR/${BACKUP_NAME}_manifest.json"
+echo "Checksums: $CHECKSUM_FILE"

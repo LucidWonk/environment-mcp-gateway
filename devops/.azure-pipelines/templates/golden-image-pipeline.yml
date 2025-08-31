@@ -1,0 +1,120 @@
+# Golden Image Pipeline Template for MCP Gateway
+# This pipeline template manages database golden image backup and restore operations
+# for the Environment MCP Gateway testing infrastructure
+
+parameters:
+- name: environment
+  type: string
+  default: 'development'
+  values:
+  - development
+  - staging
+  - production
+
+- name: operation
+  type: string
+  default: 'backup'
+  values:
+  - backup
+  - restore
+  - validate
+
+- name: backupRetentionDays
+  type: number
+  default: 30
+
+- name: skipValidation
+  type: boolean
+  default: false
+
+stages:
+- stage: GoldenImageOperation
+  displayName: 'Golden Image ${{ parameters.operation }} - ${{ parameters.environment }}'
+  jobs:
+  - job: GoldenImageJob
+    displayName: 'Execute Golden Image ${{ parameters.operation }}'
+    pool:
+      vmImage: 'ubuntu-latest'
+    
+    variables:
+      ENVIRONMENT: ${{ parameters.environment }}
+      OPERATION: ${{ parameters.operation }}
+      RETENTION_DAYS: ${{ parameters.backupRetentionDays }}
+      
+    steps:
+    - checkout: self
+      displayName: 'Checkout Repository'
+      
+    - task: Docker@2
+      displayName: 'Start MCP Gateway Services'
+      inputs:
+        command: 'run'
+        arguments: '--name mcp-test-db -d -p 5432:5432 -e POSTGRES_PASSWORD=test timescale/timescaledb:latest-pg16'
+        
+    - script: |
+        echo "Waiting for database to be ready..."
+        sleep 10
+        docker exec mcp-test-db pg_isready -U postgres
+      displayName: 'Wait for Database'
+      
+    - script: |
+        chmod +x devops/scripts/database/*.sh
+        chmod +x devops/scripts/testing/*.sh
+      displayName: 'Set Script Permissions'
+      
+    - script: |
+        if [ "${{ parameters.operation }}" = "backup" ]; then
+          echo "Executing golden image backup"
+          ./devops/scripts/database/golden-image-backup.sh
+        elif [ "${{ parameters.operation }}" = "restore" ]; then
+          echo "Executing golden image restore"
+          ./devops/scripts/database/golden-image-restore.sh
+        elif [ "${{ parameters.operation }}" = "validate" ]; then
+          echo "Validating golden image integrity"
+          ./devops/scripts/database/test-data-refresh.sh --validate-only
+        fi
+      displayName: 'Execute Golden Image Operation'
+      env:
+        AZURE_STORAGE_ACCOUNT: $(AZURE_STORAGE_ACCOUNT)
+        AZURE_STORAGE_KEY: $(AZURE_STORAGE_KEY)
+        
+    - script: |
+        if [ "${{ parameters.skipValidation }}" = "false" ]; then
+          echo "Running post-operation validation"
+          ./devops/scripts/testing/test-orchestrator.sh --golden-image-validation
+        else
+          echo "Skipping validation as requested"
+        fi
+      displayName: 'Post-Operation Validation'
+      condition: and(succeeded(), ne('${{ parameters.operation }}', 'validate'))
+      
+    - script: |
+        echo "Cleaning up test containers"
+        docker stop mcp-test-db || true
+        docker rm mcp-test-db || true
+      displayName: 'Cleanup'
+      condition: always()
+      
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Golden Image Logs'
+      inputs:
+        pathtoPublish: '$(System.DefaultWorkingDirectory)/logs'
+        artifactName: 'golden-image-logs-${{ parameters.environment }}-${{ parameters.operation }}'
+      condition: always()
+
+# Additional validation stage for production operations
+- stage: ProductionValidation
+  displayName: 'Production Safety Validation'
+  condition: and(succeeded(), eq('${{ parameters.environment }}', 'production'))
+  jobs:
+  - job: ValidationJob
+    displayName: 'Validate Production Operation'
+    steps:
+    - script: |
+        echo "Production operations require additional validation"
+        if [ "${{ parameters.operation }}" = "restore" ]; then
+          echo "WARNING: Production restore detected - requires manual approval"
+          exit 1
+        fi
+        echo "Production ${{ parameters.operation }} operation validated"
+      displayName: 'Production Safety Check'
