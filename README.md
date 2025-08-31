@@ -1,5 +1,7 @@
 # Lucidwonks Environment MCP Gateway
 
+**Repository**: https://github.com/LucidWonk/environment-mcp-gateway.git
+
 A TypeScript MCP (Model Context Protocol) server that provides Claude Code with comprehensive access to the Lucidwonks development environment infrastructure.
 
 ## Overview
