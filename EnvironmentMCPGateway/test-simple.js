@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Simple test to verify the MCP server is working
+// Simple test to verify the MCP server is working 
 import { readFileSync } from 'fs';
 
 try {
