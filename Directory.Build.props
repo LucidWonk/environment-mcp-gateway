@@ -1,0 +1,80 @@
+<Project>
+  <!-- Global properties for all projects in the solution -->
+  <PropertyGroup>
+    <!-- Ensure consistent versioning across all projects -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <Product>Lucidwonks Algorithmic Trading Platform</Product>
+    <Company>Lucidwonks</Company>
+    <Copyright>Copyright © Lucidwonks 2025</Copyright>
+  </PropertyGroup>
+
+  <!-- Automatically include all markdown and context files in every project -->
+  <ItemGroup>
+    <!-- Include markdown files for documentation visibility -->
+    <None Include="**/*.md" Exclude="bin/**;obj/**;node_modules/**" />
+    
+    <!-- Include context files for AI assistance -->
+    <None Include=".context/**/*.md" Exclude="bin/**;obj/**;node_modules/**" />
+    
+    <!-- Include common documentation formats -->
+    <None Include="**/*.txt" Exclude="bin/**;obj/**;node_modules/**;logs/**" Condition="'$(MSBuildProjectName)' != 'EnvironmentMCPGateway'" />
+    
+    <!-- Include configuration files for visibility -->
+    <None Include="*.yml" Exclude="bin/**;obj/**;node_modules/**" />
+    <None Include="*.yaml" Exclude="bin/**;obj/**;node_modules/**" />
+    <None Include="*.json" Exclude="bin/**;obj/**;node_modules/**;package*.json;tsconfig*.json" />
+  </ItemGroup>
+
+  <!-- Exclude specific projects from automatic markdown inclusion if needed -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'EnvironmentMCPGateway'">
+    <!-- EnvironmentMCPGateway explicitly manages its own .md files -->
+    <None Remove="**/*.md" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'DevOps'">
+    <!-- DevOps project explicitly manages its own devops directory files -->
+    <None Remove="**/*.md" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Documentation'">
+    <!-- Documentation project explicitly manages its own .md files -->
+    <None Remove="**/*.md" />
+  </ItemGroup>
+
+  <!-- Global package version management -->
+  <PropertyGroup>
+    <!-- Enable central package management -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    
+    <!-- Common build settings -->
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    
+    <!-- Enable nullable reference types globally -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- Default global exclusions for all projects -->
+  <ItemGroup>
+    <!-- Exclude build artifacts -->
+    <None Remove="**/bin/**" />
+    <None Remove="**/obj/**" />
+    
+    <!-- Exclude Node.js artifacts -->
+    <None Remove="**/node_modules/**" />
+    <None Remove="**/dist/**" />
+    
+    <!-- Exclude log files -->
+    <None Remove="**/logs/**/*.log" />
+    <None Remove="**/*.log" />
+    
+    <!-- Exclude temporary files -->
+    <None Remove="**/*~" />
+    <None Remove="**/*.bak" />
+    <None Remove="**/*.tmp" />
+  </ItemGroup>
+
+</Project>
