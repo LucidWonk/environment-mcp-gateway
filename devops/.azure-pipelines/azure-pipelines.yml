@@ -119,17 +119,17 @@ stages:
               commands: |
                 # Debug: Check deployment directory exists and is accessible
                 echo "Checking /opt/mcp-gateway directory:"
-                sudo ls -la /opt/mcp-gateway/ || echo "Cannot access /opt/mcp-gateway"
+                ls -la /opt/mcp-gateway/ || echo "Cannot access /opt/mcp-gateway"
                 
                 # Load new MCP server image
                 docker load < /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
                 docker tag mcp-gateway:$(Build.BuildId) mcp-gateway:latest
                 
-                # Update Bytebase to latest version (run from deployment directory)
-                sudo docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase
+                # Update Bytebase to latest version
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase
                 
-                # Deploy with rolling restart (run from deployment directory)
-                sudo docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d
+                # Deploy with rolling restart
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d
                 
                 # Verify deployment
                 echo "Checking container status:"
