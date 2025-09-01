@@ -130,11 +130,17 @@ stages:
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase >/dev/null 2>&1 || true
                 echo "Bytebase pull completed"
                 
+                # Clean up any problematic containers before deployment
+                echo "Cleaning up existing containers..."
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml down --volumes --remove-orphans >/dev/null 2>&1 || true
+                docker container prune -f >/dev/null 2>&1 || true
+                
                 # Deploy with rolling restart
+                echo "Starting services with new image..."
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d
                 
                 # Wait for services to start
-                sleep 10
+                sleep 15
                 
                 # Verify deployment
                 echo "Checking container status:"
