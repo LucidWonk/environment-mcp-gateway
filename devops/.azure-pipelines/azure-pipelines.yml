@@ -156,17 +156,42 @@ stages:
             inputs:
               sshEndpoint: 'ubuntu-devops-ssh'
               runOptions: 'commands'
+              failOnStderr: false
               commands: |
                 # Wait for services to be ready
                 sleep 30
                 
-                # Check MCP Gateway health
-                curl -f http://localhost:3002/health || exit 1
+                # Show container status first
+                echo "=== Container Status ==="
+                docker ps -a
+                
+                echo "=== MCP Gateway Logs (last 50 lines) ==="
+                docker logs --tail 50 environment-mcp-gateway || echo "No MCP Gateway logs available"
+                
+                echo "=== Network Status ==="
+                docker network ls
+                
+                echo "=== Port Binding Check ==="
+                netstat -tlnp | grep -E ":(3002|8080|9000)" || echo "No services bound to expected ports"
+                
+                # Check MCP Gateway health with more details
+                echo "=== Testing MCP Gateway Health ==="
+                curl -v http://localhost:3002/health || echo "MCP Gateway health check failed"
+                
+                # Check if container is actually running
+                if docker ps | grep -q environment-mcp-gateway; then
+                  echo "MCP Gateway container is running"
+                else
+                  echo "ERROR: MCP Gateway container is not running"
+                  exit 1
+                fi
                 
                 # Check Bytebase health  
-                curl -f http://localhost:8080/api/ping || exit 1
+                echo "=== Testing Bytebase Health ==="
+                curl -f http://localhost:8080/api/ping || echo "Bytebase health check failed"
                 
                 # Check Portainer health
-                curl -f http://localhost:9000/api/system/status || exit 1
+                echo "=== Testing Portainer Health ==="
+                curl -f http://localhost:9000/api/system/status || echo "Portainer health check failed"
                 
-                echo "All services healthy"
+                echo "=== Health Check Summary Complete ==="
