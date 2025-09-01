@@ -113,9 +113,11 @@ stages:
               
           - task: SSH@0
             displayName: 'Deploy MCP Server and Update Bytebase'
+            continueOnError: false
             inputs:
               sshEndpoint: 'ubuntu-devops-ssh'
               runOptions: 'commands'
+              failOnStderr: false
               commands: |
                 # Debug: Check deployment directory exists and is accessible
                 echo "Checking /opt/mcp-gateway directory:"
