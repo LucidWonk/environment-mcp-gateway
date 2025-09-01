@@ -45,10 +45,10 @@ stages:
       displayName: 'Build TypeScript MCP Server'
       
     - task: UseDotNet@2
-      displayName: 'Setup .NET'
+      displayName: 'Setup .NET 9'
       inputs:
         packageType: 'sdk'
-        version: '8.x'
+        version: '9.x'
         
     - script: |
         dotnet build LucidwonksMCPGateway.sln
