@@ -102,12 +102,7 @@ services:
     restart: unless-stopped
     networks:
       - devops-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # Portainer doesn't have curl/wget - health check via external pipeline test
     labels:
       - "com.lucidwonks.service=portainer"
       - "com.lucidwonks.environment=production"
