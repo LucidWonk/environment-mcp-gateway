@@ -17,7 +17,7 @@ trigger:
 
 variables:
   DEVOPS_SERVER: 'ubuntu-devops.lan'
-  DEVOPS_USER: 'devops'  # Update this to your SSH user
+  DEVOPS_USER: 'alex'  # Updated to match your SSH user
   CONTAINER_REGISTRY: 'your-registry'  # Update if using custom registry
 
 stages:
@@ -26,8 +26,7 @@ stages:
   jobs:
   - job: BuildJob
     displayName: 'Build MCP Gateway'
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: Default
     
     steps:
     - checkout: self
@@ -85,8 +84,7 @@ stages:
   - deployment: DeployJob
     displayName: 'Deploy MCP Server and Update DevOps Tools'
     environment: 'ubuntu-devops-lan'
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: Default
     strategy:
       runOnce:
         deploy:
