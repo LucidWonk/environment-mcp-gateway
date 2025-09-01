@@ -129,24 +129,42 @@ stages:
                 echo "MCP Gateway image loaded successfully"
                 
           - task: SSH@0
-            displayName: 'Deploy Services'
+            displayName: 'Complete Docker Cleanup'
             inputs:
               sshEndpoint: 'ubuntu-devops-ssh'
               runOptions: 'commands' 
               failOnStderr: false
               commands: |
-                echo "Stopping and removing MCP Gateway container..."
-                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml stop environment-mcp-gateway || true
-                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml rm -f environment-mcp-gateway || true
+                echo "Performing complete Docker cleanup to prevent ContainerConfig errors..."
                 
-                echo "Updating service images..."
+                # Stop all compose services
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml down || true
+                
+                # Force remove any remaining containers
+                docker container ls -a --format "{{.Names}}" | grep -E "(environment-mcp-gateway|bytebase|portainer)" | xargs -r docker container rm -f || true
+                
+                # Remove potentially corrupted images
+                docker image ls --format "{{.Repository}}:{{.Tag}}" | grep -E "(mcp-gateway|bytebase|portainer)" | xargs -r docker image rm -f || true
+                
+                # Clean up dangling resources
+                docker system prune -f >/dev/null 2>&1 || true
+                
+                echo "Docker cleanup complete"
+                
+          - task: SSH@0
+            displayName: 'Deploy Services'  
+            inputs:
+              sshEndpoint: 'ubuntu-devops-ssh'
+              runOptions: 'commands'
+              failOnStderr: false
+              commands: |
+                echo "Pulling fresh images..."
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull >/dev/null 2>&1 || true
                 
-                echo "Starting all services..."
-                COMPOSE_INTERACTIVE_NO_CLI=1 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d
+                echo "Starting services with fresh containers..."
+                COMPOSE_INTERACTIVE_NO_CLI=1 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d --force-recreate
                 
                 echo "Cleaning up..."
-                docker container prune -f >/dev/null 2>&1 || true
                 rm -f /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
                 
                 echo "Deployment complete. Container status:"
