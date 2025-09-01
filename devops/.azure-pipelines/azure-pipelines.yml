@@ -109,7 +109,6 @@ stages:
               contents: |
                 docker-compose.production.yml
                 .env.production
-                devops/scripts/deploy/*.sh
               targetFolder: '/opt/mcp-gateway'
               
           - task: SSH@0
@@ -122,6 +121,7 @@ stages:
                 
                 # Load new MCP server image
                 docker load < /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
+                docker tag mcp-gateway:$(Build.BuildId) mcp-gateway:latest
                 
                 # Update Bytebase to latest version
                 docker-compose -f docker-compose.production.yml pull bytebase
