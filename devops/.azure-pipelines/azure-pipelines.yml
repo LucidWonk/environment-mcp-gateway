@@ -63,7 +63,8 @@ stages:
       condition: always()
       
     - script: |
-        docker build -f EnvironmentMCPGateway/docker/Dockerfile -t mcp-gateway:$(Build.BuildId) .
+        cd EnvironmentMCPGateway
+        docker build -f docker/Dockerfile -t mcp-gateway:$(Build.BuildId) .
       displayName: 'Build Docker Image'
       
     - script: |
