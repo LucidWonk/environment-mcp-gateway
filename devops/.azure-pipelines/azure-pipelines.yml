@@ -125,9 +125,9 @@ stages:
                 docker load < /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
                 docker tag mcp-gateway:$(Build.BuildId) mcp-gateway:latest
                 
-                # Update Bytebase to latest version (docker outputs status to stderr, not an error)
+                # Update Bytebase to latest version (suppress Docker's normal stderr status messages)
                 echo "Pulling latest Bytebase image..."
-                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase >/dev/null 2>&1 || true
                 echo "Bytebase pull completed"
                 
                 # Deploy with rolling restart
