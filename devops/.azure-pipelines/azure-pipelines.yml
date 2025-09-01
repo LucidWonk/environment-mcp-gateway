@@ -130,16 +130,15 @@ stages:
               runOptions: 'commands' 
               failOnStderr: false
               commands: |
-                echo "Forcing complete cleanup of MCP Gateway container..."
+                echo "Stopping and removing MCP Gateway container..."
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml stop environment-mcp-gateway || true
-                docker container rm -f environment-mcp-gateway || true
-                docker image rm -f mcp-gateway:latest || true
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml rm -f environment-mcp-gateway || true
                 
                 echo "Updating service images..."
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull >/dev/null 2>&1 || true
                 
                 echo "Starting all services..."
-                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d --force-recreate --remove-orphans
+                COMPOSE_INTERACTIVE_NO_CLI=1 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d
                 
                 echo "Cleaning up..."
                 docker container prune -f >/dev/null 2>&1 || true
