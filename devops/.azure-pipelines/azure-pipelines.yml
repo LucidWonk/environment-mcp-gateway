@@ -119,6 +119,10 @@ stages:
               commands: |
                 cd /opt/mcp-gateway
                 
+                # Debug: List files in deployment directory
+                echo "Files in /opt/mcp-gateway:"
+                ls -la
+                
                 # Load new MCP server image
                 docker load < /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
                 docker tag mcp-gateway:$(Build.BuildId) mcp-gateway:latest
