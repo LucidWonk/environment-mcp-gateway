@@ -38,7 +38,7 @@ COPY docker/cleanup-processes.sh ./cleanup-processes.sh
 # Create non-root user and directories with proper permissions
 RUN addgroup -g 1001 -S mcpuser && \
     adduser -S mcpuser -u 1001 -G mcpuser && \
-    mkdir -p /app/.semantic-cache /app/.holistic-rollback /app/.atomic-ops /app/.holistic-ops && \
+    mkdir -p /app/.semantic-cache /app/.holistic-rollback /app/.atomic-ops /app/.holistic-ops /app/.context-templates && \
     chmod +x /app/health-check.js /app/cleanup-processes.sh && \
     chown -R mcpuser:mcpuser /app
 

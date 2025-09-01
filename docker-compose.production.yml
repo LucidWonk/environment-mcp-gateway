@@ -13,7 +13,7 @@ services:
       - MCP_SERVER_PORT=3001
       - MCP_TRANSPORT_TYPE=http
       - MCP_LOG_LEVEL=info
-      - PROJECT_ROOT=/workspace
+      - PROJECT_ROOT=/app
       # Database connection to your local PostgreSQL server
       - DATABASE_URL=${DATABASE_URL}
       # Set data directories to mounted volumes
