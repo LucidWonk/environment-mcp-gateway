@@ -15,6 +15,9 @@ trigger:
     - README.md
     - docs/*
 
+# Prevent concurrent deployments to same environment  
+lockBehavior: sequential
+
 variables:
   DEVOPS_SERVER: 'ubuntu-devops.lan'
   DEVOPS_USER: 'alex'  # Updated to match your SSH user
@@ -86,6 +89,8 @@ stages:
     displayName: 'Deploy MCP Server and Update DevOps Tools'
     environment: 'ubuntu-devops-lan'
     pool: Default
+    # Ensure only one deployment at a time
+    condition: succeeded()
     strategy:
       runOnce:
         deploy:
