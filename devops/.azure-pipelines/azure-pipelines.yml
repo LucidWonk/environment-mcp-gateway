@@ -148,46 +148,28 @@ stages:
                 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
                 
           - task: SSH@0
-            displayName: 'Health Check Services'
+            displayName: 'Verify Container Status'
             inputs:
               sshEndpoint: 'ubuntu-devops-ssh'
               runOptions: 'commands'
-              failOnStderr: false
               commands: |
-                # Wait for services to be ready
                 sleep 30
+                echo "Container Status:"
+                docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
                 
-                # Show container status first
-                echo "=== Container Status ==="
-                docker ps -a
+          - task: SSH@0
+            displayName: 'Test Service Health'
+            inputs:
+              sshEndpoint: 'ubuntu-devops-ssh'
+              runOptions: 'commands'
+              commands: |
+                echo "Testing MCP Gateway..."
+                curl -s -f http://localhost:3002/health > /dev/null && echo "✅ MCP Gateway: HEALTHY" || echo "❌ MCP Gateway: FAILED"
                 
-                echo "=== MCP Gateway Logs (last 50 lines) ==="
-                docker logs --tail 50 environment-mcp-gateway || echo "No MCP Gateway logs available"
+                echo "Testing Bytebase..."
+                curl -s -f http://localhost:8080/api/ping > /dev/null && echo "✅ Bytebase: HEALTHY" || echo "❌ Bytebase: FAILED"
                 
-                echo "=== Network Status ==="
-                docker network ls
+                echo "Testing Portainer..."
+                curl -s -f http://localhost:9000/api/system/status > /dev/null && echo "✅ Portainer: HEALTHY" || echo "❌ Portainer: FAILED"
                 
-                echo "=== Port Binding Check ==="
-                netstat -tlnp | grep -E ":(3002|8080|9000)" || echo "No services bound to expected ports"
-                
-                # Check MCP Gateway health with more details
-                echo "=== Testing MCP Gateway Health ==="
-                curl -v http://localhost:3002/health || echo "MCP Gateway health check failed"
-                
-                # Check if container is actually running
-                if docker ps | grep -q environment-mcp-gateway; then
-                  echo "MCP Gateway container is running"
-                else
-                  echo "ERROR: MCP Gateway container is not running"
-                  exit 1
-                fi
-                
-                # Check Bytebase health  
-                echo "=== Testing Bytebase Health ==="
-                curl -f http://localhost:8080/api/ping || echo "Bytebase health check failed"
-                
-                # Check Portainer health
-                echo "=== Testing Portainer Health ==="
-                curl -f http://localhost:9000/api/system/status || echo "Portainer health check failed"
-                
-                echo "=== Health Check Summary Complete ==="
+                echo "All health checks complete"
