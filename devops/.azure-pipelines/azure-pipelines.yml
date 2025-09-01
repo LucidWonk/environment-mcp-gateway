@@ -127,19 +127,60 @@ stages:
                 docker load < /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
                 docker tag mcp-gateway:$(Build.BuildId) mcp-gateway:latest
                 
-                # Update Bytebase to latest version (suppress Docker's normal stderr status messages)
-                echo "Pulling latest Bytebase image..."
+                # Check for image updates and restart only if needed
+                echo "Checking for image updates..."
+                
+                # Pull latest images and check if any changed
+                BYTEBASE_UPDATED=false
+                PORTAINER_UPDATED=false
+                
+                # Check Bytebase update
+                BYTEBASE_OLD=$(docker images --format "{{.ID}}" bytebase/bytebase:latest 2>/dev/null || echo "none")
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase >/dev/null 2>&1 || true
-                echo "Bytebase pull completed"
+                BYTEBASE_NEW=$(docker images --format "{{.ID}}" bytebase/bytebase:latest 2>/dev/null || echo "none")
+                if [ "$BYTEBASE_OLD" != "$BYTEBASE_NEW" ]; then
+                  BYTEBASE_UPDATED=true
+                  echo "Bytebase image updated"
+                else
+                  echo "Bytebase image unchanged"
+                fi
                 
-                # Clean up any problematic containers before deployment
-                echo "Cleaning up existing containers..."
-                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml down --volumes --remove-orphans >/dev/null 2>&1 || true
-                docker container prune -f >/dev/null 2>&1 || true
+                # Check Portainer update
+                PORTAINER_OLD=$(docker images --format "{{.ID}}" portainer/portainer-ce:latest 2>/dev/null || echo "none")
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull portainer >/dev/null 2>&1 || true
+                PORTAINER_NEW=$(docker images --format "{{.ID}}" portainer/portainer-ce:latest 2>/dev/null || echo "none")
+                if [ "$PORTAINER_OLD" != "$PORTAINER_NEW" ]; then
+                  PORTAINER_UPDATED=true
+                  echo "Portainer image updated"
+                else
+                  echo "Portainer image unchanged"
+                fi
                 
-                # Deploy with rolling restart
-                echo "Starting services with new image..."
+                # Always restart MCP Gateway (we built a new image)
+                echo "Restarting MCP Gateway with new build..."
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml stop environment-mcp-gateway
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d environment-mcp-gateway
+                
+                # Conditionally restart other services
+                if [ "$BYTEBASE_UPDATED" = true ]; then
+                  echo "Restarting Bytebase due to image update..."
+                  docker-compose -f /opt/mcp-gateway/docker-compose.production.yml stop bytebase
+                  docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d bytebase
+                fi
+                
+                if [ "$PORTAINER_UPDATED" = true ]; then
+                  echo "Restarting Portainer due to image update..."
+                  docker-compose -f /opt/mcp-gateway/docker-compose.production.yml stop portainer
+                  docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d portainer
+                fi
+                
+                # Ensure all services are running (start any that aren't without affecting running ones)
+                echo "Ensuring all services are running..."
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d
+                
+                # Clean up unused images and containers
+                docker container prune -f >/dev/null 2>&1 || true
+                docker image prune -f >/dev/null 2>&1 || true
                 
                 # Wait for services to start
                 sleep 15
