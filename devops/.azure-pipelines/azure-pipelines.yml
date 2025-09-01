@@ -52,7 +52,7 @@ stages:
         
     - script: |
         dotnet build LucidwonksMCPGateway.sln
-        dotnet test EnvironmentMCPGateway.Tests/ --logger trx --results-directory TestResults --filter "ClassName!~Integration"
+        dotnet test EnvironmentMCPGateway.Tests/ --logger trx --results-directory TestResults --filter "FullyQualifiedName~Unit"
       displayName: 'Build and Test .NET Components (Unit Tests Only)'
       
     - task: PublishTestResults@2
