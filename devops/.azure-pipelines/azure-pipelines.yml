@@ -162,7 +162,7 @@ stages:
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull >/dev/null 2>&1 || true
                 
                 echo "Starting services with fresh containers..."
-                COMPOSE_INTERACTIVE_NO_CLI=1 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d --force-recreate
+                echo "y" | docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d --force-recreate
                 
                 echo "Cleaning up..."
                 rm -f /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
