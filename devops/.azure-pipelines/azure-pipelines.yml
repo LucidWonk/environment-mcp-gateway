@@ -166,4 +166,7 @@ stages:
                 # Check Bytebase health  
                 curl -f http://localhost:8080/api/ping || exit 1
                 
+                # Check Portainer health
+                curl -f http://localhost:9000/api/system/status || exit 1
+                
                 echo "All services healthy"
