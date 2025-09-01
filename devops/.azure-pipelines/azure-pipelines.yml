@@ -143,8 +143,8 @@ stages:
                 # Force remove any remaining containers
                 docker container ls -a --format "{{.Names}}" | grep -E "(environment-mcp-gateway|bytebase|portainer)" | xargs -r docker container rm -f || true
                 
-                # Remove potentially corrupted images
-                docker image ls --format "{{.Repository}}:{{.Tag}}" | grep -E "(mcp-gateway|bytebase|portainer)" | xargs -r docker image rm -f || true
+                # Remove potentially corrupted registry images only (not our local mcp-gateway build)
+                docker image ls --format "{{.Repository}}:{{.Tag}}" | grep -E "(bytebase|portainer)" | xargs -r docker image rm -f || true
                 
                 # Clean up dangling resources
                 docker system prune -f >/dev/null 2>&1 || true
@@ -158,11 +158,11 @@ stages:
               runOptions: 'commands'
               failOnStderr: false
               commands: |
-                echo "Pulling fresh images..."
-                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull >/dev/null 2>&1 || true
+                echo "Pulling fresh registry images..."
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase portainer >/dev/null 2>&1 || true
                 
                 echo "Starting services with fresh containers..."
-                echo "y" | docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d --force-recreate
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d --force-recreate
                 
                 echo "Cleaning up..."
                 rm -f /tmp/mcp-deploy/mcp-gateway-$(Build.BuildId).tar.gz
