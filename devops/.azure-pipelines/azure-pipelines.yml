@@ -126,10 +126,13 @@ stages:
                 docker tag mcp-gateway:$(Build.BuildId) mcp-gateway:latest
                 
                 # Update Bytebase to latest version
-                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase
+                docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase 2>/dev/null || true
                 
                 # Deploy with rolling restart
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d
+                
+                # Wait for services to start
+                sleep 10
                 
                 # Verify deployment
                 echo "Checking container status:"
