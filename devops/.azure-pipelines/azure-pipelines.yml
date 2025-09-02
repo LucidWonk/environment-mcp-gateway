@@ -190,13 +190,15 @@ stages:
               runOptions: 'commands'
               commands: |
                 echo "Testing MCP Gateway..."
-                curl -s -f http://localhost:3002/health > /dev/null && echo "✅ MCP Gateway: HEALTHY" || {
+                if curl -s -f http://localhost:3002/health > /dev/null; then
+                  echo "✅ MCP Gateway: HEALTHY"
+                else
                   echo "❌ MCP Gateway: FAILED"
                   echo "Container status:"
                   docker ps | grep environment-mcp-gateway || echo "Container not found"
                   echo "Recent logs:"
                   docker logs --tail 10 environment-mcp-gateway || echo "No logs available"
-                }
+                fi
                 
                 echo "Testing Bytebase..."
                 curl -s -f http://localhost:8080/api/ping > /dev/null && echo "✅ Bytebase: HEALTHY" || echo "❌ Bytebase: FAILED"
