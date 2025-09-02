@@ -161,6 +161,9 @@ stages:
                 echo "Pulling fresh registry images..."
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase portainer >/dev/null 2>&1 || true
                 
+                echo "Configuring Azure DevOps PAT securely..."
+                echo "AZURE_DEVOPS_PAT=$(AZURE_DEVOPS_PAT)" >> /opt/mcp-gateway/.env.production
+                
                 echo "Starting services with fresh containers..."
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d --force-recreate
                 
