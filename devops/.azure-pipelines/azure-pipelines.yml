@@ -184,26 +184,30 @@ stages:
                 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
                 
           - task: SSH@0
-            displayName: 'Test Service Health'
+            displayName: 'Test MCP Gateway Health'
             inputs:
               sshEndpoint: 'ubuntu-devops-ssh'
               runOptions: 'commands'
               commands: |
-                echo "Testing MCP Gateway..."
-                if curl -s -f http://localhost:3002/health > /dev/null; then
-                  echo "✅ MCP Gateway: HEALTHY"
-                else
-                  echo "❌ MCP Gateway: FAILED"
-                  echo "Container status:"
-                  docker ps | grep environment-mcp-gateway || echo "Container not found"
-                  echo "Recent logs:"
-                  docker logs --tail 10 environment-mcp-gateway || echo "No logs available"
-                fi
+                curl -s -f http://localhost:3002/health > /dev/null && echo "✅ MCP Gateway: HEALTHY" || echo "❌ MCP Gateway: FAILED"
                 
-                echo "Testing Bytebase..."
+          - task: SSH@0
+            displayName: 'MCP Gateway Diagnostics'
+            condition: failed()
+            inputs:
+              sshEndpoint: 'ubuntu-devops-ssh'
+              runOptions: 'commands'
+              commands: |
+                echo "=== Container Status ==="
+                docker ps | grep environment-mcp-gateway || echo "Container not found"
+                echo "=== Recent Logs ==="
+                docker logs --tail 20 environment-mcp-gateway || echo "No logs available"
+                
+          - task: SSH@0
+            displayName: 'Test Other Services'
+            inputs:
+              sshEndpoint: 'ubuntu-devops-ssh'
+              runOptions: 'commands'
+              commands: |
                 curl -s -f http://localhost:8080/api/ping > /dev/null && echo "✅ Bytebase: HEALTHY" || echo "❌ Bytebase: FAILED"
-                
-                echo "Testing Portainer..."
                 curl -s -f http://localhost:9000/api/system/status > /dev/null && echo "✅ Portainer: HEALTHY" || echo "❌ Portainer: FAILED"
-                
-                echo "All health checks complete"
