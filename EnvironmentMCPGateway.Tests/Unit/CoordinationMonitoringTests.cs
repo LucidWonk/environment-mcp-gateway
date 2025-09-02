@@ -181,6 +181,9 @@ namespace EnvironmentMCPGateway.Tests.Unit
                         
                         await monitor.startCoordinationMonitoring(coordinationId, 'context-sync', 2);
                         
+                        // Add small delay to ensure duration > 0
+                        await new Promise(resolve => setTimeout(resolve, 10));
+                        
                         // Update metrics
                         await monitor.updateCoordinationMetrics(coordinationId, {
                             completedSteps: 3,
