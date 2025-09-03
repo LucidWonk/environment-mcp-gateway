@@ -232,11 +232,12 @@ class EnvironmentMCPGateway {
     private transportHandler?: TransportHandler;
     
     constructor() {
+        logger.info('🏗️ EnvironmentMCPGateway constructor started');
         logger.info('🔧 Initializing EnvironmentMCPGateway components');
         
         try {
             // Initialize Base MCP Server (template for sessions)
-            logger.debug('Creating Base MCP Server instance');
+            logger.info('🔄 Creating Base MCP Server instance');
             this.baseServer = new Server(
                 {
                     name: 'lucidwonks-environment-mcp-gateway',
@@ -261,22 +262,24 @@ class EnvironmentMCPGateway {
             logger.debug('✅ ToolRegistry created');
             
             // Initialize Session Manager
-            logger.debug('Creating SessionManager instance');
+            logger.info('🔄 Creating SessionManager instance');
             this.sessionManager = new SessionManager({
                 maxSessions: 10,
                 sessionTimeout: 5 * 60 * 1000, // 5 minutes
                 cleanupInterval: 60 * 1000 // 1 minute
             });
-            logger.debug('✅ SessionManager created');
+            logger.info('✅ SessionManager created');
             
             // Initialize Session-Aware Tool Executor
-            logger.debug('Creating SessionAwareToolExecutor instance');
+            logger.info('🔄 Creating SessionAwareToolExecutor instance');
             this.sessionAwareExecutor = new SessionAwareToolExecutor();
-            logger.debug('✅ SessionAwareToolExecutor created');
+            logger.info('✅ SessionAwareToolExecutor created');
             
             // Setup request handlers
-            logger.debug('Setting up MCP request handlers');
+            logger.info('🔄 Setting up MCP request handlers');
             this.setupHandlers();
+            logger.info('✅ MCP request handlers setup completed');
+            
             logger.info('✅ EnvironmentMCPGateway components initialized successfully');
             
         } catch (error) {
