@@ -161,6 +161,36 @@ try {
 // Configure logging - avoid console output during MCP operations
 const logger = createMCPLogger('environment-mcp-gateway.log');
 
+// Enhanced error handling for unhandled exceptions and rejections
+process.on('uncaughtException', (error) => {
+    logger.error('💥 Uncaught Exception - Process will exit', {
+        processId: process.pid,
+        error: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        },
+        timestamp: new Date().toISOString()
+    });
+    // Give time for logs to flush
+    setTimeout(() => process.exit(1), 500);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error('🚫 Unhandled Promise Rejection - Process will exit', {
+        processId: process.pid,
+        reason: reason instanceof Error ? {
+            name: reason.name,
+            message: reason.message,
+            stack: reason.stack
+        } : reason,
+        promise: promise.toString(),
+        timestamp: new Date().toISOString()
+    });
+    // Give time for logs to flush
+    setTimeout(() => process.exit(1), 500);
+});
+
 // Log process lifecycle events
 logger.info('🎬 Process starting', {
     processId: process.pid,
@@ -1628,6 +1658,12 @@ class EnvironmentMCPGateway {
         });
         
         try {
+            logger.info('🔧 Creating transport handler', {
+                transportType: transportConfig.type,
+                port: transportConfig.port,
+                processId: process.pid
+            });
+            
             // Create appropriate transport handler
             this.transportHandler = transportFactory.createTransportHandler(
                 transportConfig,
@@ -1636,11 +1672,28 @@ class EnvironmentMCPGateway {
                 this.sessionAwareExecutor
             );
             
+            logger.info('✅ Transport handler created successfully', {
+                transportType: transportConfig.type,
+                processId: process.pid
+            });
+            
             // Set as current handler for metrics
             transportFactory.setCurrentHandler(this.transportHandler);
             
+            logger.info('🚀 Starting transport handler', {
+                transportType: transportConfig.type,
+                port: transportConfig.port,
+                processId: process.pid
+            });
+            
             // Start the transport handler
             await this.transportHandler.start();
+            
+            logger.info('✅ Transport handler started successfully', {
+                transportType: transportConfig.type,
+                port: transportConfig.port,
+                processId: process.pid
+            });
             
             logger.info('✅ EnvironmentMCPGateway started successfully', {
                 name: 'lucidwonks-environment-mcp-gateway',
@@ -1946,7 +1999,17 @@ async function startServer() {
             timestamp: new Date().toISOString()
         });
         
+        logger.info('🏗️ Creating EnvironmentMCPGateway instance', {
+            phase: 'server_constructor_start',
+            processId: process.pid
+        });
+        
         const server = new EnvironmentMCPGateway();
+        
+        logger.info('✅ EnvironmentMCPGateway instance created successfully', {
+            phase: 'server_constructor_complete',
+            processId: process.pid
+        });
         
         logger.info('🚀 Starting MCP server run phase', {
             phase: 'mcp_server_start',
