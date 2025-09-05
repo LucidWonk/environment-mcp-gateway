@@ -84,9 +84,6 @@ stages:
   displayName: 'Deploy to ubuntu-devops.lan'
   dependsOn: BuildAndTest
   condition: succeeded()
-  variables:
-  - name: AZURE_DEVOPS_PAT
-    value: $(AZURE_DEVOPS_PAT)
   jobs:
   - deployment: DeployJob
     displayName: 'Deploy MCP Server and Update DevOps Tools'
@@ -165,10 +162,11 @@ stages:
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml pull bytebase portainer >/dev/null 2>&1 || true
                 
                 echo "Configuring Azure DevOps PAT securely..."
-                echo "Adding AZURE_DEVOPS_PAT to .env.production..."
+                echo "Adding AZURE_DEVOPS_PAT to .env.production with proper formatting..."
+                echo "" >> /opt/mcp-gateway/.env.production
                 echo "AZURE_DEVOPS_PAT=$(AZURE_DEVOPS_PAT)" >> /opt/mcp-gateway/.env.production
-                echo "DEBUG: Verifying .env.production contents (last 3 lines):"
-                tail -3 /opt/mcp-gateway/.env.production
+                echo "DEBUG: Verifying .env.production contents (last 5 lines):"
+                tail -5 /opt/mcp-gateway/.env.production
                 
                 echo "Starting services with fresh containers..."
                 docker-compose -f /opt/mcp-gateway/docker-compose.production.yml up -d --force-recreate
