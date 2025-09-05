@@ -84,6 +84,9 @@ stages:
   displayName: 'Deploy to ubuntu-devops.lan'
   dependsOn: BuildAndTest
   condition: succeeded()
+  variables:
+  - name: AZURE_DEVOPS_PAT
+    value: $(AZURE_DEVOPS_PAT)
   jobs:
   - deployment: DeployJob
     displayName: 'Deploy MCP Server and Update DevOps Tools'
