@@ -147,6 +147,13 @@ if (!isContainer && !process.env.FORCE_LOCAL_MCP && !isClaudeCodeContext) {
 
 // Initialize environment and logging
 console.log('🔍 Starting environment validation...');
+console.log('🐛 DEBUG: Azure DevOps environment variables:', {
+    AZURE_DEVOPS_ORGANIZATION: process.env.AZURE_DEVOPS_ORGANIZATION || 'NOT_SET',
+    AZURE_DEVOPS_PROJECT: process.env.AZURE_DEVOPS_PROJECT || 'NOT_SET', 
+    AZURE_DEVOPS_PAT: process.env.AZURE_DEVOPS_PAT ? `SET (length: ${process.env.AZURE_DEVOPS_PAT.length})` : 'NOT_SET',
+    NODE_ENV: process.env.NODE_ENV,
+    PROJECT_ROOT: process.env.PROJECT_ROOT
+});
 try {
     Environment.validateEnvironment();
     console.log('✅ Environment validation passed');
