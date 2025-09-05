@@ -146,15 +146,21 @@ if (!isContainer && !process.env.FORCE_LOCAL_MCP && !isClaudeCodeContext) {
 }
 
 // Initialize environment and logging
+console.log('🔍 Starting environment validation...');
 try {
     Environment.validateEnvironment();
+    console.log('✅ Environment validation passed');
 } catch (error) {
-    // Only log in development mode, not during MCP operations
-    const isDevelopment = process.env.NODE_ENV === 'development' && !process.env.MCP_SILENT_MODE;
-    if (isDevelopment) {
-        // Note: This is during environment initialization where logger might not be available yet
-        console.error('Environment validation failed:', error);
-    }
+    // ALWAYS log environment validation errors in production to debug container issues
+    console.error('❌ Environment validation failed - this is likely the cause of container restart loop:', error);
+    console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        nodeEnv: process.env.NODE_ENV,
+        projectRoot: process.env.PROJECT_ROOT,
+        mcpServerPort: process.env.MCP_SERVER_PORT
+    });
     process.exit(1);
 }
 
