@@ -1,0 +1,12 @@
+{
+  "updateId": "holistic_1757155491152_nnbsu8",
+  "timestamp": "2025-09-06T10:44:51.473Z",
+  "affectedDomains": [
+    "EnvironmentMCPGateway",
+    "Configuration",
+    "Infrastructure",
+    "Testing"
+  ],
+  "status": "pending",
+  "snapshotPath": "/mnt/m/projects/lucidwonks-mcp-gateway/.holistic-rollback/snapshots/holistic_1757155491152_nnbsu8.snapshot.json"
+}

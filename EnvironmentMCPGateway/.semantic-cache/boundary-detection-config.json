@@ -1,0 +1,15 @@
+{
+  "businessConceptWeight": 0.4,
+  "algorithmComplexityWeight": 0.35,
+  "semanticCoherenceWeight": 0.25,
+  "granularThreshold": 0.65,
+  "domainThreshold": 0.45,
+  "mathematicalComplexityMultiplier": 1.5,
+  "tradingAlgorithmBonus": 0.2,
+  "designPatternWeight": 0.3,
+  "enableAdaptiveTuning": true,
+  "learningRate": 0.1,
+  "minimumFeedbackCount": 5,
+  "maxAnalysisTimeMs": 15000,
+  "cacheExpirationHours": 24
+}
