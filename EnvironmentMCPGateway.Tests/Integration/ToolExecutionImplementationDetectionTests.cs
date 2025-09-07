@@ -1,9 +1,15 @@
 using System.Net.Http;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using System.Text;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using System.Text.Json;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using FluentAssertions;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using Microsoft.Extensions.Logging;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using Xunit;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 
 namespace EnvironmentMCPGateway.Tests.Integration
 {
@@ -11,6 +17,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
     /// Tests specifically designed to detect when tool execution is not properly implemented
     /// These tests would have caught the original HTTP transport tool execution issues
     /// </summary>
+    [Collection("MCP Server Collection")]
     public class ToolExecutionImplementationDetectionTests : IAsyncLifetime
     {
         private readonly HttpClient _httpClient;

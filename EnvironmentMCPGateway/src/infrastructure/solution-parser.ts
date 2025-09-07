@@ -1,12 +1,13 @@
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, basename } from 'path';
 import { SolutionStructure, SolutionProject } from '../types/infrastructure-types.js';
 
 export class SolutionParser {
     public static parseSolution(solutionPath: string): SolutionStructure {
         const content = readFileSync(solutionPath, 'utf-8');
         const solutionDir = dirname(solutionPath);
-        const solutionName = solutionPath.split('/').pop()?.replace('.sln', '') || 'Unknown';
+        // Use path.basename for cross-platform compatibility instead of split('/')
+        const solutionName = basename(solutionPath, '.sln');
         
         const projects: SolutionProject[] = [];
         const solutionFolders: string[] = [];

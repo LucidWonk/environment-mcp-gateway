@@ -6,7 +6,7 @@ public static class EnvironmentConfig
     public static string DbHost => Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
     public static string? DbPassword => Environment.GetEnvironmentVariable("DB_PASSWORD");
     public static int DbPort => int.Parse(Environment.GetEnvironmentVariable("DB_PORT") ?? "5432");
-    public static string Database => Environment.GetEnvironmentVariable("TIMESCALE_DATABASE") ?? "pricehistorydb";
+    public static string Database => Environment.GetEnvironmentVariable("TIMESCALE_DATABASE") ?? "postgres";
     public static string Username => Environment.GetEnvironmentVariable("TIMESCALE_USERNAME") ?? "postgres";
     
     // Git configuration for development workflow

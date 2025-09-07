@@ -2,8 +2,8 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using Xunit;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 
 namespace EnvironmentMCPGateway.Tests.Integration
 {
@@ -11,11 +11,11 @@ namespace EnvironmentMCPGateway.Tests.Integration
     /// Tests specifically designed to validate the Claude Code connection pattern
     /// Simulates how Claude Code actually connects to MCP servers
     /// </summary>
-    public class ClaudeCodeMCPConnectionTests : IAsyncLifetime
+    [Collection("MCP Server Collection")]
+    public class ClaudeCodeMCPConnectionTests : TestBase, IAsyncLifetime
     {
         private readonly HttpClient _httpClient;
         private readonly string _mcpBaseUrl = "http://localhost:3002";
-        private readonly ILogger<ClaudeCodeMCPConnectionTests> _logger;
         private readonly string _claudeCodeUserAgent = "claude-code/1.0.90";
 
         public ClaudeCodeMCPConnectionTests()
@@ -23,10 +23,6 @@ namespace EnvironmentMCPGateway.Tests.Integration
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromSeconds(10);
             _httpClient.DefaultRequestHeaders.Add("User-Agent", _claudeCodeUserAgent);
-            
-            var loggerFactory = LoggerFactory.Create(builder => 
-                builder.AddConsole().SetMinimumLevel(LogLevel.Information));
-            _logger = loggerFactory.CreateLogger<ClaudeCodeMCPConnectionTests>();
         }
 
         public async Task InitializeAsync()
@@ -45,8 +41,16 @@ namespace EnvironmentMCPGateway.Tests.Integration
 
         public Task DisposeAsync()
         {
-            _httpClient.Dispose();
-            return Task.CompletedTask;
+            try
+            {
+                _httpClient?.Dispose();
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "Error disposing HttpClient in ClaudeCodeMCPConnectionTests");
+                return Task.CompletedTask;
+            }
         }
 
         [Fact]
@@ -75,13 +79,13 @@ namespace EnvironmentMCPGateway.Tests.Integration
             var json = JsonSerializer.Serialize(initRequest);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            _logger.LogInformation($"Sending Claude Code style initialize request: {json}");
+            // Initialize request sent
 
             // Act
             var response = await _httpClient.PostAsync($"{_mcpBaseUrl}/mcp", content);
             var responseContent = await response.Content.ReadAsStringAsync();
 
-            _logger.LogInformation($"Initialize response: Status={response.StatusCode}, Content={responseContent}");
+            // Initialize response received
 
             // Assert
             response.IsSuccessStatusCode.Should().BeTrue($"Initialize request failed: {response.StatusCode} - {responseContent}");
@@ -122,13 +126,13 @@ namespace EnvironmentMCPGateway.Tests.Integration
             var json = JsonSerializer.Serialize(toolsRequest);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            _logger.LogInformation($"Sending tools/list request: {json}");
+            // Tools list request sent
 
             // Act
             var response = await _httpClient.PostAsync($"{_mcpBaseUrl}/mcp", content);
             var responseContent = await response.Content.ReadAsStringAsync();
 
-            _logger.LogInformation($"Tools list response: Status={response.StatusCode}, Content={responseContent}");
+            // Tools list response received
 
             // Assert
             response.IsSuccessStatusCode.Should().BeTrue($"Tools list request failed: {response.StatusCode} - {responseContent}");
@@ -164,7 +168,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
                     typeProperty.GetString().Should().Be("object", "InputSchema type should be object for MCP tools");
                 }
 
-                _logger.LogInformation($"Validated tool: {nameProperty.GetString()}");
+                // Tool validated
             }
         }
 
@@ -176,18 +180,18 @@ namespace EnvironmentMCPGateway.Tests.Integration
             var requestId = 1;
 
             // Step 1: Initialize connection
-            _logger.LogInformation("Step 1: Initialize MCP connection");
+            // Step 1: Initialize MCP connection
             var initSuccess = await PerformInitialization(requestId++);
             initSuccess.Should().BeTrue("Initialization must succeed for Claude Code workflow");
 
             // Step 2: List available tools
-            _logger.LogInformation("Step 2: List available tools");
+            // Step 2: List available tools
             var toolsListResult = await PerformToolsList(requestId++);
             toolsListResult.Tools.Should().NotBeEmpty("Tools list must return tools for Claude Code workflow");
             toolsListResult.Success.Should().BeTrue("Tools list must succeed");
 
             // Step 3: Attempt tool call (should now work successfully)
-            _logger.LogInformation("Step 3: Attempt tool call");
+            // Step 3: Attempt tool call
             var firstTool = toolsListResult.Tools.First();
             var toolCallResult = await PerformToolCall(requestId++, firstTool, new { });
             
@@ -195,7 +199,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             toolCallResult.Success.Should().BeTrue("Tool call should return proper JSON-RPC response");
             toolCallResult.HasError.Should().BeFalse("Working tools should execute successfully without errors");
 
-            _logger.LogInformation("Full Claude Code workflow simulation completed successfully");
+            // Full Claude Code workflow simulation completed successfully
         }
 
         [Theory]
@@ -214,7 +218,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             var response = await _httpClient.PostAsync($"{_mcpBaseUrl}/mcp", content);
             var responseContent = await response.Content.ReadAsStringAsync();
 
-            _logger.LogInformation($"Invalid request '{invalidJson}' response: {response.StatusCode} - {responseContent}");
+            // Invalid request response received
 
             // Assert
             if (string.IsNullOrEmpty(invalidJson) || invalidJson == "{" || invalidJson == "invalid json")
@@ -265,7 +269,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             var response = await client.PostAsync($"{_mcpBaseUrl}/mcp", content);
             var responseContent = await response.Content.ReadAsStringAsync();
 
-            _logger.LogInformation($"Headers test response: {response.StatusCode} - Headers handled correctly");
+            // Headers test response received
 
             // Assert
             response.IsSuccessStatusCode.Should().BeTrue("Server should handle Claude Code headers correctly");
@@ -312,7 +316,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             {
                 var data = JsonSerializer.Deserialize<JsonElement>(result.Response);
                 data.GetProperty("id").GetInt32().Should().Be(result.InstanceId);
-                _logger.LogInformation($"Claude Code instance {result.InstanceId} connected successfully");
+                // Claude Code instance connected successfully
             }
         }
 
@@ -340,7 +344,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError($"Initialize failed: {response.StatusCode} - {responseContent}");
+                    LogError($"Initialize failed: {response.StatusCode} - {responseContent}");
                     return false;
                 }
 
@@ -349,7 +353,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Initialize exception: {ex.Message}");
+                LogError(ex, "Initialize exception occurred");
                 return false;
             }
         }
@@ -372,7 +376,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError($"Tools list failed: {response.StatusCode} - {responseContent}");
+                    LogError($"Tools list failed: {response.StatusCode} - {responseContent}");
                     return (false, new List<string>());
                 }
 
@@ -390,7 +394,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Tools list exception: {ex.Message}");
+                LogError(ex, "Tools list exception occurred");
                 return (false, new List<string>());
             }
         }
@@ -417,19 +421,19 @@ namespace EnvironmentMCPGateway.Tests.Integration
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError($"Tool call failed: {response.StatusCode} - {responseContent}");
+                    LogError($"Tool call failed: {response.StatusCode} - {responseContent}");
                     return (false, false);
                 }
 
                 var data = JsonSerializer.Deserialize<JsonElement>(responseContent);
                 var hasError = data.TryGetProperty("error", out _);
 
-                _logger.LogInformation($"Tool call for {toolName}: Success={response.IsSuccessStatusCode}, HasError={hasError}");
+                // Tool call completed
                 return (true, hasError);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Tool call exception: {ex.Message}");
+                LogError(ex, "Tool call exception occurred");
                 return (false, false);
             }
         }

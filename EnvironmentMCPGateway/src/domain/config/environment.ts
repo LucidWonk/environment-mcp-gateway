@@ -48,17 +48,17 @@ export class Environment {
     // Git configuration for development workflow
     public static get gitRepoPath(): string { 
         // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
-        return process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/projects/lucidwonks'; 
+        return process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/projects/lucidwonks-mcp-gateway'; 
     }
     public static get gitUserName(): string | undefined { return process.env.GIT_USER_NAME; }
     public static get gitUserEmail(): string | undefined { return process.env.GIT_USER_EMAIL; }
     
     
     // Solution and project paths
-    public static get solutionPath(): string { return join(this.projectRoot, 'Lucidwonks.sln'); }
+    public static get solutionPath(): string { return join(this.projectRoot, 'LucidwonksMCPGateway.sln'); }
     public static get projectRoot(): string { 
         // Use PROJECT_ROOT from Docker environment, fallback to GIT_REPO_PATH, then default
-        const root = process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/projects/lucidwonks';
+        const root = process.env.PROJECT_ROOT ?? process.env.GIT_REPO_PATH ?? '/mnt/m/projects/lucidwonks-mcp-gateway';
         // Only log in development mode, not during MCP operations
         const isDevelopment = process.env.NODE_ENV === 'development' && !process.env.MCP_SILENT_MODE;
         if (isDevelopment) {

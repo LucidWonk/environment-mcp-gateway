@@ -25,7 +25,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
     /// Integration tests for HTTP transport context operations
     /// Tests the HTTP/SSE transport layer for context reindexing functionality
     /// </summary>
-    [Collection("HTTPTransportContext")]
+    [Collection("MCP Server Collection")]
     [Trait("Category", "Integration")]
     [Trait("Integration", "HTTPTransport")]
     [Trait("Component", "HTTPTransportContext")]
@@ -33,13 +33,14 @@ namespace EnvironmentMCPGateway.Tests.Integration
     {
         private readonly HttpClient _httpClient;
         private readonly Mock<ILogger> _mockLogger;
-        private readonly string _mcpBaseUrl = "http://localhost:3002";
+        private readonly MCPServerTestFixture _serverFixture;
         private readonly string _healthEndpoint = "/health";
         private readonly string _statusEndpoint = "/status";
         private readonly string _mcpEndpoint = "/mcp";
 
-        public HTTPTransportContextOperationTests()
+        public HTTPTransportContextOperationTests(MCPServerTestFixture serverFixture)
         {
+            _serverFixture = serverFixture;
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
             _mockLogger = new Mock<ILogger>();
@@ -52,7 +53,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             // Act
             try
             {
-                var response = await _httpClient.GetAsync($"{_mcpBaseUrl}{_healthEndpoint}");
+                var response = await _httpClient.GetAsync($"{_serverFixture.GetServerUrl()}{_healthEndpoint}");
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -91,7 +92,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             // Act
             try
             {
-                var response = await _httpClient.GetAsync($"{_mcpBaseUrl}{_statusEndpoint}");
+                var response = await _httpClient.GetAsync($"{_serverFixture.GetServerUrl()}{_statusEndpoint}");
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -105,7 +106,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
                         "should use HTTP/SSE transport type");
                     statusData.GetProperty("transport").GetProperty("endpoint").GetString().Should().Be("/mcp",
                         "should use correct MCP endpoint");
-                    statusData.GetProperty("transport").GetProperty("port").GetInt32().Should().Be(3001,
+                    statusData.GetProperty("transport").GetProperty("port").GetInt32().Should().Be(3002,
                         "should report correct internal port");
                 }
             }
@@ -125,7 +126,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             var expectedInternalPort = 3001;  // Internal container port
             
             // Assert
-            _mcpBaseUrl.Should().Contain($":{expectedExternalPort}",
+            _serverFixture.GetServerUrl().Should().Contain($":{expectedExternalPort}",
                 "HTTP client should use external port mapping");
             
             // The internal port would be validated through status endpoint response
@@ -142,7 +143,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             try
             {
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                using var request = new HttpRequestMessage(HttpMethod.Get, $"{_mcpBaseUrl}{_mcpEndpoint}");
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"{_serverFixture.GetServerUrl()}{_mcpEndpoint}");
                 
                 // For SSE endpoints, we just need to confirm we get a successful connection
                 // We don't need to read the full streaming response
@@ -176,7 +177,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             // Act & Assert
             // The key indicator is that we can make HTTP requests to the MCP server
             // The old STDIO transport wouldn't have HTTP endpoints
-            _mcpBaseUrl.Should().StartWith("http://", 
+            _serverFixture.GetServerUrl().Should().StartWith("http://", 
                 "Should use HTTP protocol instead of STDIO");
             
             expectedTransportType.Should().NotBe(oldTransportType,
@@ -193,7 +194,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             
             try
             {
-                var response = await _httpClient.GetAsync($"{_mcpBaseUrl}{_statusEndpoint}");
+                var response = await _httpClient.GetAsync($"{_serverFixture.GetServerUrl()}{_statusEndpoint}");
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -265,7 +266,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             
             try
             {
-                var response = await _httpClient.GetAsync($"{_mcpBaseUrl}{_statusEndpoint}");
+                var response = await _httpClient.GetAsync($"{_serverFixture.GetServerUrl()}{_statusEndpoint}");
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -318,7 +319,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             
             try
             {
-                var response = await _httpClient.GetAsync($"{_mcpBaseUrl}{_healthEndpoint}");
+                var response = await _httpClient.GetAsync($"{_serverFixture.GetServerUrl()}{_healthEndpoint}");
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -347,7 +348,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             
             try
             {
-                var request = new HttpRequestMessage(HttpMethod.Options, $"{_mcpBaseUrl}{_healthEndpoint}");
+                var request = new HttpRequestMessage(HttpMethod.Options, $"{_serverFixture.GetServerUrl()}{_healthEndpoint}");
                 request.Headers.Add("Origin", "http://localhost:3000");
                 request.Headers.Add("Access-Control-Request-Method", "GET");
                 
@@ -371,7 +372,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             
             try
             {
-                var response = await _httpClient.GetAsync($"{_mcpBaseUrl}{_healthEndpoint}");
+                var response = await _httpClient.GetAsync($"{_serverFixture.GetServerUrl()}{_healthEndpoint}");
                 
                 if (response.IsSuccessStatusCode)
                 {

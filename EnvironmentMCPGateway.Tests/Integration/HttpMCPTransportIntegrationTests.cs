@@ -1,10 +1,17 @@
 using System.Net.Http;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using System.Text;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using System.Text.Json;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using FluentAssertions;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using Microsoft.Extensions.Logging;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using Moq;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using Xunit;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 
 namespace EnvironmentMCPGateway.Tests.Integration
 {
@@ -12,6 +19,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
     /// Comprehensive HTTP MCP Transport Integration Tests
     /// Tests the actual HTTP transport layer that Claude Code connects to
     /// </summary>
+    [Collection("MCP Server Collection")]
     public class HttpMCPTransportIntegrationTests : IAsyncLifetime
     {
         private readonly HttpClient _httpClient;
@@ -102,7 +110,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
             var transportInfo = statusData.GetProperty("transport");
             transportInfo.GetProperty("type").GetString().Should().Be("HTTP/SSE");
             transportInfo.GetProperty("endpoint").GetString().Should().Be("/mcp");
-            transportInfo.GetProperty("port").GetInt32().Should().Be(3001);
+            transportInfo.GetProperty("port").GetInt32().Should().Be(3002);
         }
 
         [Fact]

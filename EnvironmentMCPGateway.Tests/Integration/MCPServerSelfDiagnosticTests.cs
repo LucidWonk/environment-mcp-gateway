@@ -1,9 +1,15 @@
 using System.Net.Http;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using System.Text;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using System.Text.Json;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using FluentAssertions;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using Microsoft.Extensions.Logging;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using Xunit;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 
 namespace EnvironmentMCPGateway.Tests.Integration
 {
@@ -11,6 +17,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
     /// Tests for the MCP Server Self-Diagnostic tool functionality
     /// Validates comprehensive health checking and diagnostic capabilities
     /// </summary>
+    [Collection("MCP Server Collection")]
     public class MCPServerSelfDiagnosticTests : IAsyncLifetime
     {
         private readonly HttpClient _httpClient;

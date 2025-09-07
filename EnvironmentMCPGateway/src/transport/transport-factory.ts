@@ -459,48 +459,114 @@ export class HttpTransportHandler implements TransportHandler {
         
         logger.info('Analyzing solution structure', { includeDependencies, projectType });
         
-        const solution = SolutionParser.parseSolution(Environment.solutionPath);
-        const validation = SolutionParser.validateSolution(solution);
-        
-        let projects = solution.projects;
-        if (projectType !== 'All') {
-            projects = SolutionParser.getProjectsByType(solution, projectType as any);
-        }
-        
-        const result = {
-            solution: {
-                name: solution.name,
-                path: solution.path,
-                totalProjects: solution.projects.length,
-                solutionFolders: solution.solutionFolders
-            },
-            projects: projects.map((p: any) => ({
-                name: p.name,
-                type: p.type,
-                path: p.path,
-                dependencies: includeDependencies ? p.dependencies : undefined
-            })),
-            validation: {
-                valid: validation.valid,
-                errors: validation.errors
-            }
-        };
-        
-        if (includeDependencies) {
-            result.projects.forEach((p: any) => {
-                const chain = SolutionParser.getProjectDependencyChain(solution, p.name);
-                (p as any).buildOrder = chain.indexOf(p.name) + 1;
+        try {
+            // Detailed logging for debugging
+            const solutionPath = Environment.solutionPath;
+            const projectRoot = Environment.projectRoot;
+            
+            logger.info('Solution analysis paths', { 
+                solutionPath, 
+                projectRoot,
+                platform: process.platform,
+                cwd: process.cwd()
             });
-        }
-        
-        return {
-            content: [
-                {
-                    type: 'text',
-                    text: JSON.stringify(result, null, 2)
+
+            // Check if solution file exists
+            const { existsSync } = await import('fs');
+            if (!existsSync(solutionPath)) {
+                const error = `Solution file not found at path: ${solutionPath}`;
+                logger.error('Solution file missing', { solutionPath, projectRoot });
+                throw new McpError(ErrorCode.InvalidParams, error);
+            }
+
+            logger.info('Parsing solution file', { solutionPath });
+            const solution = SolutionParser.parseSolution(solutionPath);
+            logger.info('Solution parsed successfully', { 
+                name: solution.name,
+                projectCount: solution.projects.length,
+                folderCount: solution.solutionFolders.length
+            });
+            
+            const validation = SolutionParser.validateSolution(solution);
+            logger.info('Solution validation completed', { 
+                valid: validation.valid,
+                errorCount: validation.errors.length
+            });
+            
+            let projects = solution.projects;
+            if (projectType !== 'All') {
+                projects = SolutionParser.getProjectsByType(solution, projectType as any);
+                logger.info('Filtered projects by type', { projectType, filteredCount: projects.length });
+            }
+            
+            const result = {
+                solution: {
+                    name: solution.name,
+                    path: solution.path,
+                    totalProjects: solution.projects.length,
+                    solutionFolders: solution.solutionFolders
+                },
+                projects: projects.map((p: any) => ({
+                    name: p.name,
+                    type: p.type,
+                    path: p.path,
+                    dependencies: includeDependencies ? p.dependencies : undefined
+                })),
+                validation: {
+                    valid: validation.valid,
+                    errors: validation.errors
                 }
-            ]
-        };
+            };
+            
+            if (includeDependencies) {
+                result.projects.forEach((p: any) => {
+                    try {
+                        const chain = SolutionParser.getProjectDependencyChain(solution, p.name);
+                        (p as any).buildOrder = chain.indexOf(p.name) + 1;
+                    } catch (depError) {
+                        logger.warn('Failed to get dependency chain for project', { 
+                            projectName: p.name,
+                            error: depError instanceof Error ? depError.message : String(depError)
+                        });
+                        (p as any).buildOrder = 0;
+                    }
+                });
+            }
+            
+            logger.info('Solution analysis completed successfully');
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2)
+                    }
+                ]
+            };
+        } catch (error) {
+            logger.error('Failed to analyze solution structure', { 
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                solutionPath: Environment.solutionPath,
+                projectRoot: Environment.projectRoot,
+                platform: process.platform,
+                args
+            });
+            
+            // Return error information instead of throwing
+            const errorResult = {
+                error: 'Failed to analyze solution structure',
+                details: error instanceof Error ? error.message : String(error),
+                solutionPath: Environment.solutionPath,
+                projectRoot: Environment.projectRoot,
+                platform: process.platform,
+                timestamp: new Date().toISOString()
+            };
+            
+            throw new McpError(
+                ErrorCode.InternalError,
+                `Solution analysis failed: ${error instanceof Error ? error.message : String(error)}`
+            );
+        }
     }
 
     /**
@@ -1000,6 +1066,12 @@ export class HttpTransportHandler implements TransportHandler {
         } catch (error) {
             return {
                 status: 'failed',
+                benchmarks: {
+                    solutionParsing: 'error',
+                    environmentStatus: 'error',
+                    totalExecutionTime: 'error'
+                },
+                performance: 'error',
                 errors: [error instanceof Error ? error.message : 'Performance test failed']
             };
         }

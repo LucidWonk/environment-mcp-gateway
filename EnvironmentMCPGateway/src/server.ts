@@ -25,7 +25,9 @@ import fs from 'fs';
 import os from 'os';
 
 // Startup protection - prevent multiple instances with enhanced container support
-const STARTUP_LOCK_FILE = '/tmp/mcp-gateway-startup.lock';
+const STARTUP_LOCK_FILE = process.platform === 'win32' 
+    ? `${process.env.TEMP || process.env.TMP || 'C:\\temp'}\\mcp-gateway-startup.lock`
+    : '/tmp/mcp-gateway-startup.lock';
 
 async function cleanupStaleProcesses(): Promise<void> {
     // In a clean Docker container environment, we don't need aggressive process cleanup

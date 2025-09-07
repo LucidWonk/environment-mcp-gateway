@@ -3,8 +3,8 @@ version: '3.8'
 services:
   environment-mcp-gateway:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp-gateway
+      context: EnvironmentMCPGateway
+      dockerfile: docker/Dockerfile
     container_name: lucidwonks-mcp-gateway
     ports:
       - "3002:3002"

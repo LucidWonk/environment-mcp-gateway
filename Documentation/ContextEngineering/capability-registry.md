@@ -84,6 +84,10 @@ After Completion:
 | VIRTUAL-EXPERT-VALIDATION-ve08 | Post-Implementation Validation Framework | Virtual Expert | Service | Virtual-Expert-Team.domain.md | Not Started | 2025-08-17 | virtual-team.implementation.icp.md | N/A | Expert recommendation compliance verification |
 | VIRTUAL-EXPERT-MONITORING-ve09 | Expert Effectiveness Monitoring | Virtual Expert | Service | Virtual-Expert-Team.domain.md | Not Started | 2025-08-17 | virtual-team.implementation.icp.md | N/A | Performance metrics and ROI tracking |
 | INFRA-HTTP-TRANSPORT-ht23 | HTTP Transport Architecture for Multi-Client MCP Server | Infrastructure | Service | http-transport.domain.req.md | Implemented | 2025-08-23 | Phase 4 Step 1 | 2025-08-24 | All phases complete: Multi-client HTTP transport with Context Engineering integration |
+| MCPGATEWAY-ENVREGISTRY-ae7f | Multi-Environment Registry and Service Discovery | EnvironmentMCPGateway | Service | environment-registry.domain.req.md | In Progress | 2025-09-06 | enable_environment_support.implementation.icp.md | N/A | Started 2025-09-06: Foundation multi-environment registry with 4 features |
+| MCPGATEWAY-TOOLMGMT-d2e5 | Tool Management Architecture | EnvironmentMCPGateway | Service | tool-management.domain.req.md | Not Started | 2025-09-06 | enable_environment_support.implementation.icp.md | N/A | Environment-aware tool classification for 43+ tools |
+| MCPGATEWAY-DIAGNOSTICS-c9d1 | Diagnostics Framework | EnvironmentMCPGateway | Service | diagnostics-framework.domain.req.md | Not Started | 2025-09-06 | enable_environment_support.implementation.icp.md | N/A | Comprehensive connectivity diagnostics and health monitoring |
+| MCPGATEWAY-TRANSPORT-f4b8 | Transport Architecture Cleanup | EnvironmentMCPGateway | Service | transport-cleanup.domain.req.md | Not Started | 2025-09-06 | enable_environment_support.implementation.icp.md | N/A | HTTP transport standardization and SSE removal |
 
 ## ID Generation Guidelines
 

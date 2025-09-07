@@ -1,9 +1,15 @@
 using System.Net.Http;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using System.Text;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using System.Text.Json;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using FluentAssertions;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using Microsoft.Extensions.Logging;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 using Xunit;
+using EnvironmentMCPGateway.Tests.Infrastructure;
 
 namespace EnvironmentMCPGateway.Tests.Integration
 {
@@ -14,6 +20,7 @@ namespace EnvironmentMCPGateway.Tests.Integration
     /// 2. Session context issues
     /// 3. Transport layer integration problems
     /// </summary>
+    [Collection("MCP Server Collection")]
     public class HttpTransportToolExecutionTests : IAsyncLifetime
     {
         private readonly HttpClient _httpClient;
