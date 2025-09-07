@@ -68,7 +68,7 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
-      - PG_URL=${DATABASE_URL}
+      # - PG_URL=${DATABASE_URL}  # Commented out to allow startup without database connection
     volumes:
       # Bytebase data persistence
       - bytebase_data:/var/opt/bytebase
