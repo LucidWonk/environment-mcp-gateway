@@ -17,7 +17,7 @@ services:
       - MCP_LOG_LEVEL=info
       - PROJECT_ROOT=/workspace
       # Use host database connection
-      - DATABASE_URL=postgresql://postgres:password@host.docker.internal:5432/pricehistorydb
+      - DATABASE_URL=postgresql://postgres:password@host.docker.internal:5432/postgres
       # Set data directories to mounted volumes
       - ATOMIC_OPS_DIR=/app/.atomic-ops
       - HOLISTIC_ROLLBACK_DIR=/app/.holistic-rollback
