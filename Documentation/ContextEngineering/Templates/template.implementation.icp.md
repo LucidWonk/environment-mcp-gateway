@@ -5,8 +5,8 @@
 TEMPLATE VERSION DEFINITION (DO NOT INCLUDE IN FINAL ICP)
 ═══════════════════════════════════════════════════════════════════════════
 TEMPLATE_FILE: template.implementation.icp.md
-TEMPLATE_VERSION: 4.0.0
-TEMPLATE_DESCRIPTION: Major enhancement: Integrated Virtual Expert Team coordination with template orchestration, enhanced human approval gates with expert context, and comprehensive expert-guided execution patterns
+TEMPLATE_VERSION: 5.0.0
+TEMPLATE_DESCRIPTION: Major v5.0 upgrade for Sonnet 4.5 optimization (ADDITIVE to v4.0): State persistence blocks for context rollover resilience, 3x3 execution structure (Preparation/Execution/Finalization), bunker-style stop gates with visual barriers, self-validation framework with PASS/FAIL checkpoints, phase-specific tool restrictions, context rollover protocol, decentralized capability tracking. Maintains all v4.0 Virtual Expert Team features.
 ═══════════════════════════════════════════════════════════════════════════
 
 TEMPLATE UPDATE INSTRUCTIONS FOR AI (DO NOT INCLUDE IN FINAL DOCUMENTS)
@@ -20,6 +20,20 @@ When updating this template, the AI MUST follow these instructions:
    - ALWAYS increment version when making ANY change
    - Update TEMPLATE_DESCRIPTION to reflect the changes made
    
+   VERSION 5.0.0 MAJOR ENHANCEMENTS:
+   <!-- RATIONALE: Sonnet 4.5 has enhanced instruction-following; these features leverage that capability
+        while addressing v4.0 pain points: 20% stop gate violations, unpredictable context rollovers,
+        frequently skipped D/E/F subtasks, capability-registry.md maintenance overhead -->
+   - State persistence blocks for context rollover resilience (100% recovery target)
+   - 3x3 execution block structure: Preparation → Execution → Finalization (replaces linear A-I)
+   - Bunker-style stop gates with visual barriers (0% violation target vs 20% in v4.0)
+   - Self-validation framework with PASS/FAIL checkpoints (prevents skipped validation)
+   - Phase-specific tool restrictions ALLOWED/PROHIBITED lists (prevents phase boundary violations)
+   - Context rollover protocol Level 1 + Level 2 (systematic recovery procedure)
+   - Eliminated centralized capability-registry.md (tracking moved to domain/digital req files)
+   - Template instruction separation to TEMPLATE-MAINTENANCE.md (clearer maintenance guidance)
+   - Three-tier instruction architecture self-contained templates (no external refs needed during execution)
+
    VERSION 4.0.0 MAJOR ENHANCEMENTS:
    - Virtual Expert Team integration with template orchestration
    - Expert coordination patterns for template execution guidance
@@ -52,11 +66,20 @@ When updating this template, the AI MUST follow these instructions:
    - Metadata fields (TEMPLATE_FILE, TEMPLATE_VERSION) get copied for traceability
 
 FAILURE TO FOLLOW THESE RULES WILL RESULT IN CORRUPTED TEMPLATE SYSTEM.
+
+**FOR AI UPDATING TEMPLATES**: See template-maintenance.md in Templates/ folder for:
+- Template versioning guidelines
+- Template modification procedures
+- Quality assurance requirements
+- When to increment version numbers
 ═══════════════════════════════════════════════════════════════════════════
 
 TEMPLATE USAGE INSTRUCTIONS FOR AI (DO NOT INCLUDE IN FINAL ICP)
 ═══════════════════════════════════════════════════════════════════════════
-IMPORTANT: Implementation ICPs are typically generated as the final output of 
+<!-- RATIONALE: Template MAINTENANCE vs USAGE instructions separated to TEMPLATE-MAINTENANCE.md
+     to reduce confusion - this section is purely for creating ICPs from the template -->
+
+IMPORTANT: Implementation ICPs are typically generated as the final output of
 Concept ICP execution (Phase 4) to ensure perfect alignment with refined requirements.
 
 If creating this ICP independently:
@@ -67,30 +90,41 @@ If creating this ICP independently:
 When creating an ICP from this template:
 1. Remove all sections marked with <!-- TEMPLATE INSTRUCTION -->
 2. Replace all [bracketed placeholders] with actual content
-3. Ensure each Phase has 3-5 Steps maximum for manageable execution
-4. Each Step should be a single logical unit of work (one component, feature, or integration)
-5. Include specific file paths and code snippets where helpful
-6. Reference actual requirement documents that exist in the codebase
-7. Maintain the STRICT execution sequence for each step
+3. Fill in state persistence block at top with initial values (enables context rollover recovery)
+4. Ensure each Phase has 3-5 Steps maximum for manageable execution
+5. Each Step must follow 3x3 execution block structure: Preparation → Execution → Finalization
+6. Include ALLOWED/PROHIBITED tool lists for each phase (prevents phase boundary violations)
+7. Use bunker-style stop gates with visual barriers between steps (0% violation target)
+8. Include PASS/FAIL validation checkpoints in Finalization Block (prevents skipped validation)
+9. Include specific file paths and code snippets where helpful
+10. Reference actual requirement documents that exist in the codebase
+11. Maintain the STRICT execution sequence for each step
+
+<!-- RATIONALE: Three-Tier Architecture - templates are self-contained (Tier 1) so AI doesn't need
+     to reference kickstarter (Tier 2) or system overview (Tier 3) during normal execution.
+     External refs only needed for context rollover recovery or conceptual "why" questions. -->
 
 IMPORTANT: Do NOT reference ANY timeframes or duration estimates.
 Instead use: complexity levels, component counts, dependency chains, or completion criteria.
 
-CAPABILITY REGISTRY INTERACTION:
-Implementation ICPs have TWO phases of registry interaction:
+<!-- RATIONALE: capability-registry.md is REMOVED in v5.0. "Never works properly" - creator observation.
+     Central registry gets out of sync with req files. Decentralized tracking in domain.req.md and
+     digital.req.md files eliminates maintenance overhead while maintaining traceability. -->
+
+CAPABILITY TRACKING (v5.0 - DECENTRALIZED):
+Capability tracking is now maintained in requirement documents, NOT in a central registry.
 
 DURING ICP CREATION:
-1. REFERENCE ONLY - Do not add new capabilities
-2. Look up capability IDs from /Documentation/ContextEngineering/capability-registry.md
-3. Use these IDs when referencing capabilities in the ICP
-4. Validate that all required capabilities exist in registry
+1. Look up capability IDs from domain.req.md and digital.req.md files (PRIMARY source)
+2. Reference these IDs when describing what this ICP implements
+3. Validate all required capabilities are documented in their respective req files
 
 DURING ICP EXECUTION:
-1. Update registry status: "Not Started" → "In Progress" at start
-2. Add this ICP's ID to the "Implementation ICP" column
-3. Update feature statuses in requirement documents
-4. Update registry status: "In Progress" → "Implemented" when complete
-5. Add completion date to registry
+1. Update status in domain.req.md: "Not Implemented" → "In Development" at start
+2. Update status in digital.req.md: "Not Implemented" → "In Development" at start
+3. Add this ICP's reference to the capability tracking section in req files
+4. At completion: Update status to "Implemented" in domain.req.md and digital.req.md
+5. Add completion date to capability entries in req files
 
 🛑 MANDATORY STOP PROTOCOL 🛑
 CRITICAL SYSTEM REQUIREMENT: The ICP must enforce this execution pattern for EVERY step:
@@ -110,6 +144,69 @@ When creating ICPs from this template, ensure:
 2. Fill in all metadata fields with actual values, not placeholders
 ═══════════════════════════════════════════════════════════════════════════
 -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+STATE PERSISTENCE BLOCK
+═══════════════════════════════════════════════════════════════════════════
+RATIONALE: Context window rollovers cause unpredictable failures in long implementations (v4.0).
+AI loses track of execution position. This live state tracker enables 100% recovery.
+AI must update this block after EVERY action to maintain accurate state.
+═══════════════════════════════════════════════════════════════════════════ -->
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                         📍 EXECUTION STATE TRACKER                               ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                  ║
+║  CURRENT PHASE: [Not Started]                                                   ║
+║  CURRENT STEP: [None]                                                           ║
+║  CURRENT BLOCK: [None - Preparation / Execution / Finalization]                 ║
+║                                                                                  ║
+║  LAST ACTION COMPLETED:                                                          ║
+║  • [None - ICP execution not yet started]                                       ║
+║                                                                                  ║
+║  NEXT ACTION:                                                                    ║
+║  • Read this entire ICP document                                                ║
+║  • Verify prerequisites are met                                                 ║
+║  • Begin Phase 1, Step 1.1, Preparation Block                                   ║
+║                                                                                  ║
+║  FILES MODIFIED THIS SESSION: 0                                                  ║
+║  • [None yet]                                                                    ║
+║                                                                                  ║
+║  VALIDATION STATUS:                                                              ║
+║  • Last checkpoint: [None - not yet started]                                    ║
+║  • Last self-validation: [None]                                                 ║
+║                                                                                  ║
+║  BUILD STATUS: ⚠️ Not yet validated                                              ║
+║  TEST STATUS: ⚠️ Not yet validated                                               ║
+║                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+CONTEXT ROLLOVER RECOVERY PROTOCOL
+═══════════════════════════════════════════════════════════════════════════
+RATIONALE: Two-level protocol balances safety and efficiency. Level 1 (state block) is fast
+and handles 95% of rollovers. Level 2 (re-grounding docs) for uncertain cases. Provides
+systematic recovery vs unpredictable failures in v4.0.
+═══════════════════════════════════════════════════════════════════════════ -->
+
+**🔄 CONTEXT ROLLOVER PROTOCOL**:
+If you're resuming after context window refresh, follow this protocol:
+
+**LEVEL 1 (ALWAYS EXECUTE)**:
+1. Read the state tracker block above (current phase/step/block)
+2. Verify understanding of your current position in execution
+3. Confirm last action completed and next action to take
+4. Assess your confidence: HIGH / MEDIUM / LOW
+
+**LEVEL 2 (EXECUTE IF CONFIDENCE < HIGH)**:
+1. If uncertain about workflow, read: `/Documentation/ContextEngineering/Kickstarters/context-engineering-kickstarter.md` (Tier 2 - workflow guidance)
+2. If uncertain about "why", read: `/Documentation/ContextEngineering/context-engineering-system.md` (Tier 3 - conceptual context)
+3. Return to this template for execution instructions (Tier 1 - execution authority)
+
+<!-- RATIONALE: Three-Tier Architecture makes this template self-contained. AI shouldn't need
+     external docs during normal execution - only for rollover recovery or conceptual questions. -->
+
+---
 
 ## **ICP OVERVIEW**
 [2-3 paragraphs describing what will be implemented, why it's needed, and the approach being taken. Focus on the technical implementation and expected outcomes.]
@@ -132,8 +229,27 @@ When creating ICPs from this template, ensure:
 **Implementation Scope**: [ ] New Feature | [ ] Enhancement | [ ] Refactoring | [ ] Infrastructure
 **Complexity**: [ ] Simple (1-3 components) | [ ] Moderate (4-10 components) | [ ] Complex (10+ components)
 **Risk Level**: [ ] Low | [ ] Medium | [ ] High
+**Template Version**: 5.0.0 (Sonnet 4.5 optimized)
 **Expert Coordination**: [x] Enabled (v4.0.0) | [ ] Disabled
 **Expert Coordination Level**: [ ] Minimal | [x] Standard | [ ] Comprehensive
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+v5.0 FEATURES IN THIS TEMPLATE (Sonnet 4.5 Optimized)
+═══════════════════════════════════════════════════════════════════════════
+RATIONALE: Each feature addresses specific v4.0 pain point observed in production use.
+
+✅ State Persistence Block → Fixes unpredictable context rollover failures
+✅ 3x3 Execution Blocks → Prevents frequently skipped D/E/F subtasks (testing/validation)
+✅ Bunker-Style Stop Gates → Reduces ~20% violation rate to 0% target
+✅ Self-Validation Framework → Forces validation before proceeding (no more "I'll fix later")
+✅ Tool Restrictions per Phase → Prevents code during codification, spec changes during implementation
+✅ Rollover Protocol → Systematic recovery procedure (Level 1 + Level 2)
+✅ Decentralized Tracking → Eliminates capability-registry.md maintenance overhead
+✅ Instruction Separation → TEMPLATE-MAINTENANCE.md for clearer maintenance guidance
+✅ Three-Tier Architecture → Self-contained templates (no external refs during execution)
+
+All v4.0 Virtual Expert Team features are maintained (backward compatible).
+═══════════════════════════════════════════════════════════════════════════ -->
 
 ## **VIRTUAL EXPERT TEAM COORDINATION (v4.0.0)**
 <!-- NEW IN v4.0.0: Expert coordination integration with template execution -->
@@ -200,6 +316,31 @@ When creating ICPs from this template, ensure:
 
 ## **RELATED DOCUMENTATION**
 <!-- List all requirement documents this ICP implements -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+THREE-TIER INSTRUCTION ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════
+RATIONALE: v4.0 had competing instructions across 9 documents causing AI confusion.
+Clear hierarchy eliminates conflicts:
+
+TIER 1 (Execution Authority - THIS TEMPLATE):
+  - Imperative "how to execute" instructions
+  - Self-contained, no external refs needed during normal execution
+  - Highest authority for execution decisions
+
+TIER 2 (Workflow Guidance - Kickstarter):
+  - "When and which" workflow patterns and decision trees
+  - Referenced only during context rollover if confidence < HIGH
+
+TIER 3 (Conceptual Context - System Overview):
+  - "Why" philosophy and principles
+  - Referenced only for conceptual questions if confidence < HIGH
+
+REQUIREMENTS DOCS (Business Rules - domain.req.md / digital.req.md):
+  - Always consulted in Preparation Block of each step
+  - Provide business rules, constraints, integration patterns
+═══════════════════════════════════════════════════════════════════════════ -->
+
 **Requirements Being Implemented:**
 - Domain Specification: [Domain-Name.domain.md](../Architecture/Domain-Name.domain.md)
 - Digital Capability: [Capability-Name.digital.md](../Architecture/Capability-Name.digital.md)
@@ -208,14 +349,14 @@ When creating ICPs from this template, ensure:
 - Claude Integration: [CLAUDE.md](../../CLAUDE.md)
 
 **CRITICAL IMPLEMENTATION NOTE:**
-The *.domain.md and *.digital.md files contain the detailed business requirements, nuances, and capabilities that MUST be referenced during implementation. These documents specify:
+The *.domain.md and *.digital.md files contain the detailed business requirements, nuances, and capabilities that MUST be referenced during implementation (in Preparation Block). These documents specify:
 - Business rules and constraints
 - Integration patterns and contracts
 - Feature behaviors and edge cases
 - Domain-specific terminology and concepts
 - Quality attributes and performance requirements
 
-The AI MUST consult these documents before and during each implementation step.
+The AI MUST consult these documents before and during each implementation step (specifically in the Preparation Block of each step).
 
 **Documents to Update After Implementation:**
 - [ ] Update domain.md with implementation status
@@ -311,64 +452,73 @@ Based on implementation, this concept actually spans:
 3. **Archive Original Document**: Move to Implemented/ folder with timestamp and forward references
 4. **Update Cross-References**: Update any documents that referenced the original NewConcept
 
-## **CAPABILITY REGISTRY MAINTENANCE**
+## **CAPABILITY TRACKING (v5.0 - DECENTRALIZED)**
 <!-- CRITICAL: These instructions MUST remain in generated ICPs for execution -->
 
-**Registry Update Requirements:**
-Registry updates differ based on ICP source type:
+<!-- RATIONALE: v5.0 removes capability-registry.md (central registry "never works properly").
+     Tracking is now DECENTRALIZED to domain.req.md and digital.req.md files where capabilities
+     are defined. This eliminates sync overhead while maintaining full traceability. -->
+
+**Tracking Update Requirements:**
+Capability status tracking differs based on ICP source type:
 
 ### **For Standard ICPs (Mature Domain Requirements):**
-**At Implementation Start:**
-1. Open `/Documentation/ContextEngineering/capability-registry.md`
-2. Find capability entries referenced in this ICP
-3. Update status from "Not Started" to "In Progress"
-4. Add this ICP's handle to the "Implementation ICP" column
-5. Add start date to "Notes" column
+**At Implementation Start (Preparation Block - Subtask C):**
+1. Open `[Domain].domain.req.md` for this component's domain
+2. Locate capability/feature section for this component
+3. Update status from "Not Implemented" to "In Development"
+4. Add this ICP's handle and step number as reference
+5. Add start date to notes/comments
 
-**At Implementation Completion:**
-1. Update status from "In Progress" to "Implemented"
-2. Add completion date to "Completed Date" column
-3. Update "Notes" with final test coverage and key implementation details
+**At Implementation Completion (Finalization Block - Subtask H):**
+1. Update status from "In Development" to "Implemented"
+2. Add completion date
+3. Update notes with final test coverage and key implementation details
+4. If applicable: Update `[Capability].digital.req.md` with same completion info
 
 ### **For NewConcepts ICPs (Exploratory Requirements):**
 **At Implementation Start:**
-1. **DO NOT** update registry yet (placeholder IDs are not registered)
+1. **DO NOT** update req files yet (placeholder concepts may not have final domain assignment)
 2. Note all placeholder capability IDs referenced (format: TEMP-[DOMAIN]-[NAME]-####)
 3. Document domain discovery during implementation
 
 **During Implementation - Domain Discovery:**
 1. Analyze actual domain boundaries as implementation progresses
 2. Identify which placeholder concepts map to which actual domains
-3. Prepare final capability ID proposals for human approval
+3. Prepare final capability and domain assignments for human approval
 
 **At Implementation Completion - Human Approval Required:**
 1. **STOP** - Generate domain restructuring proposal:
    - Original NewConcept document path
-   - Proposed mature domain documents and locations
-   - Placeholder → Final capability ID mapping
-   - Registry entries to create/update
+   - Proposed mature domain.req.md and digital.req.md locations
+   - Placeholder → Final capability assignments
+   - Requirement document sections to create/update
 2. **WAIT** for human approval of restructuring proposal
-3. **ONLY AFTER APPROVAL** - Execute registry updates and document migrations
+3. **ONLY AFTER APPROVAL** - Execute req file updates and document migrations
 
-**Registry Interaction Pattern:**
-- **Standard ICPs**: REFERENCE existing IDs, UPDATE status only
-- **NewConcepts ICPs**: CREATE final capability IDs after human approval
+**Tracking Interaction Pattern:**
+- **Standard ICPs**: UPDATE status in existing domain.req.md and digital.req.md files
+- **NewConcepts ICPs**: CREATE capability entries in req files after human approval
 - **VALIDATE** all dependencies exist before starting
+- **NO CENTRAL REGISTRY** - All tracking is in requirement documents
 
 ## **AI EXECUTION REQUIREMENTS**
 <!-- CRITICAL SECTION - These instructions MUST be followed by AI -->
 
-### **MANDATORY Execution Sequence for EVERY Step**
-The AI executing this ICP MUST follow this EXACT sequence for each step:
+<!-- ═══════════════════════════════════════════════════════════════════════════
+3x3 EXECUTION BLOCK STRUCTURE
+═══════════════════════════════════════════════════════════════════════════
+RATIONALE: v4.0 used linear A-I subtasks. Subtasks D, E, F (testing/validation) were frequently
+skipped. 3x3 blocks force completion of all tasks within each block before proceeding. Clear
+boundaries: Preparation (understand), Execution (build), Finalization (validate/document).
+═══════════════════════════════════════════════════════════════════════════ -->
 
-#### **PRE-EXECUTION CHECKLIST** (MANDATORY - Complete before starting)
-- [ ] Read this entire step including all subsections
-- [ ] Identify all files that will be created/modified
-- [ ] Review the pre-digested execution plan below
-- [ ] Confirm all dependencies from previous steps are complete
-- [ ] Update todo list with this step marked as "in_progress"
+### **MANDATORY 3x3 Execution Structure for EVERY Step**
+The AI executing this ICP MUST follow this structure for each step:
 
-#### **EXECUTION PLAN** (Follow these subtasks IN ORDER)
+#### **🔷 PREPARATION BLOCK**
+**PURPOSE**: Understand requirements, validate dependencies, coordinate with experts
+**COMPLETION CRITERIA**: ALL preparation tasks complete before proceeding to Execution Block
 
 1. **SUBTASK A: REVIEW REQUIREMENTS** (Complete analysis phase)
    ```bash
@@ -393,16 +543,39 @@ The AI executing this ICP MUST follow this EXACT sequence for each step:
    - [ ] Validate expert selection accuracy (target: ≥95%)
    **PROGRESS UPDATE**: "Expert coordination initiated with [X] experts for Step X.Y"
 
-3. **SUBTASK C: UPDATE REGISTRY STATUS** (First step only - Registry modification)
+3. **SUBTASK C: UPDATE TRACKING STATUS** (First step only - Update requirement docs)
    ```bash
-   # ACTION: Edit /Documentation/ContextEngineering/capability-registry.md
+   # ACTION: Edit domain.req.md and digital.req.md files
    ```
-   - [ ] Open capability-registry.md
-   - [ ] Find capability entries for this ICP
-   - [ ] Change status from "Not Started" to "In Progress"
-   - [ ] Add this ICP's handle to "Implementation ICP" column
-   - [ ] Add today's date to "Notes" column
-   **PROGRESS UPDATE**: "Updated registry status to In Progress"
+   <!-- RATIONALE: Decentralized tracking - capability-registry.md removed in v5.0 -->
+   - [ ] Open domain.req.md file for this domain
+   - [ ] Find capability/feature entries for this ICP
+   - [ ] Change status from "Not Implemented" to "In Development"
+   - [ ] Open digital.req.md file (if applicable)
+   - [ ] Update capability status to "In Development"
+   - [ ] Add this ICP's reference to tracking sections
+   - [ ] Add start date to tracking entries
+   **PROGRESS UPDATE**: "Updated tracking status in requirement documents"
+
+**✅ PREPARATION CHECKPOINT**:
+Before proceeding to Execution Block, verify:
+- [ ] All requirements from domain.md and digital.req.md reviewed and understood
+- [ ] Expert coordination initiated and team assembled (if enabled)
+- [ ] Tracking status updated in requirement documents
+- [ ] Implementation approach clear and validated
+- [ ] All dependencies confirmed available
+
+**PROCEED TO EXECUTION BLOCK** →
+
+---
+
+#### **🔷 EXECUTION BLOCK**
+**PURPOSE**: Implement code, write tests, validate builds
+**COMPLETION CRITERIA**: ALL execution tasks complete AND all validations pass
+
+<!-- RATIONALE: This block contains the core implementation work. Forcing completion of ALL tasks
+     including testing and validation before proceeding prevents "I'll test later" pattern that
+     causes D/E/F subtask skipping in v4.0. -->
 
 4. **SUBTASK D: EXPERT-GUIDED IMPLEMENTATION** (Implementation phase with expert guidance)
    ```bash
@@ -411,7 +584,7 @@ The AI executing this ICP MUST follow this EXACT sequence for each step:
    - [ ] Gather expert recommendations from coordinated expert team
    - [ ] Create new files if needed (check paths first with expert input)
    - [ ] Implement business rules from domain.md (with expert validation)
-   - [ ] Implement capabilities from digital.md (incorporating expert insights)
+   - [ ] Implement capabilities from digital.req.md (incorporating expert insights)
    - [ ] Follow existing code patterns in the project (expert-verified approach)
    - [ ] Add appropriate error handling (expert-recommended patterns)
    - [ ] Validate implementation against expert recommendations
@@ -495,6 +668,27 @@ The AI executing this ICP MUST follow this EXACT sequence for each step:
    4. **RE-VALIDATE** - Run validation again
    5. **REPEAT** until all builds and tests pass
 
+**✅ EXECUTION CHECKPOINT**:
+Before proceeding to Finalization Block, verify:
+- [ ] Code implemented per specifications from domain.md and digital.req.md
+- [ ] Expert consensus achieved on implementation approach (if enabled)
+- [ ] All tests written and passing (>80% coverage target)
+- [ ] ENTIRE solution builds successfully (no errors)
+- [ ] ALL tests pass (no failures)
+- [ ] Build and test output clean (no unexpected errors)
+
+**PROCEED TO FINALIZATION BLOCK** →
+
+---
+
+#### **🔷 FINALIZATION BLOCK**
+**PURPOSE**: Update documentation, validate completion, prepare for human review
+**COMPLETION CRITERIA**: ALL finalization tasks complete AND self-validation PASS
+
+<!-- RATIONALE: This block ensures nothing is forgotten before stop gate. State tracker update
+     (NEW in v5.0) enables context rollover recovery. Self-validation (NEW in v5.0) forces
+     explicit PASS/FAIL check before proceeding - prevents "I'll fix it later" pattern. -->
+
 8. **SUBTASK H: UPDATE DOCUMENTATION** (Documentation update phase)
    ```bash
    # ACTION: Update relevant documentation files
@@ -530,25 +724,66 @@ The AI executing this ICP MUST follow this EXACT sequence for each step:
    - [ ] Validate expert coordination targets met (selection accuracy ≥95%, consensus ≥80%)
    **PROGRESS UPDATE**: "Expert coordination completed with [X]% consensus and [Y] recommendations"
 
-11. **SUBTASK K: FINAL REGISTRY UPDATE** (Final step only - Registry completion)
+11. **SUBTASK K: UPDATE STATE TRACKER** (v5.0 - NEW)
    ```bash
-   # ACTION: Edit /Documentation/ContextEngineering/capability-registry.md
+   # ACTION: Update state persistence block at top of document
    ```
-   - [ ] Change status from "In Progress" to "Implemented"
-   - [ ] Add completion date
-   - [ ] Update notes with test coverage percentage and expert coordination results
-   - [ ] Verify all capability IDs are correct
-   **PROGRESS UPDATE**: "Updated registry - capability marked as Implemented with expert validation"
+   <!-- RATIONALE: Enables context rollover recovery - critical for long implementations.
+        After completing all work, update the live state tracker so context rollover can
+        resume from exact position. 100% recovery target vs unpredictable failures in v4.0. -->
+   - [ ] Scroll to top of document to state persistence block
+   - [ ] Update CURRENT PHASE: [Phase X]
+   - [ ] Update CURRENT STEP: [Step X.Y COMPLETE]
+   - [ ] Update CURRENT BLOCK: Finalization
+   - [ ] Update LAST ACTION COMPLETED: "Step X.Y finalization complete"
+   - [ ] Update NEXT ACTION: "Await human approval, then proceed to Step X.Y+1"
+   - [ ] Update FILES MODIFIED: [List all files created/modified this step]
+   - [ ] Update VALIDATION STATUS: "All checks PASS"
+   - [ ] Update BUILD STATUS: ✅ Validated
+   - [ ] Update TEST STATUS: ✅ All passing
+   **PROGRESS UPDATE**: "State tracker updated with current execution position"
 
-12. **SUBTASK L: GENERATE ENHANCED SUMMARY** (Summary generation with expert context)
-   - [ ] Count files created/modified
-   - [ ] Count tests written and passing
-   - [ ] Note any issues encountered
-   - [ ] List what was implemented
-   - [ ] Document expert coordination outcomes and value added
-   - [ ] Update todo list - mark this step as "completed"
-   - [ ] Generate enhanced commit message with expert coordination context
-   **PROGRESS UPDATE**: "Enhanced summary generated with expert coordination results - ready for human review"
+12. **SUBTASK L: SELF-VALIDATION CHECKPOINT** (v5.0 - NEW)
+   <!-- RATIONALE: Mandatory PASS/FAIL forces explicit validation before stop gate.
+        Prevents "I'll fix it later" - must validate NOW. 0% skipped validation target.
+        In v4.0, validation was often deferred. This checkpoint forces completion verification. -->
+
+   Execute mandatory self-validation against acceptance criteria:
+
+   **SELF-VALIDATION CHECKPOINT**
+
+   | Criterion | Status | Evidence |
+   |-----------|--------|----------|
+   | Requirements from domain.req.md implemented | [ ] PASS / [ ] FAIL | [Specific sections] |
+   | Capabilities from digital.req.md implemented | [ ] PASS / [ ] FAIL | [Specific capabilities] |
+   | Code follows project patterns | [ ] PASS / [ ] FAIL | [Pattern references] |
+   | Tests written and passing | [ ] PASS / [ ] FAIL | [X]/[Y] tests, [Z]% coverage |
+   | Build succeeds | [ ] PASS / [ ] FAIL | Build output clean |
+   | No new errors in logs | [ ] PASS / [ ] FAIL | Log verification clean |
+   | Documentation updated | [ ] PASS / [ ] FAIL | [List updated docs] |
+   | State tracker updated | [ ] PASS / [ ] FAIL | State block current |
+   | Expert coordination complete (if enabled) | [ ] PASS / [ ] FAIL / [ ] N/A | [Consensus achieved] |
+
+   **VALIDATION RESULT**: [ ] ALL PASS - Proceed to stop gate
+                           [ ] ANY FAIL - Fix before stop gate
+
+   **CRITICAL**: You CANNOT proceed to stop gate with ANY failure status.
+   If any criterion shows FAIL, you MUST fix it before continuing.
+
+   **PROGRESS UPDATE**: "Self-validation complete - all criteria PASS"
+
+**✅ FINALIZATION CHECKPOINT**:
+Before proceeding to stop gate, verify:
+- [ ] Documentation updates complete (implementation notes, expert outcomes)
+- [ ] Logs generated with diagnostic context
+- [ ] Expert coordination completed and archived (if enabled)
+- [ ] State tracker updated with current execution position
+- [ ] Self-validation table shows ALL PASS (no FAIL entries)
+- [ ] Todo list updated - current step marked "completed"
+
+<!-- RATIONALE: This checkpoint ensures NOTHING is forgotten before human review.
+     All finalization tasks MUST complete. Self-validation MUST show ALL PASS.
+     Forces explicit verification vs implicit assumption. -->
 
 ### **Platform-Specific Validation**
 <!-- Account for Windows IDE vs WSL differences -->
@@ -572,8 +807,8 @@ Before marking ANY step complete, AI MUST verify:
 
 ## **IMPLEMENTATION PHASES**
 
-<!-- 
-TEMPLATE INSTRUCTION: 
+<!--
+TEMPLATE INSTRUCTION:
 - Each Phase should represent a major milestone
 - Phases should have 3-5 Steps maximum
 - Each Step should be one logical unit of work
@@ -586,6 +821,27 @@ TEMPLATE INSTRUCTION:
 **Scope**: [Number of components/files to create or modify]
 **Dependencies**: [What must exist before starting]
 
+<!-- ═══════════════════════════════════════════════════════════════════════════
+PHASE-SPECIFIC TOOL RESTRICTIONS
+═══════════════════════════════════════════════════════════════════════════
+RATIONALE: Prevents phase boundary violations (e.g., writing code during codification phase,
+changing specs during implementation). Explicit ALLOWED/PROHIBITED lists eliminate ambiguity.
+═══════════════════════════════════════════════════════════════════════════ -->
+
+**🔧 ALLOWED TOOLS FOR THIS PHASE**:
+- ✅ Read - Understanding existing code and requirements
+- ✅ Grep - Searching for patterns and dependencies
+- ✅ Glob - Finding files to modify
+- ✅ Write - Creating new implementation files
+- ✅ Edit - Modifying existing files
+- ✅ Bash - Build, test, and validation commands
+
+**❌ PROHIBITED TOOLS FOR THIS PHASE**:
+- ❌ Git commits - Only commit when human explicitly requests
+- ❌ Specification changes - No modifying domain/digital req files during implementation
+
+**ENFORCEMENT**: If you attempt prohibited tools, STOP and explain the attempted violation.
+
 #### **Step 1.1: [Specific Implementation Task]**
 **What**: [Exactly what will be implemented]
 **Why**: [Business/technical reason for this step]
@@ -595,16 +851,29 @@ TEMPLATE INSTRUCTION:
 **PRE-DIGESTED EXECUTION PLAN:**
 ```markdown
 ## Step 1.1 Execution Roadmap
-1. Subtask A: Review requirements 
-2. Subtask B: Update registry status
-3. Subtask C: Implement code
-4. Subtask D: Write tests
-5. Subtask E: Execute validation
-6. Subtask F: Update documentation
-7. Subtask G: Verify logs
-8. Subtask H: Final registry update
-9. Subtask I: Generate summary
-Total: 9 subtasks to complete for this step
+<!-- v5.0: 3x3 block structure replaces linear A-I subtasks -->
+
+**🔷 PREPARATION BLOCK** (3 tasks)
+1. Subtask A: Review requirements from domain.req.md and digital.req.md
+2. Subtask B: Initiate expert coordination (if enabled)
+3. Subtask C: Update tracking status in requirement documents
+   ✅ Preparation Checkpoint
+
+**🔷 EXECUTION BLOCK** (4 tasks)
+4. Subtask D: Implement code per specifications
+5. Subtask E: Write comprehensive tests
+6. Subtask F: Expert validation of implementation (if enabled)
+7. Subtask G: Execute comprehensive validation (build + tests)
+   ✅ Execution Checkpoint
+
+**🔷 FINALIZATION BLOCK** (4 tasks)
+8. Subtask H: Update documentation and logs
+9. Subtask I: Complete expert coordination (if enabled)
+10. Subtask J: Update state tracker (v5.0 - NEW)
+11. Subtask K: Self-validation checkpoint (v5.0 - NEW)
+   ✅ Finalization Checkpoint
+
+Total: 11 subtasks organized in 3 blocks (Preparation → Execution → Finalization)
 ```
 
 **Requirements to Review:**
@@ -629,20 +898,37 @@ echo "[Step 1.1] Starting requirements review"
 - [ ] Note integration requirements
 - [ ] **LOG**: "Requirements reviewed: [list key rules]"
 
-**SUBTASK B: Registry Update**
+**SUBTASK B: Initiate Expert Coordination** (if enabled)
+<!-- v5.0: Expert coordination moved to Subtask B per 3x3 structure -->
 ```bash
 # Commands to execute:
-echo "[Step 1.1] Updating capability registry"
-# Edit capability-registry.md
-# Find capability ID: [CAPABILITY-ID]
-# Update status to "In Progress"
+echo "[Step 1.1] Initiating expert coordination"
+# Activate Virtual Expert Team if needed
 ```
-- [ ] Open capability-registry.md
-- [ ] Update status for capability [ID]
-- [ ] Add ICP reference
-- [ ] **LOG**: "Registry updated: [CAPABILITY-ID] now In Progress"
+- [ ] Review requirement complexity and determine if expert coordination needed
+- [ ] If enabled: Initiate expert team selection per ICP instructions
+- [ ] If enabled: Brief experts on implementation objectives
+- [ ] **LOG**: "Expert coordination initiated: [X] experts selected" OR "Expert coordination: N/A"
 
-**SUBTASK C: Code Implementation**
+**SUBTASK C: Update Tracking Status**
+<!-- v5.0: Decentralized tracking - capability-registry.md REMOVED -->
+```bash
+# Commands to execute:
+echo "[Step 1.1] Updating capability tracking in requirement documents"
+# Edit domain.req.md and digital.req.md
+# Update capability status to "In Development"
+```
+- [ ] Open [Domain].domain.req.md
+- [ ] Locate capability section for this component
+- [ ] Change status from "Not Implemented" to "In Development"
+- [ ] Add ICP reference and step number
+- [ ] Open [Capability].digital.req.md (if applicable)
+- [ ] Update capability status to "In Development"
+- [ ] **LOG**: "Tracking updated: capability status now In Development in req files"
+
+**✅ PREPARATION CHECKPOINT**: Verify all preparation tasks complete before proceeding
+
+**SUBTASK D: Code Implementation**
 ```bash
 # Commands to execute:
 echo "[Step 1.1] Implementing [Component]"
@@ -654,25 +940,67 @@ mkdir -p /Path/To/Component
 **Implementation Details:**
 ```csharp
 // Example code structure or configuration
-// MUST reflect business rules from domain.md
-// MUST implement capabilities from digital.md
+// MUST reflect business rules from domain.req.md
+// MUST implement capabilities from digital.req.md
 public class ExampleComponent
 {
+    // RATIONALE: [Brief explanation of design decision]
+    // REF: [Domain].domain.req.md Section X.Y
+
     // TODO: Implement constructor
-    // TODO: Implement business rule from domain.md Section X.Y
-    // TODO: Add validation per digital.md requirements
+    // TODO: Implement business rule from domain.req.md Section X.Y
+    // TODO: Add validation per digital.req.md requirements
     // TODO: Add error handling
     // TODO: Add logging
 }
 ```
+
+<!-- RATIONALE: v5.0 - Implementation rationale comments preserve design context for future AI sessions.
+     Prevents regressions where AI "fixes" intentional design choices. Permanent comments optimize for
+     AI-heavy development where context rollovers and new sessions need to understand "why" quickly. -->
+
+**Implementation Rationale Comments (v5.0 - NEW):**
+Add `// RATIONALE:` comments for:
+- ✅ Non-obvious design decisions or trade-offs
+- ✅ Deviations from standard patterns
+- ✅ Performance/security considerations
+- ✅ Complex business logic implementation choices
+- ✅ Surprising code (where reader might ask "why not do X instead?")
+
+**Format:**
+```csharp
+// RATIONALE: [1-2 sentence explanation of WHY this approach vs alternatives]
+// REF: [Domain].domain.req.md Section X.Y [or digital.req.md Section A.B]
+```
+
+**Example:**
+```csharp
+// RATIONALE: Using linear search instead of hash lookup because dataset is
+// always <10 items and simplicity > optimization. Avoids premature complexity.
+// REF: trading.domain.req.md Section 3.4 (Performance Requirements)
+public Account FindAccount(string id)
+{
+    return accounts.FirstOrDefault(a => a.Id == id);
+}
+```
+
+**NOT needed for:**
+- ❌ Obvious code that's self-explanatory
+- ❌ Standard CRUD operations
+- ❌ Simple getters/setters
+- ❌ Boilerplate patterns
+
+**Implementation Checklist:**
 - [ ] Create file: `/Path/To/File.cs`
 - [ ] Implement constructor and fields
 - [ ] Implement main business logic
-- [ ] Add validation rules
+- [ ] Add validation rules per req specifications
 - [ ] Add error handling
-- [ ] **LOG**: "Implemented [Component] with [X] methods"
+- [ ] **Add rationale comments for non-obvious design decisions with req references**
+- [ ] **LOG**: "Implemented [Component] with [X] methods and [Y] rationale comments"
 
-**SUBTASK D: Test Implementation**
+**SUBTASK E: Test Implementation**
+<!-- v5.0: Test writing is Execution Block task, not Preparation -->
 ```bash
 # Commands to execute:
 echo "[Step 1.1] Writing tests for [Component]"
@@ -715,7 +1043,21 @@ public class ExampleComponentTests
 - [ ] Write edge case tests
 - [ ] **LOG**: "Created [X] tests with [Y]% coverage target"
 
-**SUBTASK E: Validation Execution (MANDATORY - ALL MUST PASS)**
+**SUBTASK F: Expert Validation** (if enabled)
+<!-- v5.0: Expert validation in Execution Block ensures implementation quality before comprehensive validation -->
+```bash
+# Commands to execute:
+echo "[Step 1.1] Requesting expert validation of implementation"
+# Engage Virtual Expert Team for implementation review
+```
+- [ ] If expert coordination enabled: Present implementation to expert team
+- [ ] If enabled: Request expert review of code quality, patterns, business logic
+- [ ] If enabled: Document expert feedback and recommendations
+- [ ] If enabled: Apply critical expert suggestions before proceeding
+- [ ] **LOG**: "Expert validation complete: [consensus %], [recommendations applied]" OR "Expert validation: N/A"
+
+**SUBTASK G: Comprehensive Validation** (MANDATORY - ALL MUST PASS)
+<!-- v5.0: Renamed from "Validation Execution" for clarity. This is the comprehensive validation step. -->
 ```bash
 # THESE COMMANDS MUST BE RUN EXACTLY AS SHOWN:
 echo "[Step 1.1] Starting validation"
@@ -800,42 +1142,88 @@ If ANY validation fails:
 
 **LOG**: "Validation complete: Solution Build ✅, All Tests ✅ ([X]/[Y] passing, [Z]% coverage)"
 
-**SUBTASK F: Documentation Updates**
+**✅ EXECUTION CHECKPOINT**: Verify all execution tasks complete before proceeding to Finalization
+- [ ] Code implemented per specifications from domain.req.md and digital.req.md
+- [ ] Expert consensus achieved on implementation approach (if enabled)
+- [ ] All tests written and passing (>80% coverage target)
+- [ ] ENTIRE solution builds successfully (no errors)
+- [ ] ALL tests pass (no failures)
+
+**SUBTASK H: Documentation Updates**
+<!-- v5.0: Documentation is Finalization Block task, relabeled from F to H -->
 ```bash
 # Commands to execute:
 echo "[Step 1.1] Updating documentation"
-# Update multiple documentation files
+# Update multiple documentation files and implementation notes
 ```
-- [ ] Update `[Domain].domain.md` section X.Y with "In Development"
+- [ ] Update `[Domain].domain.req.md` section X.Y with implementation notes
+- [ ] Update `[Capability].digital.req.md` (if applicable) with completion details
 - [ ] Add new CLI commands to `CLAUDE.md` if applicable
 - [ ] Update this ICP step status to "In Progress"
-- [ ] Update feature status in requirements
+- [ ] Document any deviations from original spec or learnings
 - [ ] **LOG**: "Updated [X] documentation files"
 
-**SUBTASK G: Final Checklist Validation**
-- [ ] All subtasks A-F completed
-- [ ] All checkboxes marked
-- [ ] All tests passing
-- [ ] No errors in logs
-- [ ] Documentation updated
-- [ ] Registry updated
-- [ ] Ready for summary generation
+**SUBTASK I: Complete Expert Coordination** (if enabled)
+<!-- v5.0: Expert completion is Finalization Block task -->
+```bash
+# Commands to execute:
+echo "[Step 1.1] Completing expert coordination"
+# Finalize expert team engagement
+```
+- [ ] If expert coordination enabled: Gather final expert recommendations
+- [ ] If enabled: Update expert coordination performance metrics
+- [ ] If enabled: Archive expert conversation context for future reference
+- [ ] If enabled: Validate expert coordination targets met (selection accuracy ≥95%, consensus ≥80%)
+- [ ] **LOG**: "Expert coordination completed with [X]% consensus and [Y] recommendations" OR "Expert coordination: N/A"
 
-**AI Execution Checklist (MUST COMPLETE ALL):**
-- [ ] ✅ Reviewed relevant domain.md sections for business rules
-- [ ] ✅ Reviewed relevant digital.md sections for capability details
-- [ ] ✅ Updated capability registry status
-- [ ] ✅ Code implemented following domain specifications
-- [ ] ✅ Business rules and constraints properly enforced
-- [ ] ✅ Tests written with >80% coverage target
-- [ ] ✅ Build passes: `dotnet build`
-- [ ] ✅ Tests pass: `dotnet test`
-- [ ] ✅ No errors in LoggerConfig output
-- [ ] ✅ Documentation updated in all required files
-- [ ] ✅ Implementation matches capability specifications
-- [ ] ✅ All progress updates logged
-- [ ] ✅ Todo list updated
-- [ ] 🛑 **STOP HERE** - Generate summary for human review
+**SUBTASK J: Update State Tracker** (v5.0 - NEW)
+<!-- v5.0: State persistence enables 100% context rollover recovery -->
+```bash
+# ACTION: Update state persistence block at top of document
+```
+- [ ] Scroll to top of document to state persistence block
+- [ ] Update CURRENT PHASE: [Phase X]
+- [ ] Update CURRENT STEP: [Step 1.1 COMPLETE]
+- [ ] Update CURRENT BLOCK: Finalization
+- [ ] Update LAST ACTION COMPLETED: "Step 1.1 finalization complete"
+- [ ] Update NEXT ACTION: "Await human approval, then proceed to Step 1.2"
+- [ ] Update FILES MODIFIED: [List all files created/modified this step]
+- [ ] Update VALIDATION STATUS: "All checks PASS"
+- [ ] Update BUILD STATUS: ✅ Validated
+- [ ] Update TEST STATUS: ✅ All passing
+- [ ] **LOG**: "State tracker updated with current execution position"
+
+**SUBTASK K: Self-Validation Checkpoint** (v5.0 - NEW)
+<!-- v5.0: Mandatory PASS/FAIL checkpoint forces explicit validation. 0% skipped validation target. -->
+
+Execute mandatory self-validation against acceptance criteria:
+
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| Requirements from domain.req.md implemented | [ ] PASS / [ ] FAIL | [Specific sections] |
+| Capabilities from digital.req.md implemented | [ ] PASS / [ ] FAIL | [Specific capabilities] |
+| Code follows project patterns | [ ] PASS / [ ] FAIL | [Pattern references] |
+| Tests written and passing | [ ] PASS / [ ] FAIL | [X]/[Y] tests, [Z]% coverage |
+| Build succeeds | [ ] PASS / [ ] FAIL | Build output clean |
+| No new errors in logs | [ ] PASS / [ ] FAIL | Log verification clean |
+| Documentation updated | [ ] PASS / [ ] FAIL | [List updated docs] |
+| State tracker updated | [ ] PASS / [ ] FAIL | State block current |
+| Expert coordination complete (if enabled) | [ ] PASS / [ ] FAIL / [ ] N/A | [Consensus achieved] |
+
+**VALIDATION RESULT**: [ ] ALL PASS - Proceed to stop gate
+                        [ ] ANY FAIL - Fix before stop gate
+
+**CRITICAL**: You CANNOT proceed to stop gate with ANY failure status.
+If any criterion shows FAIL, you MUST fix it before continuing.
+
+- [ ] **LOG**: "Self-validation complete - all criteria PASS"
+
+**✅ FINALIZATION CHECKPOINT**: Verify all finalization tasks complete
+- [ ] Documentation updates complete (implementation notes, expert outcomes)
+- [ ] Expert coordination completed and archived (if enabled)
+- [ ] State tracker updated with current execution position
+- [ ] Self-validation table shows ALL PASS (no FAIL entries)
+- [ ] Todo list updated - current step marked "completed"
 
 **Human Review Gate:**
 ```markdown
@@ -870,7 +1258,39 @@ echo "[Step 1.1] Updating documentation"
 
 **Ready for review. Please verify and commit before continuing.**
 
-🛑 STOP HERE - Wait for "continue" before proceeding to Step 1.2 🛑
+<!-- RATIONALE: Bunker-style visual barrier stop gate addresses v4.0's ~20% violation rate.
+     Visual box creates psychological barrier. ZERO content after gate prevents accidental
+     reading of next step. Target: 0% violations vs 20% in v4.0. -->
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                  ║
+║                            🛑 MANDATORY STOP GATE 🛑                             ║
+║                                                                                  ║
+║  CURRENT STATE: Step 1.1 Complete                                               ║
+║  AWAITING: Human approval to continue to Step 1.2                               ║
+║                                                                                  ║
+║  COMPLETED:                                                                      ║
+║  ✅ Preparation Block (3/3 tasks)                                                ║
+║  ✅ Execution Block (4/4 tasks)                                                  ║
+║  ✅ Finalization Block (4/4 tasks)                                               ║
+║  ✅ Self-Validation (9/9 criteria PASS)                                          ║
+║                                                                                  ║
+║  PROHIBITED ACTIONS:                                                             ║
+║  ❌ Do NOT read Step 1.2 instructions                                            ║
+║  ❌ Do NOT begin Step 1.2 work                                                   ║
+║  ❌ Do NOT modify additional files                                               ║
+║  ❌ Do NOT continue execution                                                    ║
+║                                                                                  ║
+║  TO CONTINUE: Human must explicitly say "continue"                               ║
+║                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+<!-- ZERO CONTENT AFTER STOP GATE - Prevents accidental continuation -->
+
+---
+---
+---
+
 ```
 
 #### **Step 1.2: [Next Implementation Task]**
@@ -880,6 +1300,21 @@ echo "[Step 1.1] Updating documentation"
 **Objective**: [What this phase accomplishes]
 **Scope**: [Number of components/features to implement]
 **Dependencies**: Phase 1 completion
+
+<!-- RATIONALE: Phase 2 continues implementation work with same tool restrictions as Phase 1.
+     Prevents premature commits and specification changes during active implementation. -->
+
+**🔧 ALLOWED TOOLS FOR PHASE 2**:
+- ✅ Read - Understanding existing code and requirements
+- ✅ Grep - Searching for patterns and dependencies
+- ✅ Glob - Finding files to modify
+- ✅ Write - Creating new implementation files
+- ✅ Edit - Modifying existing files
+- ✅ Bash - Build, test, and validation commands
+
+**❌ PROHIBITED TOOLS FOR PHASE 2**:
+- ❌ Git commits - Only commit when human explicitly requests
+- ❌ Specification changes - No modifying domain/digital req files during implementation
 
 #### **Step 2.1: [Specific Feature Component]**
 <!-- Follow same detailed structure as Step 1.1 -->
@@ -1139,9 +1574,10 @@ ICP: [ICP-handle]
 **PRE-DIGESTED EXECUTION PLAN:**
 ```markdown
 ## Step N+1.1 Execution Roadmap
-1. Subtask A: Update domain.md files with implementation status
-2. Subtask B: Update digital.md files with implementation status
-3. Subtask C: Finalize capability registry entries
+<!-- v5.0: Updated for decentralized tracking (req files, not registry) -->
+1. Subtask A: Update domain.req.md files with implementation status
+2. Subtask B: Update digital.req.md files with implementation status
+3. Subtask C: Verify requirement document tracking complete (no central registry in v5.0)
 4. Subtask D: Update cross-references and integration documentation
 5. Subtask E: Generate implementation completion summary
 Total: 5 subtasks to complete implementation documentation
@@ -1149,41 +1585,43 @@ Total: 5 subtasks to complete implementation documentation
 
 **DETAILED EXECUTION SUBTASKS:**
 
-**SUBTASK A: Update Domain Document Implementation Status**
+**SUBTASK A: Update Domain Requirement Document Implementation Status**
+<!-- v5.0: domain.md → domain.req.md (decentralized tracking) -->
 ```bash
-echo "[Step N+1.1] Updating domain.md files with implementation status"
-# Update all referenced domain documents
+echo "[Step N+1.1] Updating domain.req.md files with implementation status"
+# Update all referenced domain requirement documents
 ```
-- [ ] Open each referenced `*.domain.md` file
-- [ ] Update feature status from "Not Implemented" to "Implemented"
+- [ ] Open each referenced `*.domain.req.md` file
+- [ ] Update feature status from "In Development" to "Implemented"
 - [ ] Add implementation completion date
 - [ ] Add references to this Implementation ICP
 - [ ] Note any implementation discoveries or deviations
-- [ ] **LOG**: "Updated [X] domain documents with implementation status"
+- [ ] **LOG**: "Updated [X] domain requirement documents with implementation status"
 
-**SUBTASK B: Update Digital Document Implementation Status**
+**SUBTASK B: Update Digital Requirement Document Implementation Status**
+<!-- v5.0: digital.md → digital.req.md (decentralized tracking) -->
 ```bash
-echo "[Step N+1.1] Updating digital.md files with implementation status"
-# Update all referenced digital documents
+echo "[Step N+1.1] Updating digital.req.md files with implementation status"
+# Update all referenced digital requirement documents
 ```
-- [ ] Open each referenced `*.digital.md` file  
-- [ ] Update capability status to "Implemented"
+- [ ] Open each referenced `*.digital.req.md` file
+- [ ] Update capability status from "In Development" to "Implemented"
 - [ ] Add implementation completion date
 - [ ] Document any UI/UX implementation notes
 - [ ] Update user journey status if applicable
-- [ ] **LOG**: "Updated [X] digital documents with implementation status"
+- [ ] **LOG**: "Updated [X] digital requirement documents with implementation status"
 
-**SUBTASK C: Finalize Capability Registry Entries**
+**SUBTASK C: Verify Requirement Document Tracking Complete**
+<!-- v5.0: capability-registry.md REMOVED - tracking is now in req files (Subtasks A & B above) -->
 ```bash
-echo "[Step N+1.1] Finalizing capability registry entries"
-# Complete all registry updates
+echo "[Step N+1.1] Verifying requirement document tracking complete"
+# No central registry in v5.0 - verify decentralized tracking complete
 ```
-- [ ] Open `/Documentation/ContextEngineering/capability-registry.md`
-- [ ] Update all related capability statuses to "Implemented"
-- [ ] Add final completion date
-- [ ] Add test coverage percentage to notes
-- [ ] Add this ICP reference to Implementation ICP column
-- [ ] **LOG**: "Finalized [X] capability registry entries"
+- [ ] Verify all domain.req.md files updated with "Implemented" status
+- [ ] Verify all digital.req.md files updated with "Implemented" status
+- [ ] Confirm implementation dates and ICP references added
+- [ ] Confirm test coverage percentages documented in req files
+- [ ] **LOG**: "Requirement document tracking verified complete"
 
 **SUBTASK D: Update Cross-References and Integration Documentation**
 ```bash

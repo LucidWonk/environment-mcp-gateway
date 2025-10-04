@@ -5,8 +5,8 @@
 TEMPLATE VERSION DEFINITION (DO NOT INCLUDE IN FINAL ICP)
 ═══════════════════════════════════════════════════════════════════════════
 TEMPLATE_FILE: template.codification.icp.md
-TEMPLATE_VERSION: 4.0.0
-TEMPLATE_DESCRIPTION: Major enhancement: Integrated Virtual Expert Team coordination for concept specification, enhanced human approval gates with expert context, and comprehensive expert-guided documentation workflows
+TEMPLATE_VERSION: 5.0.0
+TEMPLATE_DESCRIPTION: Major v5.0 upgrade for Sonnet 4.5 optimization: Three-tier instruction architecture (self-contained templates), bunker-style stop gates, state persistence blocks, 3x3 execution blocks (Preparation/Execution/Finalization), self-validation framework, phase-specific tool restrictions, context rollover protocol, decentralized capability tracking, template instruction separation
 ═══════════════════════════════════════════════════════════════════════════
 
 TEMPLATE UPDATE INSTRUCTIONS FOR AI (DO NOT INCLUDE IN FINAL DOCUMENTS)
@@ -15,9 +15,21 @@ When updating this template, the AI MUST follow these instructions:
 
 1. VERSION INCREMENTATION:
    - Major (x.0.0): Fundamental changes to template structure or execution model
-   - Minor (x.y.0): Significant enhancements like new sections or validation requirements  
+   - Minor (x.y.0): Significant enhancements like new sections or validation requirements
    - Patch (x.y.z): Minor tweaks, typo fixes, or small clarifications
    - ALWAYS increment version when making ANY change
+   - UPDATE TEMPLATE_DESCRIPTION to reflect changes
+
+   VERSION 5.0.0 MAJOR ENHANCEMENTS:
+   - Three-tier instruction architecture (templates are Tier 1 - execution authority)
+   - Bunker-style stop gates with visual barriers
+   - State persistence blocks for context rollover resilience
+   - 3x3 execution block structure (Preparation/Execution/Finalization)
+   - Self-validation framework with PASS/FAIL checkpoints
+   - Phase-specific tool restrictions (ALLOWED/PROHIBITED lists)
+   - Context rollover protocol (Level 1 + Level 2)
+   - Decentralized capability tracking (in req files, not central registry)
+   - Template instruction separation (maintenance → TEMPLATE-MAINTENANCE.md)
    - Update TEMPLATE_DESCRIPTION to reflect the changes made
    
    VERSION 4.0.0 MAJOR ENHANCEMENTS:
@@ -52,6 +64,12 @@ When updating this template, the AI MUST follow these instructions:
    - Metadata fields (TEMPLATE_FILE, TEMPLATE_VERSION) get copied for traceability
 
 FAILURE TO FOLLOW THESE RULES WILL RESULT IN CORRUPTED TEMPLATE SYSTEM.
+
+**FOR AI UPDATING TEMPLATES**: See template-maintenance.md in Templates/ folder for:
+- Template versioning guidelines
+- Template modification procedures
+- Quality assurance requirements
+- When to increment version numbers
 ═══════════════════════════════════════════════════════════════════════════
 
 TEMPLATE USAGE INSTRUCTIONS FOR AI (DO NOT INCLUDE IN FINAL ICP)
@@ -102,8 +120,20 @@ When creating ICPs from this template, ensure:
 **Documentation Impact**: [ ] Single Document | [ ] Multiple Related Documents | [ ] New Document Creation | [ ] Enterprise Standards Update
 **Build Dependencies**: [ ] No Prerequisites | [ ] Requires Foundation Docs | [ ] Requires Core Specifications | [ ] Requires Integration Specs
 **Complexity**: [ ] Simple | [ ] Moderate | [ ] Complex
+**Template Version**: 5.0.0 (Sonnet 4.5 optimized - see TEMPLATE_DESCRIPTION for v5.0 features)
 **Expert Coordination**: [x] Enabled (v4.0.0) | [ ] Disabled
 **Expert Coordination Level**: [ ] Minimal | [x] Standard | [ ] Comprehensive
+
+**📋 v5.0 TEMPLATE FEATURES**:
+This template follows Context Engineering v5.0 principles:
+- **Three-Tier Architecture**: Self-contained execution instructions (no external references needed)
+- **Bunker-Style Stop Gates**: Visual barriers with zero post-gate content for mandatory human review
+- **State Persistence**: Track execution state for context rollover resilience
+- **3x3 Execution Blocks**: Preparation → Execution → Finalization (replaces A-I subtasks)
+- **Self-Validation**: Mandatory PASS/FAIL checkpoints throughout execution
+- **Tool Restrictions**: Clear ALLOWED/PROHIBITED lists per phase (codification = docs only)
+- **Rollover Protocol**: Level 1 (state block) + Level 2 (re-grounding) recovery procedures
+- **Decentralized Tracking**: Capability tracking in req files (no central registry)
 
 ## **VIRTUAL EXPERT TEAM COORDINATION (v4.0.0)**
 <!-- NEW IN v4.0.0: Expert coordination integration for concept specification -->
@@ -156,45 +186,102 @@ When creating ICPs from this template, ensure:
 - [ ] **Concept Specification Quality**: Expert-validated specifications meet architecture and domain standards
 - [ ] **Documentation Consistency**: Expert coordination maintains cross-document consistency
 
-## **CAPABILITY REGISTRY MAINTENANCE**
+## **STATE PERSISTENCE & CONTEXT ROLLOVER (v5.0)**
+
+<!-- RATIONALE: Context window rollovers cause unpredictable failures in long documentation sessions.
+     AI loses track of which phase/step is current. This live state tracker enables 100% recovery.
+     AI must update this block after EVERY action to maintain accurate state. -->
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                         📍 EXECUTION STATE TRACKER                               ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║  CURRENT PHASE: [Not Started]                                                   ║
+║  CURRENT STEP: [None]                                                           ║
+║  CURRENT BLOCK: [None - Preparation / Execution / Finalization]                 ║
+║  LAST ACTION COMPLETED: [None - ICP execution not yet started]                  ║
+║  NEXT ACTION: [Read this entire ICP document]                                   ║
+║  DOCUMENTS MODIFIED THIS SESSION: 0                                             ║
+║  VALIDATION STATUS: [Last checkpoint: None]                                     ║
+║  EXPERT CONSENSUS: ⚠️ Not yet initiated                                          ║
+║  APPROVAL STATUS: ⚠️ Awaiting human approval                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+<!-- RATIONALE: Two-level protocol balances safety and efficiency. Level 1 (state block) is fast
+     and handles 95% of rollovers. Level 2 (re-grounding docs) for uncertain cases. Provides
+     systematic recovery vs unpredictable failures. -->
+
+**🔄 CONTEXT ROLLOVER PROTOCOL**:
+
+**LEVEL 1 (ALWAYS EXECUTE)**:
+1. Read the state tracker block above (current phase/step/block)
+2. Verify understanding of your current position in execution
+3. Confirm last action completed and next action to take
+4. Assess your confidence: HIGH / MEDIUM / LOW
+
+**LEVEL 2 (EXECUTE IF CONFIDENCE < HIGH)**:
+1. If uncertain about workflow, read: `.../context-engineering-kickstarter.md` (Tier 2 - Workflow patterns)
+2. If uncertain about "why", read: `.../context-engineering-system.md` (Tier 3 - System concepts)
+3. Return to this template for execution instructions (Tier 1 - Execution authority)
+
+**IMPORTANT**: This template is Tier 1 (execution authority) - it contains all necessary instructions
+for normal execution. Only reference Tier 2/3 if context rollover creates uncertainty.
+
+## **CAPABILITY TRACKING (v5.0 - DECENTRALIZED)**
 <!-- CRITICAL: These instructions MUST remain in generated Concept ICPs -->
 
-**Registry Update Requirements:**
-Registry handling differs based on the type of concept work:
+<!-- RATIONALE: v5.0 removes capability-registry.md (central registry "never works properly").
+     Tracking is now DECENTRALIZED to domain.req.md and digital.req.md files where capabilities
+     are defined. This eliminates sync overhead while maintaining full traceability.
+     Codification ICPs SPECIFY new capabilities in req files (status: "Not Implemented").
+     Implementation ICPs IMPLEMENT capabilities (status: "Not Implemented" → "Implemented"). -->
+
+**Tracking Update Requirements:**
+Capability specification tracking differs based on ICP source type:
 
 ### **For Standard Concept ICPs (Mature Domain Documentation):**
+
 **For NEW Capabilities Being Specified:**
-1. Generate unique capability ID: [DOMAIN]-[NAME]-[4-random-chars]
-2. Check `/Documentation/ContextEngineering/capability-registry.md` for conflicts
-3. ADD new capability entry to registry with:
-   - Status: "Not Started"
+1. Open target `[Domain].domain.req.md` file
+2. Add new capability section with:
+   - Capability Name: [Clear descriptive name]
+   - Status: "Not Implemented"
    - Created Date: Today's date
-   - Implementation ICP: "TBD"
-   - Document: Target document where capability will be specified
+   - Implementation ICP: "TBD - awaiting implementation"
+   - Specifications: [Detailed requirements]
+3. If UI/UX related, also add to `[Capability].digital.req.md` with:
+   - Status: "Not Implemented"
+   - User journey specifications
+   - Interface requirements
 
 **For EXISTING Capabilities Being Enhanced:**
-1. Look up existing capability IDs from registry
-2. REFERENCE these IDs in all documentation updates
-3. Do NOT change status (Concept ICPs document, they don't implement)
+1. Open existing `[Domain].domain.req.md` file
+2. Locate capability section
+3. UPDATE specifications with enhancements
+4. Do NOT change status (Codification ICPs specify, they don't implement)
+5. Add "Last Updated" date and this ICP reference
+6. If applicable: Update corresponding `[Capability].digital.req.md`
 
 ### **For NewConcepts Concept ICPs (Exploratory Documentation):**
-**IMPORTANT**: NewConcepts use different registry approach to avoid cleanup complexity.
+**IMPORTANT**: NewConcepts create initial req files that will be moved to mature domains later.
 
-**When Working with NewConcept Requirements:**
-1. **DO NOT** register placeholder capability IDs (TEMP-[DOMAIN]-[NAME]-####)
-2. **REFERENCE** placeholder IDs consistently in all concept documentation
-3. **NOTE**: Final capability registration happens during implementation ICP execution
-4. **VALIDATE**: Ensure placeholder ID format is correct and consistent
+**When Creating NewConcept Requirements:**
+1. Create `/Documentation/ContextEngineering/NewConcepts/[concept-name].concept.req.md`
+2. Specify all capabilities with status: "Not Implemented"
+3. Use placeholder format for capability IDs: TEMP-[DOMAIN]-[NAME]-####
+4. Document domain discovery notes (which mature domain this might belong to)
+5. **NOTE**: Final domain.req.md placement happens after human approval
 
-**When Creating Concept Documentation:**
-1. If enhancing existing NewConcept: Use existing placeholder IDs
-2. If referencing mature capabilities: Use real capability IDs from registry
-3. Cross-reference validation: Ensure all capability references are accurate
+**When Working with Existing NewConcept Requirements:**
+1. Update existing `/Documentation/ContextEngineering/NewConcepts/*.concept.req.md`
+2. Maintain placeholder ID consistency
+3. Track which mature domains capabilities might map to
+4. Prepare domain assignment proposal for human approval
 
-**Registry Interaction Pattern:**
-- **Standard Concepts**: ADD new capabilities, REFERENCE existing ones
-- **NewConcepts**: PLACEHOLDER IDs only, avoid registry until implementation
-- **MAINTAIN** registry as single source of truth for implemented capabilities
+**Tracking Interaction Pattern:**
+- **Standard Concepts**: ADD or UPDATE capability specs in domain.req.md and digital.req.md files
+- **NewConcepts**: CREATE concept.req.md, propose domain assignment to human
+- **NO CENTRAL REGISTRY** - All tracking is in requirement documents
+- **VALIDATE**: Ensure all capability references have corresponding req file entries
 
 ## **CURRENT CAPABILITY STATE**
 **Business Capability Gap:** [Clear description of what business capability is missing, unclear, or inadequately specified in current documentation]
@@ -479,6 +566,24 @@ Before marking any documentation step complete:
 **Scope**: [Number of documents to review and sections to analyze]
 **Review Focus**: Understanding current state and planning changes
 
+<!-- RATIONALE: Codification phase is DOCUMENTATION ONLY. Tool restrictions prevent accidental
+     code implementation or premature commits. Phase boundary violations in v4.0 caused
+     implementation work during specification phase. Explicit ALLOWED/PROHIBITED lists eliminate ambiguity. -->
+
+**🔧 ALLOWED TOOLS FOR PHASE 1 (Documentation Analysis)**:
+- ✅ Read - Reading existing requirement documents
+- ✅ Grep - Searching for patterns in documentation
+- ✅ Glob - Finding documentation files
+- ✅ Write - Creating new requirement document sections
+- ✅ Edit - Modifying existing requirement documents
+
+**❌ PROHIBITED TOOLS FOR PHASE 1**:
+- ❌ Code implementation (any Write/Edit in code directories)
+- ❌ Test execution (Bash commands that run tests)
+- ❌ Build commands (dotnet build, etc.)
+- ❌ Git commits - Only commit when human explicitly requests
+- ❌ Deployment operations
+
 **Step 1.1: Document Review**
 - **What**: Review all documents listed in enhancement breakdown
 - **Why**: Understand current state and identify specific enhancement points
@@ -649,6 +754,46 @@ Ready for review. Type "continue" to proceed with enhancement planning.
   - Review enhancement plan for completeness
   - Validate that all cross-references will remain accurate
   - Ensure domain and digital documents will remain aligned
+
+**Phase 1 Completion Summary:**
+- **Analysis Status**: Complete
+- **Documents Reviewed**: [X]
+- **Gaps Identified**: [Y]
+- **Enhancement Plan**: Ready for execution
+
+<!-- RATIONALE: Bunker-style visual barrier stop gate addresses ~20% violation rate in v4.0.
+     Visual box creates psychological barrier. ZERO content after gate prevents accidental
+     reading of next phase. Target: 0% violations. Codification work requires careful
+     review before proceeding to execution phase. -->
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                  ║
+║                            🛑 MANDATORY STOP GATE 🛑                             ║
+║                                                                                  ║
+║  CURRENT STATE: Phase 1 Complete                                                ║
+║  AWAITING: Human approval to continue to Phase 2                                ║
+║                                                                                  ║
+║  COMPLETED:                                                                      ║
+║  ✅ Document Analysis (comprehensive review)                                     ║
+║  ✅ Expert Coordination (if enabled)                                             ║
+║  ✅ Gap Identification (all gaps documented)                                     ║
+║  ✅ Enhancement Planning (detailed plan ready)                                   ║
+║                                                                                  ║
+║  PROHIBITED ACTIONS:                                                             ║
+║  ❌ Do NOT read Phase 2 instructions                                             ║
+║  ❌ Do NOT begin Phase 2 work                                                    ║
+║  ❌ Do NOT modify requirement documents yet                                      ║
+║  ❌ Do NOT continue execution                                                    ║
+║                                                                                  ║
+║  TO CONTINUE: Human must explicitly say "continue"                               ║
+║                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+<!-- ZERO CONTENT AFTER STOP GATE - Prevents accidental continuation -->
+
+---
+---
+---
 
 ### **Phase 2: Document Enhancement Execution**
 **Objective**: Execute planned enhancements to target documents

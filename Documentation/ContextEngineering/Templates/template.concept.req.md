@@ -5,8 +5,8 @@
 TEMPLATE VERSION DEFINITION (DO NOT INCLUDE IN FINAL DOCUMENT)
 ═══════════════════════════════════════════════════════════════════════════
 TEMPLATE_FILE: template.concept.req.md
-TEMPLATE_VERSION: 1.1.0
-TEMPLATE_DESCRIPTION: Enhanced with dependency-based prioritization and template update instructions
+TEMPLATE_VERSION: 5.0.0
+TEMPLATE_DESCRIPTION: Major v5.0 upgrade for Sonnet 4.5 optimization: Template instruction separation, decentralized capability tracking (placeholder IDs only for NewConcepts), version alignment with Context Engineering System v5.0
 ═══════════════════════════════════════════════════════════════════════════
 
 TEMPLATE UPDATE INSTRUCTIONS FOR AI (DO NOT INCLUDE IN FINAL DOCUMENTS)
@@ -15,10 +15,16 @@ When updating this template, the AI MUST follow these instructions:
 
 1. VERSION INCREMENTATION:
    - Major (x.0.0): Fundamental changes to template structure or execution model
-   - Minor (x.y.0): Significant enhancements like new sections or validation requirements  
+   - Minor (x.y.0): Significant enhancements like new sections or validation requirements
    - Patch (x.y.z): Minor tweaks, typo fixes, or small clarifications
    - ALWAYS increment version when making ANY change
-   - Update TEMPLATE_DESCRIPTION to reflect the changes made
+   - UPDATE TEMPLATE_DESCRIPTION to reflect changes
+
+   VERSION 5.0.0 MAJOR ENHANCEMENTS:
+   - Template instruction separation (maintenance guidance → TEMPLATE-MAINTENANCE.md)
+   - Decentralized capability tracking (placeholder IDs for NewConcepts, no central registry)
+   - Version alignment with Context Engineering System v5.0.0
+   - Note: NewConcepts use placeholder IDs (TEMP-[DOMAIN]-[NAME]-####) - not registered until implementation
 
 2. TIME REFERENCE REMOVAL:
    - NEVER include time estimates (minutes, hours, days) in any section
@@ -76,6 +82,12 @@ When creating documents from this template, ensure:
 2. Fill in all metadata fields with actual values, not placeholders
 ═══════════════════════════════════════════════════════════════════════════
 -->
+
+**📋 v5.0 TEMPLATE FEATURES**:
+- **Template Version**: 5.0.0 (Context Engineering System v5.0 aligned)
+- **Decentralized Tracking**: Placeholder IDs only (TEMP-[DOMAIN]-[NAME]-####), no central registry
+- **Template Instruction Separation**: Maintenance guidance in TEMPLATE-MAINTENANCE.md
+- **NewConcepts Lifecycle**: Exploratory phase → Implementation → Mature domain documents
 
 ## **TEMPLATE USAGE**
 This template creates exploratory domain concepts using pattern: `[concept-name].domain.md`

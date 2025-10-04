@@ -2,7 +2,79 @@
 
 This document tracks the evolution of the Lucidwonks template system, documenting major enhancements and changes.
 
-## Version 4.0.0 - Virtual Expert Team Integration (Current)
+## Version 5.0.0 - Sonnet 4.5 Optimization (Current)
+
+**Release Date**: October 4, 2025
+**Major Enhancement**: Complete system redesign for Sonnet 4.5's enhanced instruction-following capabilities
+
+### Theme
+Simplification and reliability improvements leveraging Sonnet 4.5's ability to follow complex, nested instructions while maintaining state across context window rollovers.
+
+### New Features
+- **Three-Tier Instruction Architecture**: Clear hierarchy (Templates > Kickstarter > System Overview)
+- **Bunker-Style Stop Gates**: Visual barriers with zero post-gate content (0% violation target vs ~20% in v4.0)
+- **State Persistence Blocks**: Live state tracking for 100% context rollover recovery
+- **3x3 Execution Block Structure**: Preparation/Execution/Finalization (replaces A-I subtasks)
+- **Self-Validation Framework**: Mandatory PASS/FAIL checkpoints (0% skipped validation target)
+- **Phase-Specific Tool Restrictions**: Clear ALLOWED/PROHIBITED lists per phase
+- **Context Rollover Protocol**: Level 1 (state block) + Level 2 (re-grounding) recovery
+- **Decentralized Capability Tracking**: Tracking in req files, capability-registry.md eliminated
+- **Template Instruction Separation**: Maintenance guidance → TEMPLATE-MAINTENANCE.md
+- **Version Alignment Strategy**: All templates aligned to v5.0.0
+
+### Template Updates
+
+**ICP Templates** (Comprehensive v5.0 Updates):
+- `template.codification.icp.md`: v4.0.0 → v5.0.0
+- `template.implementation.icp.md`: v4.0.0 → v5.0.0
+- `template.setup.icp.md`: v1.0.0 → v5.0.0
+
+**Requirements Templates** (v5.0 Alignment):
+- `template.concept.req.md`: v1.1.0 → v5.0.0
+- `template.domain.req.md`: v1.2.0 → v5.0.0
+- `template.digital.req.md`: v1.2.0 → v5.0.0
+- `template.prp.req.md`: v1.2.0 → v5.0.0
+
+**New Documentation**:
+- `TEMPLATE-MAINTENANCE.md`: v5.0.0 (new file - template maintenance guidance)
+
+**System Documentation**:
+- `context-engineering-system.md`: v1.1 → v5.0.0
+- `context-engineering-kickstarter.md`: v1.3.0 → v5.0.0
+
+### Pain Points Addressed
+- **Stop Gate Violations**: ~20% → 0% target (bunker-style gates with visual barriers)
+- **Context Rollover Failures**: Unpredictable → 100% recovery (state persistence blocks)
+- **Subtask Skipping**: D, E, F frequently skipped → 0% skipping (self-validation framework)
+- **Instruction Conflicts**: 9 competing docs → Clear three-tier hierarchy
+- **Capability Registry Issues**: "Never works properly" → Eliminated (decentralized to req files)
+- **Phase Boundary Violations**: Code during codification → Clear tool restriction lists
+- **Template Maintenance Confusion**: Mixed with usage → Separated to TEMPLATE-MAINTENANCE.md
+
+### Quality Improvements
+- **Workflow Violations**: 90% reduction target (skipped tests, ignored gates, lost context)
+- **Execution Speed**: 40% faster target (clearer instructions, reduced ambiguity)
+- **Context Rollover Recovery**: 100% success target
+- **Registry Maintenance Overhead**: 100% elimination (no central registry)
+
+### Breaking Changes
+- **capability-registry.md Eliminated**: Capability tracking now in domain.req.md/digital.req.md files
+- **A-I Subtask Structure Replaced**: Now Preparation/Execution/Finalization (3x3 blocks)
+- **Template Instruction Location**: Maintenance guidance moved from templates to TEMPLATE-MAINTENANCE.md
+
+### Migration Guide
+- **From v4.0 Templates**: Update version to v5.0.0, add v5.0 features note
+- **From capability-registry.md**: Move capability tracking to respective domain.req.md/digital.req.md files
+- **From A-I Subtasks**: Map to 3x3 blocks (A-C → Preparation, D-F → Execution, G-I → Finalization)
+
+### Backward Compatibility
+- **v4.0 Documents Compatible**: Existing documents continue to work
+- **V4.0 Expert Coordination**: Maintained alongside v5.0 features
+- **Gradual Adoption**: v5.0 features can be adopted incrementally
+
+---
+
+## Version 4.0.0 - Virtual Expert Team Integration
 
 **Release Date**: August 19, 2025  
 **Major Enhancement**: Integrated Virtual Expert Team coordination with template orchestration

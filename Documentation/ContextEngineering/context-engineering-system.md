@@ -1,8 +1,44 @@
 # Context Engineering System Overview
 
+**Version**: 5.0.0
+**Last Updated**: 2025-10-04
+**Status**: Active
+
 ## **System Purpose**
 
 The Context Engineering System is a comprehensive AI-powered development assistance framework that autonomously maintains accurate, semantically-rich contextual information throughout the software development lifecycle. It enables AI systems like Claude Code to provide domain-aware, business-intelligent assistance by automatically curating and updating context based on code changes, requirements evolution, and architectural decisions.
+
+## **Three-Tier Instruction Architecture (v5.0)**
+
+The Context Engineering System v5.0 establishes a clear instruction hierarchy to eliminate conflicts and leverage Sonnet 4.5's enhanced instruction-following capabilities:
+
+### **Tier 1: Templates (Execution Authority)**
+- **Purpose**: Imperative execution instructions
+- **Content**: Complete, self-contained execution steps
+- **Authority**: Highest - templates have final say on "how" to execute
+- **Location**: `/Documentation/ContextEngineering/Templates/`
+- **Who Uses**: AI executing ICPs
+
+### **Tier 2: Kickstarter (Workflow Reference)**
+- **Purpose**: Workflow patterns and decision trees
+- **Content**: Template selection logic, process guidance
+- **Authority**: Medium - provides "when" and "which" guidance
+- **Location**: `/Documentation/ContextEngineering/Kickstarters/`
+- **Who Uses**: AI choosing which template to use
+
+### **Tier 3: System Overview (Conceptual Context)**
+- **Purpose**: Philosophy, principles, and "why" explanations
+- **Content**: Conceptual understanding, architecture, purpose
+- **Authority**: Foundational - explains "why" but doesn't prescribe "how"
+- **Location**: This document
+- **Who Uses**: Humans and AI seeking to understand the system
+
+### **Escalation Path**
+When AI needs context beyond template instructions:
+1. **First**: Check relevant template (execution details)
+2. **Second**: Check kickstarter (workflow guidance)
+3. **Third**: Check system overview (conceptual understanding)
+4. **Last**: Ask human for clarification
 
 ## **Key Terminology**
 
@@ -791,12 +827,12 @@ Critical for maintaining capability registry integrity while supporting the NewC
 
 **Document Metadata**
 - **System**: Context Engineering
-- **Version**: 1.1
+- **Version**: 5.0.0
 - **Created**: 2025-08-04
-- **Last Updated**: 2025-08-16
-- **Status**: Active Design
-- **Next Review**: After Phase 2 implementation completion
-- **Enhancement Notes**: Added Phase 5 Document Lifecycle Completion workflows and enhanced template system integration
+- **Last Updated**: 2025-10-04
+- **Status**: Active
+- **Next Review**: After v5.0 adoption and dog-fooding validation
+- **v5.0.0 Notes**: Major upgrade for Sonnet 4.5 optimization - Three-tier instruction architecture, bunker stop gates, state persistence, 3x3 execution blocks, self-validation, tool restrictions, context rollover protocol, decentralized capability tracking, template instruction separation, version alignment
 
 **Related Documentation**
 - [Concept Requirements Template](../Templates/template.concept.req.md)

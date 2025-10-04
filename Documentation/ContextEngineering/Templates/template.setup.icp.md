@@ -5,8 +5,8 @@
 TEMPLATE VERSION DEFINITION (DO NOT INCLUDE IN FINAL DOCUMENT)
 ═══════════════════════════════════════════════════════════════════════════
 TEMPLATE_FILE: template.setup.icp.md
-TEMPLATE_VERSION: 1.0.0
-TEMPLATE_DESCRIPTION: Initial standardized setup and installation template
+TEMPLATE_VERSION: 5.0.0
+TEMPLATE_DESCRIPTION: Major v5.0 upgrade for Sonnet 4.5 optimization: Three-tier instruction architecture (self-contained templates), bunker-style stop gates, state persistence blocks, 3x3 execution blocks (Preparation/Execution/Finalization), self-validation framework, phase-specific tool restrictions, context rollover protocol, decentralized capability tracking, template instruction separation
 ═══════════════════════════════════════════════════════════════════════════
 
 TEMPLATE UPDATE INSTRUCTIONS FOR AI (DO NOT INCLUDE IN FINAL DOCUMENTS)
@@ -15,10 +15,21 @@ When updating this template, the AI MUST follow these instructions:
 
 1. VERSION INCREMENTATION:
    - Major (x.0.0): Fundamental changes to template structure or execution model
-   - Minor (x.y.0): Significant enhancements like new sections or validation requirements  
+   - Minor (x.y.0): Significant enhancements like new sections or validation requirements
    - Patch (x.y.z): Minor tweaks, typo fixes, or small clarifications
    - ALWAYS increment version when making ANY change
-   - Update TEMPLATE_DESCRIPTION to reflect the changes made
+   - UPDATE TEMPLATE_DESCRIPTION to reflect changes
+
+   VERSION 5.0.0 MAJOR ENHANCEMENTS:
+   - Three-tier instruction architecture (templates are Tier 1 - execution authority)
+   - Bunker-style stop gates with visual barriers
+   - State persistence blocks for context rollover resilience
+   - 3x3 execution block structure (Preparation/Execution/Finalization)
+   - Self-validation framework with PASS/FAIL checkpoints
+   - Phase-specific tool restrictions (ALLOWED/PROHIBITED lists)
+   - Context rollover protocol (Level 1 + Level 2)
+   - Decentralized capability tracking (in req files, not central registry)
+   - Template instruction separation (maintenance → TEMPLATE-MAINTENANCE.md)
 
 2. TIME REFERENCE REMOVAL:
    - NEVER include time estimates (minutes, hours, days) in any section
@@ -44,10 +55,32 @@ When updating this template, the AI MUST follow these instructions:
    - Metadata fields (TEMPLATE_FILE, TEMPLATE_VERSION) get copied for traceability
 
 FAILURE TO FOLLOW THESE RULES WILL RESULT IN CORRUPTED TEMPLATE SYSTEM.
+
+**FOR AI UPDATING TEMPLATES**: See template-maintenance.md in Templates/ folder for:
+- Template versioning guidelines
+- Template modification procedures
+- Quality assurance requirements
+- When to increment version numbers
 ═══════════════════════════════════════════════════════════════════════════
 -->
 
 > **Template Purpose**: This template provides a standardized format for creating comprehensive setup and installation instructions for software components. It ensures consistent, human-readable documentation that enables both technical and non-technical users to successfully install and configure software systems.
+
+**📋 v5.0 TEMPLATE FEATURES**:
+- **Template Version**: 5.0.0 (Sonnet 4.5 optimized - Context Engineering v5.0 compatible)
+- **Template Type**: Documentation Guide (not an execution ICP)
+- **Purpose**: Provides standardized structure for setup/installation documentation
+- **Integration**: Setup docs created from this template support implementation ICPs
+
+<!-- RATIONALE: v5.0 - This is a DOCUMENTATION TEMPLATE, not an execution ICP. Most v5.0 execution
+     features (state persistence, stop gates, 3x3 blocks) don't apply to documentation guides.
+     This template helps AI and humans structure setup instructions clearly and completely. -->
+
+**Context Engineering Integration**:
+- Setup documentation created from this template should be referenced in implementation ICPs
+- Setup docs are typically created during or after implementation phase
+- Document placement: `/Documentation/Installation/` or component-specific directories
+- Version control: Track setup doc versions alongside code releases
 
 ## Template Structure
 
@@ -205,10 +238,17 @@ When following setup instructions:
 
 ## Version Control
 
-- **Template Version**: 1.0
-- **Last Updated**: [Date]
-- **Maintained By**: [Team/Role]
-- **Review Schedule**: [Frequency]
+<!-- v5.0: Updated to reflect Context Engineering v5.0 compatibility -->
+- **Template Version**: 5.0.0 (Context Engineering v5.0 compatible)
+- **Template Type**: Documentation Guide
+- **Last Updated**: 2025-10-04
+- **Maintained By**: Context Engineering System
+- **Review Schedule**: Per template.version-history.md
+
+**v5.0 Updates**:
+- Clarified template purpose (documentation guide vs execution ICP)
+- Added Context Engineering integration guidelines
+- Aligned version with Context Engineering System v5.0.0
 
 ---
 
