@@ -23,8 +23,22 @@ The implementation follows expert-validated architectural specifications from th
 **Implementation Scope**: [x] Infrastructure
 **Complexity**: [x] Complex (10+ components)
 **Risk Level**: [x] Medium
-**Expert Coordination**: [x] Enabled (v4.0.0)
+**Template Version**: 5.0.0 (v5.0 upgrade: State persistence, 3x3 blocks, bunker stop gates, tool restrictions)
+**Expert Coordination**: [x] Enabled (v4.0.0 - maintained in v5.0)
 **Expert Coordination Level**: [x] Standard
+
+**📋 v5.0 TEMPLATE FEATURES APPLIED**:
+<!-- RATIONALE: v5.0 upgrade adds execution resilience features to existing v4.0 Virtual Expert Team
+     coordination. All v4.0 features preserved - v5.0 is additive, not subtractive. -->
+- ✅ State Persistence Block - Track execution position for context rollover recovery
+- ✅ Context Rollover Protocol - Level 1 + Level 2 systematic recovery procedure
+- ✅ 3x3 Execution Block Structure - Preparation → Execution → Finalization (replaces A-L linear)
+- ✅ Self-Validation Checkpoints - PASS/FAIL verification before proceeding
+- ✅ Bunker-Style Stop Gates - Visual barriers between phases (0% violation target)
+- ✅ Tool Restrictions - ALLOWED/PROHIBITED lists per phase (prevent boundary violations)
+- ✅ Decentralized Tracking - domain.req.md/digital.req.md (capability-registry.md removed)
+- ✅ Implementation Rationale Comments - // RATIONALE: with REF: to req files
+- ✅ All v4.0 Virtual Expert Team Features Maintained
 
 ## **VIRTUAL EXPERT TEAM COORDINATION (v4.0.0)**
 
@@ -80,6 +94,51 @@ The implementation follows expert-validated architectural specifications from th
 - [ ] **Human Approval Enhancement**: Expert context successfully integrated into approval workflows
 - [ ] **Performance Target Achievement**: All expert coordination performance targets met
 
+## **STATE PERSISTENCE & CONTEXT ROLLOVER (v5.0)**
+
+<!-- RATIONALE: v5.0 - Long-running implementation ICPs (18 steps) are prone to context rollover failures.
+     State persistence block provides 100% recovery capability. AI updates after EVERY action to track
+     current position. Level 1 + Level 2 rollover protocol ensures systematic recovery. -->
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                         📍 EXECUTION STATE TRACKER                               ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║  CURRENT PHASE: Phase 1 - Environment Registry Foundation                       ║
+║  CURRENT STEP: Step 1.1 - Multi-Environment Registry Architecture               ║
+║  CURRENT BLOCK: Execution (Step 1.1 Complete)                                   ║
+║  LAST ACTION COMPLETED: Step 1.1 comprehensive validation - all tests passing   ║
+║  NEXT ACTION: Await human approval to proceed to Step 1.2                       ║
+║  FILES MODIFIED THIS SESSION: 6 TypeScript classes + tests                      ║
+║  VALIDATION STATUS: ✅ Build passing, tests passing, Step 1.1 COMPLETE          ║
+║  BUILD STATUS: ✅ C# solution validated, TypeScript build validated             ║
+║  TEST STATUS: ✅ All tests passing (Step 1.1)                                    ║
+║  EXPERT CONSENSUS: ✅ Expert validation achieved (Step 1.1)                      ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+**🔄 CONTEXT ROLLOVER PROTOCOL**:
+
+<!-- RATIONALE: v5.0 - Two-level protocol balances safety (complete re-grounding if needed) with
+     efficiency (fast state block recovery for 95% of rollovers). Systematic vs unpredictable. -->
+
+**LEVEL 1 (ALWAYS EXECUTE AFTER CONTEXT ROLLOVER)**:
+1. Read the state tracker block above (current phase/step/block)
+2. Verify understanding of your current position in execution
+3. Check LAST ACTION COMPLETED and NEXT ACTION fields
+4. Assess your confidence in resuming: HIGH / MEDIUM / LOW
+
+**LEVEL 2 (EXECUTE IF CONFIDENCE < HIGH)**:
+1. If uncertain about workflow/process:
+   - Read: `../context-engineering-kickstarter.md` (Tier 2 - Workflow patterns)
+   - Note: Implementation ICP workflow guidance
+2. If uncertain about "why" or system concepts:
+   - Read: `../context-engineering-system.md` (Tier 3 - System overview)
+3. If uncertain about requirements:
+   - Re-read relevant domain.req.md files from RELATED DOCUMENTATION section below
+4. Return to this ICP for execution instructions (Tier 1 - Execution authority)
+
+**IMPORTANT**: This ICP is Tier 1 (execution authority) - contains all necessary execution instructions.
+Only reference Tier 2/3 documents if context rollover creates uncertainty about process or purpose.
+
 ## **RELATED DOCUMENTATION**
 **Requirements Being Implemented:**
 - Environment Registry: [environment-registry.domain.req.md](../EnvironmentMCPGateway/environment-registry.domain.req.md)
@@ -101,10 +160,13 @@ The domain.req.md files contain the detailed business requirements, architectura
 The AI MUST consult these documents before and during each implementation step.
 
 **Documents to Update After Implementation:**
-- [ ] Update domain.req.md files with implementation status
-- [ ] Update capability registry with completed features and dates
+<!-- RATIONALE: v5.0 - capability-registry.md REMOVED. Tracking moved to domain.req.md and
+     digital.req.md files where capabilities are defined. Eliminates central registry sync overhead. -->
+- [ ] Update domain.req.md files with implementation status (status: "Not Implemented" → "Implemented")
+- [ ] Update digital.req.md files if UI/UX capabilities added
 - [ ] Update CLAUDE.md if new commands/projects added
 - [ ] Update this ICP with completion status
+- [ ] NO capability-registry.md updates (removed in v5.0)
 
 ## **IMPLEMENTATION DESIGN**
 
@@ -120,29 +182,57 @@ Comprehensive testing strategy following Lucidwonks testing standards with TypeS
 ### **Rollback Strategy**
 Each implementation phase includes immediate rollback capability through feature flags and configuration management. Environment Registry rollback through registry disable flag, Tool Management rollback through classification disable, Diagnostics rollback to existing self-diagnostics, and Transport cleanup rollback through transport abstraction layer. All rollback procedures tested and validated before phase completion.
 
-## **CAPABILITY REGISTRY MAINTENANCE**
+## **CAPABILITY TRACKING (v5.0 - DECENTRALIZED)**
 
-**Registry Update Requirements:**
-Implementation ICPs update existing capabilities created during Codification phase:
+<!-- RATIONALE: v5.0 - capability-registry.md REMOVED ("never works properly" - gets out of sync).
+     Tracking is now DECENTRALIZED to domain.req.md files where capabilities are actually defined.
+     This eliminates sync overhead while maintaining full traceability. -->
+
+**Tracking Update Requirements:**
+Implementation ICPs update capability status in domain requirement documents:
 
 ### **For Standard Implementation ICPs:**
-**At Implementation Start:**
-1. Open `/Documentation/ContextEngineering/capability-registry.md`
-2. Find capability entries referenced in this ICP:
-   - MCPGATEWAY-ENVREGISTRY-ae7f
-   - MCPGATEWAY-TOOLMGMT-d2e5
-   - MCPGATEWAY-DIAGNOSTICS-c9d1
-   - MCPGATEWAY-TRANSPORT-f4b8
-3. Update status from "Not Started" to "In Progress"
-4. Add this ICP's handle to the "Implementation ICP" column
-5. Add start date to "Notes" column
+**At Implementation Start (Preparation Block - Subtask C):**
+1. Open each domain.req.md file for capabilities being implemented:
+   - `environment-registry.domain.req.md` (MCPGATEWAY-ENVREGISTRY-ae7f equivalent)
+   - `tool-management.domain.req.md` (MCPGATEWAY-TOOLMGMT-d2e5 equivalent)
+   - `diagnostics-framework.domain.req.md` (MCPGATEWAY-DIAGNOSTICS-c9d1 equivalent)
+   - `transport-cleanup.domain.req.md` (MCPGATEWAY-TRANSPORT-f4b8 equivalent)
+2. Update capability status from "Not Implemented" to "In Development"
+3. Add this ICP's handle as reference
+4. Add start date to notes/comments
 
-**At Implementation Completion:**
-1. Update status from "In Progress" to "Implemented"
-2. Add completion date to "Completed Date" column
-3. Update "Notes" with final test coverage and key implementation details
+**At Implementation Completion (Finalization Block):**
+1. Update capability status from "In Development" to "Implemented"
+2. Add completion date
+3. Update notes with final test coverage percentage and key implementation details
+4. If applicable: Update corresponding digital.req.md files with same info
+
+**NO CENTRAL REGISTRY** - All tracking is in domain.req.md and digital.req.md files
 
 ## **AI EXECUTION REQUIREMENTS**
+
+<!-- RATIONALE: v5.0 - Tool restrictions prevent phase boundary violations. Implementation phases
+     should only use implementation tools (Read, Write, Edit, Bash for build/test), not git commits
+     or specification changes. Explicit ALLOWED/PROHIBITED lists eliminate ambiguity. -->
+
+**🔧 ALLOWED TOOLS FOR IMPLEMENTATION PHASES (1-4)**:
+- ✅ Read - Understanding existing code and requirements
+- ✅ Grep - Searching for patterns and dependencies
+- ✅ Glob - Finding files to modify
+- ✅ Write - Creating new TypeScript/C# implementation files
+- ✅ Edit - Modifying existing files
+- ✅ Bash - Build commands (dotnet build, npm run build, npm test)
+
+**❌ PROHIBITED TOOLS FOR IMPLEMENTATION PHASES (1-4)**:
+- ❌ Git commits - Only commit when human explicitly requests
+- ❌ Specification changes - No modifying domain.req.md or digital.req.md during implementation
+- ❌ Deployment operations - No production deployments
+
+**PHASE 5 TOOL ALLOWANCES** (Implementation Lifecycle Completion):
+- ✅ All implementation tools above
+- ✅ Edit domain.req.md files - Update status to "Implemented"
+- ❌ Git commits still prohibited unless human requests
 
 ### **MANDATORY Execution Sequence for EVERY Step**
 The AI executing this ICP MUST follow this EXACT sequence for each step:
@@ -155,6 +245,14 @@ The AI executing this ICP MUST follow this EXACT sequence for each step:
 - [ ] Update todo list with this step marked as "in_progress"
 
 #### **EXECUTION PLAN** (Follow these subtasks IN ORDER)
+
+<!-- RATIONALE: v5.0 - 3x3 block structure replaces linear A-L subtasks. Blocks force completion
+     of all tasks within each phase before proceeding. Prevents skipping D/E/F (testing/validation)
+     which was common problem in v4.0. Each block has checkpoint before next block starts. -->
+
+### **🔷 PREPARATION BLOCK**
+**PURPOSE**: Analysis, expert coordination, tracking setup
+**COMPLETION CRITERIA**: ALL preparation tasks complete before proceeding to Execution Block
 
 1. **SUBTASK A: REVIEW REQUIREMENTS** (Complete analysis phase)
    - [ ] Read relevant sections of domain.req.md files
@@ -172,24 +270,48 @@ The AI executing this ICP MUST follow this EXACT sequence for each step:
    - [ ] Validate expert selection accuracy (target: ≥95%)
    **PROGRESS UPDATE**: "Expert coordination initiated with [X] experts for Step X.Y"
 
-3. **SUBTASK C: UPDATE REGISTRY STATUS** (First step only - Registry modification)
-   - [ ] Open capability-registry.md
-   - [ ] Find capability entries for this ICP (4 capabilities)
-   - [ ] Change status from "Not Started" to "In Progress"
-   - [ ] Add this ICP's handle to "Implementation ICP" column
-   - [ ] Add today's date to "Notes" column
-   **PROGRESS UPDATE**: "Updated registry status to In Progress"
+3. **SUBTASK C: UPDATE TRACKING STATUS** (First step only - Decentralized tracking update)
+   <!-- RATIONALE: v5.0 - Updated from capability-registry.md to domain.req.md tracking -->
+   - [ ] Open environment-registry.domain.req.md
+   - [ ] Update capability status from "Not Implemented" to "In Development"
+   - [ ] Open tool-management.domain.req.md (if applicable for this step)
+   - [ ] Update capability status to "In Development"
+   - [ ] Open diagnostics-framework.domain.req.md (if applicable for this step)
+   - [ ] Update capability status to "In Development"
+   - [ ] Open transport-cleanup.domain.req.md (if applicable for this step)
+   - [ ] Update capability status to "In Development"
+   - [ ] Add this ICP's handle as reference and today's date
+   **PROGRESS UPDATE**: "Updated tracking status to In Development in req files"
+
+**✅ PREPARATION CHECKPOINT**: Verify all preparation tasks complete before proceeding
+- [ ] Requirements from domain.req.md reviewed and understood
+- [ ] Expert coordination initiated and team assembled (if enabled)
+- [ ] Tracking status updated in requirement documents (first step only)
+
+### **🔷 EXECUTION BLOCK**
+**PURPOSE**: Implementation, testing, expert validation, comprehensive validation
+**COMPLETION CRITERIA**: ALL execution tasks complete AND all builds/tests passing
+
+<!-- RATIONALE: v5.0 - Forcing completion of ALL tasks including testing and validation before
+     proceeding prevents "I'll test later" pattern that caused D/E/F subtask skipping in v4.0 -->
 
 4. **SUBTASK D: EXPERT-GUIDED IMPLEMENTATION** (Implementation phase with expert guidance)
+   <!-- RATIONALE: v5.0 - Added implementation rationale comment requirements for code context preservation -->
    - [ ] Gather expert recommendations from coordinated expert team
    - [ ] Create new TypeScript/C# files as needed (check paths first with expert input)
    - [ ] Implement business rules from domain.req.md (with expert validation)
    - [ ] Implement capabilities following architectural specifications
    - [ ] Follow existing code patterns in the project (expert-verified approach)
    - [ ] Add appropriate error handling (expert-recommended patterns)
+   - [ ] **Add implementation rationale comments for non-obvious design decisions**:
+     ```typescript
+     // RATIONALE: [1-2 sentence explanation of WHY this approach vs alternatives]
+     // REF: environment-registry.domain.req.md Section X.Y
+     ```
+   - [ ] Add rationale comments for: non-obvious patterns, performance trade-offs, security considerations
    - [ ] Validate implementation against expert recommendations
    - [ ] Achieve expert consensus on implementation approach (≥80%)
-   **PROGRESS UPDATE**: "Implemented [component name] with expert guidance - [X] lines of code"
+   **PROGRESS UPDATE**: "Implemented [component name] with expert guidance - [X] lines of code, [Y] rationale comments"
 
 5. **SUBTASK E: EXPERT-VALIDATED TESTING** (Test creation with expert validation)
    - [ ] Consult expert team for testing strategy recommendations
@@ -275,6 +397,21 @@ The AI executing this ICP MUST follow this EXACT sequence for each step:
    - [ ] 🔧 All build/test failures FIXED before proceeding
    **PROGRESS UPDATE**: "Validation complete: C# Build ✅, TS Build ✅, All Tests ✅"
 
+**✅ EXECUTION CHECKPOINT**: Verify all execution tasks complete before proceeding to Finalization
+- [ ] Code implemented per specifications from domain.req.md files
+- [ ] Expert consensus achieved on implementation approach (if enabled - ≥80%)
+- [ ] All tests written and passing (>80% coverage target)
+- [ ] ENTIRE solution builds successfully (C# + TypeScript - no errors)
+- [ ] ALL tests pass (no failures in C# or TypeScript tests)
+- [ ] Implementation rationale comments added for non-obvious design decisions
+
+### **🔷 FINALIZATION BLOCK**
+**PURPOSE**: Documentation, logging, expert completion, tracking updates, self-validation
+**COMPLETION CRITERIA**: ALL finalization tasks complete AND self-validation PASS
+
+<!-- RATIONALE: v5.0 - This block ensures nothing is forgotten before stop gate. State tracker
+     update and self-validation are NEW v5.0 tasks forcing explicit completion verification. -->
+
 8. **SUBTASK H: UPDATE DOCUMENTATION** (Documentation update phase)
    - [ ] Update CLAUDE.md if new commands added
    - [ ] Update this ICP step status to "In Progress"
@@ -298,22 +435,69 @@ The AI executing this ICP MUST follow this EXACT sequence for each step:
     - [ ] Validate expert coordination targets met (selection accuracy ≥95%, consensus ≥80%)
     **PROGRESS UPDATE**: "Expert coordination completed with [X]% consensus and [Y] recommendations"
 
-11. **SUBTASK K: FINAL REGISTRY UPDATE** (Final step only - Registry completion)
-    - [ ] Change status from "In Progress" to "Implemented"
-    - [ ] Add completion date
-    - [ ] Update notes with test coverage percentage and expert coordination results
-    - [ ] Verify all capability IDs are correct
-    **PROGRESS UPDATE**: "Updated registry - capabilities marked as Implemented with expert validation"
+11. **SUBTASK K: UPDATE STATE TRACKER** (v5.0 - NEW)
+    <!-- RATIONALE: v5.0 - State persistence enables 100% context rollover recovery. After completing
+         all work, update the live state tracker so context rollover can resume from exact position. -->
+    ```bash
+    # ACTION: Update state persistence block at top of document
+    ```
+    - [ ] Scroll to STATE PERSISTENCE & CONTEXT ROLLOVER section at top of document
+    - [ ] Update CURRENT PHASE: [Current phase name]
+    - [ ] Update CURRENT STEP: [Step X.Y COMPLETE]
+    - [ ] Update CURRENT BLOCK: Finalization
+    - [ ] Update LAST ACTION COMPLETED: "Step X.Y finalization complete"
+    - [ ] Update NEXT ACTION: "Await human approval, then proceed to Step X.Y+1"
+    - [ ] Update FILES MODIFIED THIS SESSION: [List all TypeScript/C# files created/modified]
+    - [ ] Update VALIDATION STATUS: "All checks PASS"
+    - [ ] Update BUILD STATUS: ✅ Validated
+    - [ ] Update TEST STATUS: ✅ All passing
+    - [ ] Update EXPERT CONSENSUS: ✅ Expert validation achieved (if enabled)
+    **PROGRESS UPDATE**: "State tracker updated with current execution position"
 
-12. **SUBTASK L: GENERATE ENHANCED SUMMARY** (Summary generation with expert context)
-    - [ ] Count files created/modified
-    - [ ] Count tests written and passing
-    - [ ] Note any issues encountered
-    - [ ] List what was implemented
-    - [ ] Document expert coordination outcomes and value added
+12. **SUBTASK L: SELF-VALIDATION CHECKPOINT** (v5.0 - NEW)
+    <!-- RATIONALE: v5.0 - Mandatory PASS/FAIL forces explicit validation before stop gate.
+         Prevents "I'll fix it later" - must validate NOW. 0% skipped validation target. -->
+
+    Execute mandatory self-validation against acceptance criteria:
+
+    **SELF-VALIDATION CHECKPOINT**
+
+    | Criterion | Status | Evidence |
+    |-----------|--------|----------|
+    | Requirements from domain.req.md implemented | [ ] PASS / [ ] FAIL | [Specific sections] |
+    | Capabilities from digital.req.md implemented (if applicable) | [ ] PASS / [ ] FAIL / [ ] N/A | [Specific capabilities] |
+    | Code follows project patterns and standards | [ ] PASS / [ ] FAIL | [Pattern references] |
+    | Tests written and passing | [ ] PASS / [ ] FAIL | [X]/[Y] tests, [Z]% coverage |
+    | C# solution builds | [ ] PASS / [ ] FAIL | Build output clean |
+    | TypeScript builds | [ ] PASS / [ ] FAIL | npm run build clean |
+    | No new errors in logs | [ ] PASS / [ ] FAIL | Log verification clean |
+    | Documentation updated | [ ] PASS / [ ] FAIL | [List updated docs] |
+    | State tracker updated | [ ] PASS / [ ] FAIL | State block current |
+    | Expert coordination complete (if enabled) | [ ] PASS / [ ] FAIL / [ ] N/A | [Consensus ≥80%] |
+    | Implementation rationale comments added | [ ] PASS / [ ] FAIL | [Count rationale comments] |
+    | Tracking status updated in domain.req.md | [ ] PASS / [ ] FAIL | [Status verified] |
+
+    **VALIDATION RESULT**: [ ] ALL PASS - Proceed to stop gate
+                            [ ] ANY FAIL - Fix before stop gate
+
+    **CRITICAL**: You CANNOT proceed to stop gate with ANY failure status.
+    If any criterion shows FAIL, you MUST fix it before continuing.
+
+    - [ ] **LOG**: "Self-validation complete - all criteria PASS"
     - [ ] Update todo list - mark this step as "completed"
-    - [ ] Generate enhanced commit message with expert coordination context
-    **PROGRESS UPDATE**: "Enhanced summary generated with expert coordination results - ready for human review"
+    - [ ] Generate enhanced summary with expert coordination context
+    **PROGRESS UPDATE**: "Self-validation complete - all [X]/[X] criteria PASS - ready for human review"
+
+**✅ FINALIZATION CHECKPOINT**: Verify all finalization tasks complete
+- [ ] Documentation updates complete (domain.req.md, CLAUDE.md if needed)
+- [ ] Logs verified (no new errors or warnings)
+- [ ] Expert coordination completed and archived (if enabled)
+- [ ] State tracker updated with current execution position
+- [ ] Self-validation table shows ALL PASS (no FAIL entries)
+- [ ] Todo list updated - current step marked "completed"
+
+<!-- RATIONALE: v5.0 - Finalization checkpoint ensures NOTHING is forgotten before human review.
+     All tasks MUST complete. Self-validation MUST show ALL PASS. Forces explicit verification. -->
 
 ### **Platform-Specific Validation**
 - **Windows/Visual Studio**: Ensure solution builds in IDE
@@ -385,6 +569,41 @@ Before implementing, the AI MUST review these sections from the referenced docum
 **Dependencies**: Step 1.1 completion for registry data structures
 **Component Count**: 4 TypeScript classes for persistence and configuration management
 
+<!-- RATIONALE: v5.0 - Bunker-style stop gate with visual barrier prevents phase boundary violations.
+     0% violation target vs 20% in v4.0. ZERO content after gate - AI cannot "peek ahead" to Phase 2. -->
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                            🛑 MANDATORY STOP GATE 🛑                             ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║  CURRENT STATE: Phase 1 Complete - Environment Registry Foundation              ║
+║  AWAITING: Human approval to continue to Phase 2                                ║
+║                                                                                  ║
+║  COMPLETED IN PHASE 1:                                                           ║
+║  ✅ Step 1.1: Multi-Environment Registry Architecture                           ║
+║  ✅ Step 1.2: Service Discovery Framework                                       ║
+║  ✅ Step 1.3: Environment Health Monitoring                                     ║
+║  ✅ Step 1.4: Configuration Persistence Layer                                   ║
+║                                                                                  ║
+║  VALIDATION REQUIRED:                                                            ║
+║  ✅ All Phase 1 builds passing (C# + TypeScript)                                ║
+║  ✅ All Phase 1 tests passing (>80% coverage)                                   ║
+║  ✅ Expert consensus achieved (≥80%)                                            ║
+║  ✅ Self-validation checkpoints ALL PASS                                        ║
+║                                                                                  ║
+║  PROHIBITED ACTIONS:                                                             ║
+║  ❌ Do NOT read Phase 2 step instructions                                       ║
+║  ❌ Do NOT begin Phase 2 implementation work                                    ║
+║  ❌ Do NOT modify additional files for Phase 2                                  ║
+║                                                                                  ║
+║  TO CONTINUE: Human must explicitly say "continue to Phase 2"                   ║
+║                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+<!-- ZERO CONTENT AFTER STOP GATE -->
+---
+---
+---
+
 ### **Phase 2: Tool Management Enhancement**
 **Objective**: Implement environment-aware tool classification and enhanced tool discovery
 **Scope**: 4 features from MCPGATEWAY-TOOLMGMT-d2e5 capability
@@ -413,6 +632,41 @@ Before implementing, the AI MUST review these sections from the referenced docum
 **Why**: Seamless environment context for tools without manual parameter specification
 **Dependencies**: Steps 2.1 and Phase 1 completion for classification and registry integration
 **Component Count**: 5 TypeScript classes for routing logic and context injection
+
+<!-- RATIONALE: v5.0 - Bunker-style stop gate with visual barrier prevents phase boundary violations.
+     0% violation target vs 20% in v4.0. ZERO content after gate - AI cannot "peek ahead" to Phase 3. -->
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                            🛑 MANDATORY STOP GATE 🛑                             ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║  CURRENT STATE: Phase 2 Complete - Tool Management Enhancement                  ║
+║  AWAITING: Human approval to continue to Phase 3                                ║
+║                                                                                  ║
+║  COMPLETED IN PHASE 2:                                                           ║
+║  ✅ Step 2.1: Environment-Aware Tool Classification                             ║
+║  ✅ Step 2.2: Enhanced Tool Registry Display                                    ║
+║  ✅ Step 2.3: Environment Management Tools                                      ║
+║  ✅ Step 2.4: Environment Context Routing Engine                                ║
+║                                                                                  ║
+║  VALIDATION REQUIRED:                                                            ║
+║  ✅ All Phase 2 builds passing (C# + TypeScript)                                ║
+║  ✅ All Phase 2 tests passing (>80% coverage)                                   ║
+║  ✅ Expert consensus achieved (≥80%)                                            ║
+║  ✅ Self-validation checkpoints ALL PASS                                        ║
+║                                                                                  ║
+║  PROHIBITED ACTIONS:                                                             ║
+║  ❌ Do NOT read Phase 3 step instructions                                       ║
+║  ❌ Do NOT begin Phase 3 implementation work                                    ║
+║  ❌ Do NOT modify additional files for Phase 3                                  ║
+║                                                                                  ║
+║  TO CONTINUE: Human must explicitly say "continue to Phase 3"                   ║
+║                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+<!-- ZERO CONTENT AFTER STOP GATE -->
+---
+---
+---
 
 ### **Phase 3: Diagnostics Framework Implementation**
 **Objective**: Implement comprehensive system health validation and diagnostics
@@ -443,6 +697,41 @@ Before implementing, the AI MUST review these sections from the referenced docum
 **Dependencies**: All Phase 3 steps completion for comprehensive health data
 **Component Count**: 5 TypeScript classes for health aggregation and reporting
 
+<!-- RATIONALE: v5.0 - Bunker-style stop gate with visual barrier prevents phase boundary violations.
+     0% violation target vs 20% in v4.0. ZERO content after gate - AI cannot "peek ahead" to Phase 4. -->
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                            🛑 MANDATORY STOP GATE 🛑                             ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║  CURRENT STATE: Phase 3 Complete - Diagnostics Framework Implementation         ║
+║  AWAITING: Human approval to continue to Phase 4                                ║
+║                                                                                  ║
+║  COMPLETED IN PHASE 3:                                                           ║
+║  ✅ Step 3.1: Comprehensive Connectivity Diagnostics                            ║
+║  ✅ Step 3.2: Real-Time Diagnostic Execution                                    ║
+║  ✅ Step 3.3: Actionable Error Reporting                                        ║
+║  ✅ Step 3.4: System Health Aggregation                                         ║
+║                                                                                  ║
+║  VALIDATION REQUIRED:                                                            ║
+║  ✅ All Phase 3 builds passing (C# + TypeScript)                                ║
+║  ✅ All Phase 3 tests passing (>80% coverage)                                   ║
+║  ✅ Expert consensus achieved (≥80%)                                            ║
+║  ✅ Self-validation checkpoints ALL PASS                                        ║
+║                                                                                  ║
+║  PROHIBITED ACTIONS:                                                             ║
+║  ❌ Do NOT read Phase 4 step instructions                                       ║
+║  ❌ Do NOT begin Phase 4 implementation work                                    ║
+║  ❌ Do NOT modify additional files for Phase 4                                  ║
+║                                                                                  ║
+║  TO CONTINUE: Human must explicitly say "continue to Phase 4"                   ║
+║                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+<!-- ZERO CONTENT AFTER STOP GATE -->
+---
+---
+---
+
 ### **Phase 4: Transport Architecture Cleanup**
 **Objective**: Implement HTTP transport standardization and SSE interface removal
 **Scope**: 4 features from MCPGATEWAY-TRANSPORT-f4b8 capability
@@ -471,6 +760,41 @@ Before implementing, the AI MUST review these sections from the referenced docum
 **Why**: Confidence in transport changes through systematic validation
 **Dependencies**: All Phase 4 steps completion for complete migration framework
 **Component Count**: 7 TypeScript classes for migration validation and safety
+
+<!-- RATIONALE: v5.0 - Bunker-style stop gate with visual barrier prevents phase boundary violations.
+     0% violation target vs 20% in v4.0. ZERO content after gate - AI cannot "peek ahead" to Phase 5. -->
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                            🛑 MANDATORY STOP GATE 🛑                             ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║  CURRENT STATE: Phase 4 Complete - Transport Architecture Cleanup               ║
+║  AWAITING: Human approval to continue to Phase 5                                ║
+║                                                                                  ║
+║  COMPLETED IN PHASE 4:                                                           ║
+║  ✅ Step 4.1: Transport Abstraction Layer                                       ║
+║  ✅ Step 4.2: SSE Interface Removal                                             ║
+║  ✅ Step 4.3: HTTP Transport Standardization                                    ║
+║  ✅ Step 4.4: Migration Safety Framework                                        ║
+║                                                                                  ║
+║  VALIDATION REQUIRED:                                                            ║
+║  ✅ All Phase 4 builds passing (C# + TypeScript)                                ║
+║  ✅ All Phase 4 tests passing (>80% coverage)                                   ║
+║  ✅ Expert consensus achieved (≥80%)                                            ║
+║  ✅ Self-validation checkpoints ALL PASS                                        ║
+║                                                                                  ║
+║  PROHIBITED ACTIONS:                                                             ║
+║  ❌ Do NOT read Phase 5 step instructions                                       ║
+║  ❌ Do NOT begin Phase 5 finalization work                                      ║
+║  ❌ Do NOT modify documentation or tracking files                               ║
+║                                                                                  ║
+║  TO CONTINUE: Human must explicitly say "continue to Phase 5"                   ║
+║                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+<!-- ZERO CONTENT AFTER STOP GATE -->
+---
+---
+---
 
 ### **Phase 5: Implementation Lifecycle Completion**
 **Objective**: Complete implementation documentation updates and validation
@@ -610,14 +934,15 @@ echo "✅ Quick validation passed"
 
 **Document Metadata**
 - **ICP Handle**: ICP-IMPLEMENTATION-ENABLE-ENVIRONMENT-SUPPORT
-- **Generated From Template**: template.implementation.icp.md v4.0.0
-- **Template Version**: 4.0.0 (Major enhancement: Integrated Virtual Expert Team coordination with template orchestration, enhanced human approval gates with expert context, and comprehensive expert-guided execution patterns)
+- **Generated From Template**: template.implementation.icp.md v5.0.0
+- **Template Version**: 5.0.0 (v5.0 upgrade: State persistence, 3x3 blocks, bunker stop gates, tool restrictions, context rollover protocol, self-validation checkpoints, decentralized tracking, implementation rationale comments - ALL v4.0 Virtual Expert Team features maintained)
 - **Generated By**: [x] Codification ICP Phase Generation
 - **Source Codification ICP**: enable_environment_support.codification.icp.md (Archived: 20250906-1633)
 - **Related Domain**: EnvironmentMCPGateway Multi-Environment Enhancement
 - **Related Requirements**: environment-registry.domain.req.md, tool-management.domain.req.md, diagnostics-framework.domain.req.md, transport-cleanup.domain.req.md
 - **Created Date**: 2025-09-06
-- **Status**: [x] Draft - Ready for Human Approval and Execution
+- **Last Updated**: 2025-10-04 (v5.0 upgrade)
+- **Status**: [x] In Progress - Step 1.1 Complete (1/18 steps), Ready for Step 1.2
 - **Total Steps**: 18 implementation steps across 5 phases
 - **Components Affected**: 4 capabilities with 16 features and 100+ TypeScript/C# components
 - **Assigned To**: AI Agent with Expert Team Coordination
@@ -627,6 +952,7 @@ echo "✅ Quick validation passed"
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
 | 0.1 | 2025-09-06 | Initial implementation ICP with expert coordination and comprehensive step definitions | AI Agent |
+| 1.0 | 2025-10-04 | v5.0 upgrade: Added state persistence, context rollover protocol, 3x3 execution blocks, bunker-style stop gates, tool restrictions, self-validation checkpoints, decentralized tracking, implementation rationale comments - preserved all v4.0 VET features | AI Agent |
 
 ---
 
