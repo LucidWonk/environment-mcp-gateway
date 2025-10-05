@@ -5,8 +5,8 @@
 TEMPLATE VERSION DEFINITION (DO NOT INCLUDE IN FINAL ICP)
 ═══════════════════════════════════════════════════════════════════════════
 TEMPLATE_FILE: template.codification.icp.md
-TEMPLATE_VERSION: 5.0.0
-TEMPLATE_DESCRIPTION: Major v5.0 upgrade for Sonnet 4.5 optimization: Three-tier instruction architecture (self-contained templates), bunker-style stop gates, state persistence blocks, 3x3 execution blocks (Preparation/Execution/Finalization), self-validation framework, phase-specific tool restrictions, context rollover protocol, decentralized capability tracking, template instruction separation
+TEMPLATE_VERSION: 5.0.1
+TEMPLATE_DESCRIPTION: Streamlined single-approval-gate workflow: Single comprehensive stop after planning phase presents all changes before execution, Three-tier instruction architecture (self-contained templates), state persistence blocks, continuous execution after approval, self-validation framework, phase-specific tool restrictions, context rollover protocol, decentralized capability tracking, template instruction separation
 ═══════════════════════════════════════════════════════════════════════════
 
 TEMPLATE UPDATE INSTRUCTIONS FOR AI (DO NOT INCLUDE IN FINAL DOCUMENTS)
@@ -20,6 +20,14 @@ When updating this template, the AI MUST follow these instructions:
    - ALWAYS increment version when making ANY change
    - UPDATE TEMPLATE_DESCRIPTION to reflect changes
 
+   VERSION 5.0.1 MINOR ENHANCEMENTS:
+   - Streamlined to single comprehensive approval gate after planning phase
+   - Removed multiple stop gates throughout execution for improved workflow efficiency
+   - Single stop presents complete change plan before any document modifications
+   - Continuous execution after approval with progress tracking
+   - Simplified AI execution instructions for clearer workflow
+   - Retained completion summaries as informational checkpoints (not hard stops)
+
    VERSION 5.0.0 MAJOR ENHANCEMENTS:
    - Three-tier instruction architecture (templates are Tier 1 - execution authority)
    - Bunker-style stop gates with visual barriers
@@ -30,7 +38,6 @@ When updating this template, the AI MUST follow these instructions:
    - Context rollover protocol (Level 1 + Level 2)
    - Decentralized capability tracking (in req files, not central registry)
    - Template instruction separation (maintenance → TEMPLATE-MAINTENANCE.md)
-   - Update TEMPLATE_DESCRIPTION to reflect the changes made
    
    VERSION 4.0.0 MAJOR ENHANCEMENTS:
    - Virtual Expert Team integration for concept specification and documentation
@@ -120,17 +127,17 @@ When creating ICPs from this template, ensure:
 **Documentation Impact**: [ ] Single Document | [ ] Multiple Related Documents | [ ] New Document Creation | [ ] Enterprise Standards Update
 **Build Dependencies**: [ ] No Prerequisites | [ ] Requires Foundation Docs | [ ] Requires Core Specifications | [ ] Requires Integration Specs
 **Complexity**: [ ] Simple | [ ] Moderate | [ ] Complex
-**Template Version**: 5.0.0 (Sonnet 4.5 optimized - see TEMPLATE_DESCRIPTION for v5.0 features)
+**Template Version**: 5.0.1 (Streamlined single-approval-gate workflow - see TEMPLATE_DESCRIPTION for v5.0.1 features)
 **Expert Coordination**: [x] Enabled (v4.0.0) | [ ] Disabled
 **Expert Coordination Level**: [ ] Minimal | [x] Standard | [ ] Comprehensive
 
-**📋 v5.0 TEMPLATE FEATURES**:
-This template follows Context Engineering v5.0 principles:
+**📋 v5.0.1 TEMPLATE FEATURES**:
+This template follows Context Engineering v5.0.1 principles:
+- **Single Approval Gate**: One comprehensive stop after planning presents all changes before execution
+- **Streamlined Workflow**: Continuous execution after approval with progress tracking
 - **Three-Tier Architecture**: Self-contained execution instructions (no external references needed)
-- **Bunker-Style Stop Gates**: Visual barriers with zero post-gate content for mandatory human review
 - **State Persistence**: Track execution state for context rollover resilience
-- **3x3 Execution Blocks**: Preparation → Execution → Finalization (replaces A-I subtasks)
-- **Self-Validation**: Mandatory PASS/FAIL checkpoints throughout execution
+- **Self-Validation**: Mandatory checkpoints throughout execution with progress logging
 - **Tool Restrictions**: Clear ALLOWED/PROHIBITED lists per phase (codification = docs only)
 - **Rollover Protocol**: Level 1 (state block) + Level 2 (re-grounding) recovery procedures
 - **Decentralized Tracking**: Capability tracking in req files (no central registry)
@@ -475,82 +482,60 @@ TEMPLATE INSTRUCTION:
 ### **AI EXECUTION REQUIREMENTS FOR DOCUMENTATION**
 <!-- CRITICAL: AI must follow this sequence for EVERY documentation step -->
 
-#### **🛑 MANDATORY STOP PROTOCOL - VIOLATION WILL BREAK THE SYSTEM 🛑**
+#### **📋 STREAMLINED WORKFLOW PROTOCOL (v5.0.1)**
 
-**CRITICAL SYSTEM REQUIREMENT**: The Context Engineering System depends on human review gates. Skipping these gates will cause system failures, inconsistencies, and require manual rollback.
+**SINGLE APPROVAL GATE**: This template uses ONE comprehensive approval gate after planning, then continuous execution with progress tracking.
 
-#### **MANDATORY Documentation Update Sequence**
-For each documentation step, the AI MUST:
+#### **Phase 1: Analysis & Planning (Complete Together)**
+The AI will complete both analysis and planning before the single approval gate:
 
-**PRE-EXECUTION CHECKLIST** (Complete before starting):
-- [ ] Read this entire step including all subsections
-- [ ] Identify all documents that will be modified
-- [ ] Review the pre-digested execution plan
-- [ ] Update todo list marking this step as "in_progress"
+**ANALYSIS ACTIVITIES**:
+- Read all referenced *.domain.md and *.digital.md files completely
+- Note all existing feature specifications
+- Identify gaps and inconsistencies
+- Map cross-references between documents
 
-**EXECUTION PLAN** (Follow these subtasks IN ORDER):
+**PLANNING ACTIVITIES**:
+- List missing business rules to add
+- List incomplete capabilities to expand
+- List integration patterns to clarify
+- Identify sections needing updates
+- Plan cross-reference updates
+- Generate complete change plan with specific file modifications
 
-1. **SUBTASK A: ANALYZE** - Read and understand current documentation state (Complete analysis phase)
-   ```bash
-   echo "Starting documentation analysis for Step X.Y"
-   # ACTION: Open and read all referenced documents
-   ```
-   - [ ] Read all referenced *.domain.md files completely
-   - [ ] Read all referenced *.digital.md files completely
-   - [ ] Note all existing feature specifications
-   - [ ] Identify gaps and inconsistencies
-   - [ ] Map cross-references between documents
-   **PROGRESS UPDATE**: "Analyzed [X] documents, found [Y] gaps"
+**OUTPUT**: Comprehensive change plan showing exactly what will be modified in which documents
 
-2. **SUBTASK B: PLAN** - Create detailed change plan (Planning phase - multiple documents)
-   ```bash
-   echo "Planning documentation changes"
-   # ACTION: Document specific changes needed
-   ```
-   - [ ] List missing business rules to add
-   - [ ] List incomplete capabilities to expand
-   - [ ] List integration patterns to clarify
-   - [ ] Identify sections needing updates
-   - [ ] Plan cross-reference updates
-   **PROGRESS UPDATE**: "Planned [X] updates across [Y] documents"
+#### **🛑 SINGLE APPROVAL GATE 🛑**
+After planning is complete, AI MUST present comprehensive change plan and STOP for approval:
+- Show all documents that will be modified
+- Show specific sections and changes for each document
+- Show features that will be added
+- Show cross-references that will be updated
+- Wait for explicit human approval to proceed
 
-3. **SUBTASK C: UPDATE** - Execute documentation changes (Implementation phase - specification updates)
-   ```bash
-   echo "Updating documentation"
-   # ACTION: Modify the identified documents
-   ```
-   - [ ] Add business rules to domain.md
-   - [ ] Add capability details to digital.md
-   - [ ] Mark features as "Not Implemented"
-   - [ ] Add ICP references for future work
-   - [ ] Update cross-references
-   **PROGRESS UPDATE**: "Updated [X] sections in [Y] documents"
+#### **Phase 2: Continuous Execution (After Approval)**
+After receiving approval, AI executes all planned changes with progress logging:
 
-4. **SUBTASK D: VALIDATE** - Verify consistency (Validation phase - cross-reference checking)
-   ```bash
-   echo "Validating documentation consistency"
-   # ACTION: Check all updates for accuracy
-   ```
-   - [ ] All cross-references resolve correctly
-   - [ ] Terminology is consistent
-   - [ ] Features properly marked with status
-   - [ ] Integration patterns align
-   - [ ] No contradictions introduced
-   **PROGRESS UPDATE**: "Validation complete - [X] cross-refs verified"
+**EXECUTION ACTIVITIES** (continuous, no stops between steps):
+- Update all planned documents
+- Add business rules to domain.md files
+- Add capability details to digital.md files
+- Mark features as "Not Implemented"
+- Add ICP references for future work
+- Update all cross-references
 
-5. **SUBTASK E: SUMMARIZE** - Generate review summary (Summary generation phase)
-   - [ ] Count documents modified
-   - [ ] List features added
-   - [ ] Note sections updated
-   - [ ] Update todo list marking step "completed"
-   - [ ] Generate commit message
-   **PROGRESS UPDATE**: "Summary generated - ready for review"
+**VALIDATION ACTIVITIES** (continuous):
+- Verify all cross-references resolve correctly
+- Confirm terminology consistency
+- Ensure features properly marked with status
+- Validate integration patterns align
+- Check for contradictions
 
-6. **SUBTASK F: MANDATORY STOP** - **🛑 FULL STOP 🛑**
-   - [ ] All previous subtasks completed
-   - [ ] Summary generated for human
-   - [ ] **🛑 STOP HERE - Wait for "continue" before proceeding 🛑**
-   - [ ] **DO NOT PROCEED** without explicit approval
+**PROGRESS LOGGING** (required throughout):
+- Log after each document modified
+- Log after each validation check
+- Update todo list with progress
+- Track completion percentage
 
 #### **Documentation Quality Checks**
 Before marking any documentation step complete:
@@ -690,13 +675,14 @@ echo "[Step 1.1] Generating analysis report"
 - [ ] ✅ Todo list updated
 - [ ] ✅ Expert coordination completed with recommendations (v4.0.0)
 - [ ] ✅ Expert consensus achieved for concept specifications (≥80% target)
-- [ ] 🛑 **STOP HERE** - Generate analysis summary with expert context for review
+- [ ] ✅ **PROCEED TO STEP 1.2** - Continue to enhancement planning (no stop here)
 
-**Human Review Gate:**
+**Step 1.1 Analysis Summary:**
 ```markdown
-## Step 1.1 Document Analysis Summary
+## Step 1.1 Document Analysis Complete
 **Step Status**: COMPLETE ✅
 **Subtasks Completed**: 10/10
+**Note**: Proceeding directly to Step 1.2 (no stop between steps)
 
 ### Documents Analyzed
 **Domain Documents**: [List with sections]
@@ -725,12 +711,8 @@ echo "[Step 1.1] Generating analysis report"
 **Risk Assessment**: [Expert-identified risks and mitigation recommendations]
 
 ### Next Step
-**Step 1.2**: Enhancement Planning
+**Step 1.2**: Enhancement Planning (proceed directly - no stop)
 **Dependencies**: Step 1.1 complete ✅
-
-Ready for review. Type "continue" to proceed with enhancement planning.
-
-🛑 STOP HERE - Wait for "continue" before proceeding to Step 1.2 🛑
 ```
 
 **Step 1.2: Enhancement Planning**
@@ -755,41 +737,83 @@ Ready for review. Type "continue" to proceed with enhancement planning.
   - Validate that all cross-references will remain accurate
   - Ensure domain and digital documents will remain aligned
 
-**Phase 1 Completion Summary:**
-- **Analysis Status**: Complete
-- **Documents Reviewed**: [X]
-- **Gaps Identified**: [Y]
-- **Enhancement Plan**: Ready for execution
+**Phase 1 Completion - Present Complete Change Plan:**
 
-<!-- RATIONALE: Bunker-style visual barrier stop gate addresses ~20% violation rate in v4.0.
-     Visual box creates psychological barrier. ZERO content after gate prevents accidental
-     reading of next phase. Target: 0% violations. Codification work requires careful
-     review before proceeding to execution phase. -->
+<!-- RATIONALE: Single comprehensive approval gate (v5.0.1) - AI presents complete change plan
+     showing ALL documents to be modified and ALL changes to be made. This replaces multiple
+     stop gates with one efficient approval point. Human reviews entire plan before any
+     execution begins. -->
 
 ╔══════════════════════════════════════════════════════════════════════════════════╗
 ║                                                                                  ║
-║                            🛑 MANDATORY STOP GATE 🛑                             ║
+║                  🛑 COMPREHENSIVE CHANGE PLAN - APPROVAL REQUIRED 🛑             ║
 ║                                                                                  ║
-║  CURRENT STATE: Phase 1 Complete                                                ║
-║  AWAITING: Human approval to continue to Phase 2                                ║
+║  ANALYSIS & PLANNING COMPLETE - Ready for your review                           ║
 ║                                                                                  ║
-║  COMPLETED:                                                                      ║
-║  ✅ Document Analysis (comprehensive review)                                     ║
-║  ✅ Expert Coordination (if enabled)                                             ║
-║  ✅ Gap Identification (all gaps documented)                                     ║
-║  ✅ Enhancement Planning (detailed plan ready)                                   ║
+║  COMPLETED ACTIVITIES:                                                           ║
+║  ✅ Document Analysis ([X] documents reviewed)                                   ║
+║  ✅ Expert Coordination (consensus: [X]% - if enabled)                           ║
+║  ✅ Gap Identification ([Y] gaps documented)                                     ║
+║  ✅ Enhancement Planning (complete change plan ready below)                      ║
 ║                                                                                  ║
-║  PROHIBITED ACTIONS:                                                             ║
-║  ❌ Do NOT read Phase 2 instructions                                             ║
-║  ❌ Do NOT begin Phase 2 work                                                    ║
-║  ❌ Do NOT modify requirement documents yet                                      ║
-║  ❌ Do NOT continue execution                                                    ║
+║  📋 COMPLETE CHANGE PLAN (Review Below):                                         ║
+║  • Documents to be modified: [List all files]                                   ║
+║  • Sections to be updated: [List all sections]                                  ║
+║  • Features to be added: [Count] total features                                 ║
+║  • Cross-references to update: [Count] references                               ║
+║  • Business rules to add: [Count] rules                                         ║
+║  • Digital capabilities to enhance: [Count] capabilities                        ║
 ║                                                                                  ║
-║  TO CONTINUE: Human must explicitly say "continue"                               ║
+║  AFTER APPROVAL, AI WILL:                                                        ║
+║  → Execute all planned document updates (continuous, with progress logging)     ║
+║  → Validate all changes for consistency                                         ║
+║  → Generate Implementation ICP                                                  ║
+║  → Complete document lifecycle                                                  ║
+║                                                                                  ║
+║  ⚠️ IMPORTANT: Review the detailed change plan below before approving            ║
+║                                                                                  ║
+║  TO APPROVE AND PROCEED: Type "continue" or "approved"                          ║
+║  TO MODIFY PLAN: Provide feedback and AI will revise                            ║
+║  TO CANCEL: Type "cancel" or "stop"                                             ║
 ║                                                                                  ║
 ╚══════════════════════════════════════════════════════════════════════════════════╝
 
-<!-- ZERO CONTENT AFTER STOP GATE - Prevents accidental continuation -->
+**DETAILED CHANGE PLAN FOR REVIEW:**
+
+### Documents to be Modified
+1. **[Document1.domain.req.md]**
+   - **Section X.Y**: Add [specific content]
+   - **Section X.Z**: Update [specific content]
+   - **New Features**: [List feature names and IDs]
+   - **Cross-References**: Update references to [other documents]
+
+2. **[Document2.digital.req.md]**
+   - **Section A.B**: Add [specific content]
+   - **New Capabilities**: [List capability names]
+   - **Integration Updates**: [List integration changes]
+
+[Continue for all documents...]
+
+### New Features Being Specified
+- Feature 1: [Name] - Status: Not Implemented - Location: [Document Section]
+- Feature 2: [Name] - Status: Not Implemented - Location: [Document Section]
+[Continue for all features...]
+
+### Cross-Reference Updates
+- Update references from [Old] to [New]
+- Add new cross-references between [Doc A] and [Doc B]
+[Continue for all cross-reference changes...]
+
+### Expert Recommendations (if enabled)
+- [Key expert insights being incorporated]
+- [Architectural considerations]
+- [Risk mitigation strategies]
+
+---
+
+**🛑 WAITING FOR YOUR APPROVAL TO PROCEED 🛑**
+
+Type "continue" to approve this plan and begin execution, or provide feedback to revise.
 
 ---
 ---
@@ -797,6 +821,13 @@ Ready for review. Type "continue" to proceed with enhancement planning.
 
 ### **Phase 2: Document Enhancement Execution**
 **Objective**: Execute planned enhancements to target documents
+**Execution Mode**: Continuous execution with progress logging (no stops until complete)
+
+**AI Execution Protocol**:
+- Execute all steps continuously after receiving approval from Phase 1
+- Log progress after each document modification
+- Update todo list to track completion
+- NO stops between steps - proceed systematically through all planned changes
 
 **Detailed Steps:**
 **Step 2.1: Primary Document Updates**
@@ -837,6 +868,13 @@ Ready for review. Type "continue" to proceed with enhancement planning.
 
 ### **Phase 3: Validation and Finalization**
 **Objective**: Validate enhancements and ensure system consistency
+**Execution Mode**: Continuous validation with comprehensive final review
+
+**AI Execution Protocol**:
+- Continue systematic validation after Phase 2 completion
+- No stops - validate all changes for consistency
+- Generate comprehensive completion summary
+- Prepare for Phase 4 (Implementation ICP generation)
 
 **Detailed Steps:**
 **Step 3.1: Consistency Validation**
@@ -1343,9 +1381,9 @@ echo "[Step 5.3] Performing system consistency check"
 - [ ] Generate final completion summary for human
 - [ ] **LOG**: "Document lifecycle completion successful - [X] total documents processed"
 
-**Human Review Gate:**
+**Phase 5 Completion Summary:**
 ```markdown
-## Phase 5: Document Lifecycle Completion Summary
+## Phase 5: Document Lifecycle Completion
 **Phase Status**: COMPLETE ✅
 **Total Subtasks Completed**: 18/18
 
@@ -1364,56 +1402,58 @@ echo "[Step 5.3] Performing system consistency check"
 
 ### System Validation Results (Step 5.3)
 **Cross-References**: [X] verified functional
-**Capability Registry**: Updated with final document locations
+**Capability Tracking**: Updated in domain.req.md and digital.req.md files
 **Documentation Consistency**: Verified across [X] related documents
 
 ### Document Lifecycle Status
 **Concept Phase**: ✅ Complete and Archived
-**Implementation Phase**: ✅ Ready (Implementation ICP generated)
+**Implementation Phase**: ✅ Ready (Implementation ICP generated in Phase 4)
 **Documentation System**: ✅ Consistent and Accessible
 
-**All document lifecycle requirements satisfied. Ready for Implementation ICP execution.**
-
-🛑 STOP HERE - Document lifecycle completion confirmed 🛑
+**Proceeding to final completion summary...**
 ```
 
-## **🛑 CODIFICATION ICP COMPLETION - MANDATORY STOP 🛑**
+## **✅ CODIFICATION ICP COMPLETION SUMMARY**
 
-### **CODIFICATION PHASE COMPLETE**
-**This codification ICP has delivered:**
-- ✅ Complete technical specifications from expert team coordination
+### **CODIFICATION WORK COMPLETE**
+**This codification ICP has successfully delivered:**
+- ✅ Complete technical specifications (with expert coordination if enabled)
 - ✅ Architecture design and requirements documentation
-- ✅ Test strategy specifications (not implemented)
-- ✅ Risk assessment and mitigation strategies
-- ✅ Implementation requirements clearly defined
+- ✅ Feature specifications marked "Not Implemented"
+- ✅ Implementation ICP generated and ready for execution
+- ✅ Document lifecycle completed (archival and placement)
+- ✅ All cross-references updated and validated
 
-### **🛑 MANDATORY HUMAN REVIEW GATE 🛑**
-**REQUIRED BEFORE ANY IMPLEMENTATION:**
-1. **Human must review** all expert recommendations and technical specifications
-2. **Human must approve** the technical approach and architecture decisions
-3. **Human must authorize** proceeding to implementation phase
-4. **Human must create** or authorize creation of implementation.icp.md
+### **📋 COMPLETION STATISTICS**
+- **Documents Modified**: [X] total
+- **Features Specified**: [Y] total (all marked "Not Implemented")
+- **Cross-References Updated**: [Z] total
+- **Expert Consensus**: [N]% (if expert coordination enabled)
+- **Implementation ICP**: Generated and ready at [file path]
 
-### **NEXT PHASE: IMPLEMENTATION ICP**
-**AFTER HUMAN APPROVAL:**
-- Create separate `implementation.icp.md` document based on these specifications
-- Execute actual code implementation with incremental approval gates
-- Build test cases and validation infrastructure
-- Deploy and validate the implemented solution
+### **NEXT PHASE: IMPLEMENTATION**
+**The generated Implementation ICP is ready for execution when you are ready:**
+- Location: [Path to implementation.icp.md]
+- Contains: Detailed implementation steps with test requirements
+- Approval Model: Will use same single-approval-gate model (v5.0.1)
+- Execution: Will implement code based on specifications in this ICP
 
-### **🛑 AI PROTOCOL: STOP HERE 🛑**
-**AI MUST NOT PROCEED TO:**
-- ❌ Code implementation or file modifications
-- ❌ Test execution or validation commands
-- ❌ System deployment or configuration changes
-- ❌ Any actions that modify the actual system
+### **📌 REMINDER: CODIFICATION vs IMPLEMENTATION**
+**This Codification ICP (completed):**
+- ✅ Created/updated requirement documents (*.req.md)
+- ✅ Specified features and capabilities (not implemented)
+- ✅ Provided architectural guidance
+- ❌ Did NOT write code or modify system files
 
-**REQUIRED AI ACTION:**
-Generate summary of expert recommendations and specifications for human review, then STOP and await human direction.
+**The Implementation ICP (ready for execution):**
+- Will implement the features specified in this ICP
+- Will write actual code and tests
+- Will modify system files and configuration
+- Will require human approval for the implementation plan
 
-### **🏁 ENHANCED ICP COMPLETION PROTOCOL 🏁**
+### **🏁 ICP LIFECYCLE STATUS**
 
-**AFTER Phase 5 Completion:**
+**Codification Phase**: ✅ Complete
 The document lifecycle is now complete. All concept documents are properly archived with timestamps, and all resulting domain/digital documents are placed in appropriate namespace-aligned locations. The Context Engineering System maintains full integrity and consistency.
 
 ## **USER-REQUESTED ROLLBACK PROCEDURES**
@@ -1563,62 +1603,93 @@ After any rollback:
 ## **AI EXECUTION SUMMARY INSTRUCTIONS**
 <!-- This section is MANDATORY for AI to follow -->
 
-### **🛑 STOP PROTOCOL - THIS IS NOT OPTIONAL 🛑**
+### **📋 STREAMLINED WORKFLOW PROTOCOL (v5.0.1)**
 
-**SYSTEM CRITICAL**: Failure to stop at each gate will corrupt the Context Engineering System and require manual intervention to fix.
+**SINGLE-STOP MODEL**: This template uses ONE comprehensive approval gate after planning, then continuous execution.
 
-**AFTER EACH AND EVERY documentation step, the AI MUST:**
-1. **Complete expert coordination** (v4.0.0) using VET MCP tools if enabled
-2. **Incorporate expert recommendations** into concept specifications 
-3. **🛑 STOP EXECUTION IMMEDIATELY 🛑** 
-4. **Generate a summary** including:
-   - What sections were updated
-   - What features were added
-   - What cross-references were fixed
-   - Expert recommendations incorporated
-   - Expert consensus achieved
-   - What the next step will be
-5. **Format for GitHub** commit message
-6. **🛑 STOP HERE - Wait for "continue" before proceeding to next step 🛑**
-7. **Only continue** when human EXPLICITLY types "continue" or "proceed to next step"
-8. **If unsure whether to stop** - ALWAYS STOP AND ASK
+### **Phase 1: Analysis & Planning (Complete Before Stop)**
 
-**🛑 CODIFICATION ICP - PROHIBITED ACTIONS 🛑:**
-- **❌ ABSOLUTELY PROHIBITED**: Code implementation, file modifications, system deployment
-- **❌ ABSOLUTELY PROHIBITED**: Building or executing tests, running validation commands
-- **❌ ABSOLUTELY PROHIBITED**: Making configuration changes or system modifications
-- **❌ ABSOLUTELY PROHIBITED**: Any action that changes the actual system state
+**AI MUST complete ALL of the following before stopping:**
+1. **Document Analysis**:
+   - Read all referenced *.domain.md and *.digital.md files completely
+   - Note all existing feature specifications
+   - Identify gaps and inconsistencies
+   - Map cross-references between documents
 
-**Standard AI Prohibitions:**
-- Skip documentation review steps
-- Make changes without understanding context
-- Proceed past validation failures
-- Continue without human approval
-- Skip progress updates or todo list updates
-- Proceed if any subtask checkbox is unchecked
-- Skip expert coordination when enabled (v4.0.0)
-- Proceed without expert consensus for complex architectural concepts
+2. **Expert Coordination** (v4.0.0 - if enabled):
+   - Initiate expert coordination using VET MCP tools when enabled
+   - Incorporate expert recommendations into planning
+   - Achieve ≥80% expert consensus for architectural and complex concepts
+   - Document expert insights for the change plan
 
-**The AI should ALWAYS:**
-- Follow sequence: Analyze (including domain/digital review) → Expert Coordination → Plan → Update → Validate → Pause (v4.0.0)
-- Complete EVERY subtask in order, including expert coordination
-- Initiate expert coordination using VET MCP tools when enabled
-- Incorporate expert recommendations before human approval gates
-- Achieve ≥80% expert consensus for architectural and complex concepts
-- Log progress updates after each subtask
-- Update todo list to track progress
-- Check all validation checkboxes before proceeding
-- Thoroughly review *.domain.md and *.digital.md files for context and nuances
-- Check capability-registry.md for existing capability IDs
-- ADD new capabilities to registry if specifying capabilities not yet documented
-- Use capability IDs consistently when referencing capabilities
+3. **Enhancement Planning**:
+   - List missing business rules to add
+   - List incomplete capabilities to expand
+   - List integration patterns to clarify
+   - Identify sections needing updates
+   - Plan cross-reference updates
+   - Create detailed change plan for each document
+
+4. **🛑 SINGLE COMPREHENSIVE STOP 🛑**:
+   - Present complete change plan showing:
+     - ALL documents to be modified
+     - ALL sections to be updated
+     - ALL features to be added
+     - ALL cross-references to update
+     - Expert recommendations (if enabled)
+   - **STOP HERE and wait for human approval**
+   - Only proceed when human types "continue" or "approved"
+
+### **Phase 2-5: Continuous Execution (After Approval)**
+
+**After receiving approval, AI executes continuously with progress logging:**
+
+**Execution Activities** (no stops between these):
+- Execute all planned document updates systematically
+- Add business rules to domain.md files
+- Add capability details to digital.md files
+- Mark all features as "Not Implemented" with future ICP references
+- Update all cross-references as planned
+- Validate consistency across all modified documents
+- Generate Implementation ICP (Phase 4)
+- Complete document lifecycle (Phase 5)
+
+**Progress Logging Requirements** (continuous throughout):
+- Log after each document modified
+- Log after each phase completed
+- Update todo list regularly
+- Track completion percentage
+- Generate final completion summary
+
+### **🛑 CODIFICATION ICP - PROHIBITED ACTIONS 🛑**
+Throughout ALL phases:
+- **❌ ABSOLUTELY PROHIBITED**: Code implementation or system file modifications
+- **❌ ABSOLUTELY PROHIBITED**: Building or executing tests
+- **❌ ABSOLUTELY PROHIBITED**: System deployment or configuration changes
+- **❌ ABSOLUTELY PROHIBITED**: Any action that changes actual system state
+- **✅ ALLOWED ONLY**: Documentation file modifications (*.req.md, *.icp.md)
+
+### **AI Must ALWAYS:**
+- Follow sequence: Analyze → Expert Coordinate → Plan → **STOP** → Execute → Validate → Complete
+- Complete full analysis AND planning before the single stop
+- Thoroughly review *.domain.md and *.digital.md files for context
+- Use decentralized capability tracking (in req files, not central registry)
 - Maintain consistent terminology across domain and digital documents
 - Mark features as "Not Implemented" with future ICP reference
 - Update cross-references across all affected documents
 - Ensure domain rules align with digital capabilities
-- Stop and ask for clarification if requirements are unclear or contradictory
-- Generate detailed summaries with subtask counts
-- Document expert recommendations and consensus levels in summaries (v4.0.0)
+- Log progress continuously during execution phase
+- Update todo list to track completion
+- Generate comprehensive summaries at planning and completion stages
+
+### **AI Must NEVER:**
+- Stop during analysis or planning (complete both before stopping)
+- Stop during execution after approval (execute continuously with logging)
+- Skip documentation review steps
+- Make changes without understanding context
+- Skip expert coordination when enabled (v4.0.0)
+- Skip progress updates or todo list updates
+- Proceed past the single approval gate without explicit human approval
 
 ### **GitHub Commit Summary Template for Documentation**
 ```markdown
