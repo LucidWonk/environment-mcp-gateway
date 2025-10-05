@@ -344,19 +344,22 @@ REQUIREMENTS DOCS (Business Rules - domain.req.md / digital.req.md):
 **Requirements Being Implemented:**
 - Domain Specification: [Domain-Name.domain.md](../Architecture/Domain-Name.domain.md)
 - Digital Capability: [Capability-Name.digital.md](../Architecture/Capability-Name.digital.md)
-- Testing Standards: [Testing-Standards.md](../Overview/Testing-Standards.md)
+- **Testing Standards: [testing-standards.domain.req.md](../Architecture/testing-standards.domain.req.md)**
 - Development Guidelines: [Development-Guidelines.md](../Overview/Development-Guidelines.md)
 - Claude Integration: [CLAUDE.md](../../CLAUDE.md)
 
 **CRITICAL IMPLEMENTATION NOTE:**
-The *.domain.md and *.digital.md files contain the detailed business requirements, nuances, and capabilities that MUST be referenced during implementation (in Preparation Block). These documents specify:
+The *.domain.md and *.digital.md files contain the detailed business requirements, nuances, and capabilities that MUST be referenced during implementation (in Preparation Block). The testing-standards.domain.req.md file contains MANDATORY testing framework selection criteria, coverage requirements, and quality gates. These documents specify:
 - Business rules and constraints
 - Integration patterns and contracts
 - Feature behaviors and edge cases
 - Domain-specific terminology and concepts
 - Quality attributes and performance requirements
+- **Testing framework selection criteria (BDD vs XUnit)**
+- **Minimum coverage requirements (100% BDD scenarios OR >85% XUnit coverage)**
+- **Mandatory Serilog logging integration for all test failures**
 
-The AI MUST consult these documents before and during each implementation step (specifically in the Preparation Block of each step).
+The AI MUST consult these documents before and during each implementation step (specifically in the Preparation Block of each step). The testing standards are EQUALLY important as business requirements - testing is a core deliverable, not an afterthought.
 
 **Documents to Update After Implementation:**
 - [ ] Update domain.md with implementation status
@@ -373,7 +376,50 @@ The AI MUST consult these documents before and during each implementation step (
 [Explain how new components integrate with existing system]
 
 ### **Testing Strategy**
-[Define the testing approach: unit, integration, BDD scenarios]
+**CRITICAL**: Testing is NOT optional - it's a core deliverable equal to code implementation.
+
+**Framework Selection (MANDATORY):**
+Consult `/Documentation/Architecture/testing-standards.domain.req.md` for complete dual framework strategy.
+
+- [ ] **BDD Testing (Reqnroll)**: Required for business logic, trading algorithms, domain workflows
+  - **Location**: `TestSuite/` project with `.feature` files
+  - **Use for**: Business rule validation, stakeholder communication, trading scenarios
+  - **Coverage**: 100% of business scenarios must have BDD coverage
+  - **When to use**: Component implements business logic, trading rules, or requires stakeholder-readable documentation
+
+- [ ] **XUnit Testing**: Required for infrastructure, API clients, integration scenarios
+  - **Location**: `[ComponentName].Tests/` projects with `*Tests.cs` files
+  - **Use for**: Technical validation, performance benchmarks, infrastructure components
+  - **Coverage**: >85% code coverage target (enforced by quality gates)
+  - **When to use**: Component is infrastructure, API client, data access, or technical utility
+  - **SPECIAL CASE - TypeScript/Node.js Infrastructure**:
+    - TypeScript infrastructure (e.g., MCP servers, Node.js services) is tested via **C# XUnit integration tests**
+    - Tests simulate external contract (e.g., MCP tool invocations) and validate responses
+    - NO TypeScript unit tests required - integration tests provide sufficient coverage
+    - Example: `EnvironmentMCPGateway.Tests/Integration/*V51IntegrationTests.cs`
+    - Rationale: Maintains single testing framework (XUnit), tests actual usage contract
+
+**PROHIBITED Testing Frameworks:**
+- ❌ Jest (JavaScript/TypeScript unit testing)
+- ❌ NUnit (C# alternative to XUnit)
+- ❌ MSTest (C# alternative to XUnit)
+- ❌ Mocha/Chai (JavaScript alternatives)
+- ❌ xunit.ts (TypeScript XUnit port - unnecessary, use C# XUnit integration tests instead)
+- **Why prohibited**: Platform standardizes on BDD (Reqnroll) + XUnit (C#) to prevent framework proliferation
+
+**Test-First Mindset:**
+- Tests are written IN PARALLEL with code (Subtask E), not after
+- Test failures are build failures - equally blocking
+- Coverage targets are quality gates - not suggestions
+- Serilog logging integration is MANDATORY for all test failures (via Utility.Output.LoggerConfig)
+
+**Quality Gates (Enforced):**
+- BDD Testing: 100% scenario coverage for all business rules
+- XUnit Testing: Minimum 85% code coverage (configurable threshold)
+- All tests must pass - zero tolerance for failures
+- All test failures must use Serilog logging - no Console.WriteLine or alternatives
+
+**Reference**: `/Documentation/Architecture/testing-standards.domain.req.md` for complete dual framework strategy and standards.
 
 ### **Rollback Strategy**
 [Describe how to safely rollback if issues occur]
@@ -593,16 +639,47 @@ Before proceeding to Execution Block, verify:
 
 5. **SUBTASK E: EXPERT-VALIDATED TESTING** (Test creation with expert validation)
    ```bash
-   # ACTION: Create test files in test project
+   # ACTION: Create test files in appropriate test project
+   # CRITICAL: Determine BDD vs XUnit framework FIRST based on testing-standards.domain.req.md
    ```
+
+   **STEP 1: Framework Selection (MANDATORY)**
+   - [ ] Review component type: Business logic → BDD | Infrastructure → XUnit
+   - [ ] Consult testing-standards.domain.req.md Section "Dual Framework Strategy"
+   - [ ] Determine test location: TestSuite/ (BDD) or [Component].Tests/ (XUnit)
+   - [ ] Validate framework selection with expert team (if enabled)
+
+   **STEP 2A: BDD Testing (if business logic component)**
+   - [ ] Create .feature file with stakeholder-readable scenarios in TestSuite/[Domain]/
+   - [ ] Write scenarios covering all business rules from domain.req.md
+   - [ ] Implement step definitions in TestSuite/StepDefinitions/[Domain]/
+   - [ ] Use realistic trading data in scenario examples
+   - [ ] Add Serilog logging in all step definitions via LoggerConfig (MANDATORY)
+   - [ ] Use FluentAssertions for all validations with descriptive messages
+   - [ ] Ensure 100% business scenario coverage
+   - [ ] Validate scenarios are readable by non-technical stakeholders
+
+   **STEP 2B: XUnit Testing (if infrastructure component)**
+   - [ ] Create test class in [ComponentName].Tests/ with [Trait] categorization
+   - [ ] Initialize Serilog via LoggerConfig in constructor (MANDATORY)
+   - [ ] Write happy path tests with FluentAssertions and descriptive messages
+   - [ ] Write error handling tests (MANDATORY - testing-standards.domain.req.md Section 5)
+   - [ ] Write edge case tests with [Theory] and [InlineData] for boundary conditions
+   - [ ] Add structured Serilog logging for all test execution and failures (MANDATORY)
+   - [ ] Implement IDisposable for proper test cleanup
+   - [ ] Achieve >85% code coverage (quality gate requirement - will be validated)
+   - [ ] Use mock data factories for consistent test data generation
+
+   **STEP 3: Expert Validation of Test Quality**
    - [ ] Consult expert team for testing strategy recommendations
-   - [ ] Create unit test file with proper naming (expert-verified patterns)
-   - [ ] Write test for happy path scenario (expert-validated scenarios)
-   - [ ] Write test for error conditions (expert-identified edge cases)
-   - [ ] Write test for expert-recommended additional test cases
-   - [ ] Aim for >80% code coverage (expert-validated coverage requirements)
-   - [ ] Validate test quality with expert team (target: ≥90% expert approval)
-   **PROGRESS UPDATE**: "Created [X] expert-validated tests for [component]"
+   - [ ] Present test coverage analysis to expert team
+   - [ ] Validate test completeness covers all business rules or technical scenarios
+   - [ ] Verify assertion patterns follow FluentAssertions best practices
+   - [ ] Confirm Serilog logging integration for all failure scenarios
+   - [ ] Validate framework selection aligns with component domain
+   - [ ] Achieve ≥90% expert approval of test quality
+
+   **PROGRESS UPDATE**: "Created [X] [BDD scenarios | XUnit tests] for [component] with [Y]% coverage using [framework]"
 
 6. **SUBTASK F: EXPERT CONSENSUS VALIDATION** (Expert approval of implementation)
    ```bash
@@ -672,10 +749,15 @@ Before proceeding to Execution Block, verify:
 Before proceeding to Finalization Block, verify:
 - [ ] Code implemented per specifications from domain.md and digital.req.md
 - [ ] Expert consensus achieved on implementation approach (if enabled)
+- [ ] **Testing framework correctly selected (BDD for business logic, XUnit for infrastructure)**
+- [ ] **Tests follow testing-standards.domain.req.md requirements and patterns**
+- [ ] **BDD: 100% scenario coverage OR XUnit: >85% code coverage achieved**
+- [ ] **Serilog logging integrated in ALL test failures (via LoggerConfig - MANDATORY)**
 - [ ] All tests written and passing (>80% coverage target)
 - [ ] ENTIRE solution builds successfully (no errors)
 - [ ] ALL tests pass (no failures)
 - [ ] Build and test output clean (no unexpected errors)
+- [ ] **Test quality validated by expert team (if enabled)**
 
 **PROCEED TO FINALIZATION BLOCK** →
 
@@ -756,7 +838,13 @@ Before proceeding to Finalization Block, verify:
    |-----------|--------|----------|
    | Requirements from domain.req.md implemented | [ ] PASS / [ ] FAIL | [Specific sections] |
    | Capabilities from digital.req.md implemented | [ ] PASS / [ ] FAIL | [Specific capabilities] |
+   | **Testing framework correctly selected** | [ ] PASS / [ ] FAIL | **BDD (business) OR XUnit (infrastructure)** |
+   | **Testing standards compliance verified** | [ ] PASS / [ ] FAIL | **Consulted testing-standards.domain.req.md** |
    | Code follows project patterns | [ ] PASS / [ ] FAIL | [Pattern references] |
+   | **Tests created using correct framework** | [ ] PASS / [ ] FAIL | **TestSuite/ (BDD) OR *.Tests/ (XUnit)** |
+   | **BDD scenarios cover all business rules** | [ ] PASS / [ ] FAIL / [ ] N/A | **100% scenario coverage** |
+   | **XUnit coverage >85%** | [ ] PASS / [ ] FAIL / [ ] N/A | **[Z]% achieved (quality gate)** |
+   | **Serilog logging in all test failures** | [ ] PASS / [ ] FAIL | **LoggerConfig.ConfigureLogger used** |
    | Tests written and passing | [ ] PASS / [ ] FAIL | [X]/[Y] tests, [Z]% coverage |
    | Build succeeds | [ ] PASS / [ ] FAIL | Build output clean |
    | No new errors in logs | [ ] PASS / [ ] FAIL | Log verification clean |
@@ -1001,47 +1089,262 @@ public Account FindAccount(string id)
 
 **SUBTASK E: Test Implementation**
 <!-- v5.0: Test writing is Execution Block task, not Preparation -->
+<!-- CRITICAL: Framework selection MUST align with testing-standards.domain.req.md -->
 ```bash
 # Commands to execute:
 echo "[Step 1.1] Writing tests for [Component]"
-# Create test file in test project
+echo "Framework selection: [BDD for business logic | XUnit for infrastructure]"
+# Create test file in appropriate test project
 ```
 
-**Test Requirements:**
+**Framework Selection Decision:**
+- [ ] **If business logic/trading algorithms/domain rules** → Use BDD (Reqnroll)
+- [ ] **If infrastructure/API/data access/utilities** → Use XUnit
+
+**Option A: BDD Testing (Business Logic Components)**
+
+**File**: `TestSuite/[Domain]/[Component].feature`
+```gherkin
+Feature: [Component Name] - [Business Capability Description]
+  As a [trader/system/stakeholder]
+  I want to [capability]
+  So that [business value delivered]
+
+Scenario: [Primary happy path business scenario]
+  Given the system has [precondition with specific test data]
+  And [additional context or setup]
+  When [business action occurs]
+  Then [measurable business outcome]
+  And [system should exhibit specific behavior]
+  And logs should contain "[expected diagnostic message]"
+
+Scenario: [Error handling business scenario]
+  Given the system encounters [error condition]
+  When [business action attempted]
+  Then the system should [graceful failure behavior]
+  And error should be logged with Serilog
+  And [compensating action or recovery]
+
+Scenario Outline: [Parameterized business scenarios with realistic data]
+  Given a trading scenario with <parameter>
+  When [action with parameter]
+  Then the result should be <expected>
+  And performance should be within <threshold>
+
+  Examples: Realistic trading data scenarios
+    | parameter | expected | threshold |
+    | value1    | result1  | 100ms     |
+    | value2    | result2  | 100ms     |
+```
+
+**File**: `TestSuite/StepDefinitions/[Domain]/[Component]Steps.cs`
 ```csharp
-[TestClass]
-public class ExampleComponentTests
+using Reqnroll;
+using FluentAssertions;
+using Lucidwonks.Utility.Output;
+using Serilog;
+
+namespace Lucidwonks.TestSuite.StepDefinitions.[Domain];
+
+[Binding]
+[Scope(Feature = "[Component Name]")]
+public class [Component]Steps
 {
-    // TODO: Test happy path
-    [TestMethod]
-    public void Should_PerformExpectedBehavior()
+    private readonly ILogger _logger;
+    private [ComponentType] _component;
+    private [ResultType] _result;
+    private Exception _caughtException;
+
+    public [Component]Steps()
     {
-        // Arrange
-        // Act
-        // Assert
+        // MANDATORY: Serilog initialization for BDD scenarios
+        LoggerConfig.ConfigureLogger("BDDTests");
+        _logger = Log.ForContext<[Component]Steps>();
     }
-    
-    // TODO: Test validation
-    [TestMethod]
-    public void Should_ValidateInput()
+
+    [Given(@"the system has (.*)")]
+    public void GivenSystemHasPrecondition(string precondition)
     {
-        // Test implementation
+        _logger.Information("Setting up precondition: {Precondition}", precondition);
+        _component = new [ComponentType]();
+        // Setup realistic test data
     }
-    
-    // TODO: Test error handling
-    [TestMethod]
-    public void Should_HandleErrors()
+
+    [When(@"(.*) occurs")]
+    public void WhenBusinessActionOccurs(string action)
     {
-        // Test implementation
+        _logger.Information("Executing business action: {Action}", action);
+        try
+        {
+            _result = _component.PerformBusinessAction();
+        }
+        catch (Exception ex)
+        {
+            _caughtException = ex;
+            _logger.Warning(ex, "Business action failed (expected for error scenarios)");
+        }
+    }
+
+    [Then(@"(.*) should (.*)")]
+    public void ThenOutcomeShouldBeValidated(string outcome, string expected)
+    {
+        _logger.Information("Validating outcome: {Outcome} = {Expected}", outcome, expected);
+
+        // MANDATORY: FluentAssertions for BDD validation
+        _result.Should().NotBeNull("business outcome must be populated");
+        _result.Should().Match<[ResultType]>(r => r.[Property] == expected);
+
+        _logger.Information("Scenario validation passed");
     }
 }
 ```
-- [ ] Create test file
-- [ ] Write happy path test
-- [ ] Write validation test
-- [ ] Write error handling test
-- [ ] Write edge case tests
-- [ ] **LOG**: "Created [X] tests with [Y]% coverage target"
+
+**BDD Test Checklist:**
+- [ ] Create `.feature` file with stakeholder-readable scenarios in `TestSuite/[Domain]/`
+- [ ] Write scenarios covering all business rules from domain.req.md
+- [ ] Implement step definitions in `TestSuite/StepDefinitions/[Domain]/`
+- [ ] Use realistic trading data in scenario examples
+- [ ] Add Serilog logging in all step definitions (MANDATORY)
+- [ ] Use FluentAssertions for all validations with descriptive messages
+- [ ] Ensure 100% business scenario coverage
+- [ ] Validate scenarios are readable by non-technical stakeholders
+
+**Option B: XUnit Testing (Infrastructure Components)**
+
+**File**: `[ComponentName].Tests/[ComponentName]Tests.cs`
+```csharp
+using Xunit;
+using FluentAssertions;
+using Lucidwonks.Utility.Output;
+using Serilog;
+using Moq; // For mocking dependencies
+
+namespace Lucidwonks.[Domain].[Component].Tests;
+
+[Trait("Category", "Unit")] // Use "Integration", "Performance" as appropriate
+public class [ComponentName]Tests : IDisposable
+{
+    private readonly ILogger _logger;
+    private readonly [ComponentName] _sut; // System Under Test
+    private readonly Mock<IDependency> _mockDependency;
+
+    public [ComponentName]Tests()
+    {
+        // MANDATORY: Serilog initialization via platform standard
+        LoggerConfig.ConfigureLogger("InfrastructureTests");
+        _logger = Log.ForContext<[ComponentName]Tests>();
+
+        // Setup mocks and SUT
+        _mockDependency = new Mock<IDependency>();
+        _sut = new [ComponentName](_mockDependency.Object);
+
+        _logger.Information("Test fixture initialized for {Component}", nameof([ComponentName]));
+    }
+
+    [Fact]
+    public void Should_PerformExpectedBehavior_When_HappyPath()
+    {
+        // Arrange
+        _logger.Information("Test: Happy path scenario starting");
+        var input = CreateValidInput();
+        _mockDependency.Setup(d => d.Method()).Returns(expectedValue);
+
+        // Act
+        var result = _sut.MethodUnderTest(input);
+
+        // Assert
+        result.Should().NotBeNull("valid input should produce result");
+        result.Should().BeOfType<ExpectedType>();
+        result.Property.Should().Be(expectedValue, "business rule should be applied");
+
+        _mockDependency.Verify(d => d.Method(), Times.Once());
+        _logger.Information("Test passed: {Result}", result);
+    }
+
+    [Fact]
+    public void Should_ThrowException_When_InvalidInput()
+    {
+        // MANDATORY: Error handling test per testing-standards.domain.req.md Section 5
+        _logger.Information("Test: Error scenario - invalid input");
+        var invalidInput = CreateInvalidInput();
+
+        // Act
+        Action act = () => _sut.MethodUnderTest(invalidInput);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+           .WithMessage("*expected validation message*");
+
+        _logger.Warning("Error scenario validated successfully");
+    }
+
+    [Theory]
+    [InlineData(null, "null input edge case")]
+    [InlineData("", "empty string edge case")]
+    [InlineData("   ", "whitespace edge case")]
+    public void Should_HandleEdgeCases_When_BoundaryConditions(string input, string scenario)
+    {
+        // MANDATORY: Edge case testing per testing standards
+        _logger.Information("Test: Edge case - {Scenario}", scenario);
+
+        // Act & Assert based on expected behavior
+        var result = _sut.MethodUnderTest(input);
+
+        result.Should().NotBeNull($"{scenario} should handle gracefully");
+        _logger.Information("Edge case passed: {Scenario}", scenario);
+    }
+
+    [Fact]
+    [Trait("Category", "Performance")]
+    public void Should_CompleteWithinThreshold_When_PerformanceValidation()
+    {
+        // Performance testing when component is performance-critical
+        _logger.Information("Test: Performance validation starting");
+        var input = CreateRealisticInput();
+
+        // Act
+        var stopwatch = Stopwatch.StartNew();
+        var result = _sut.MethodUnderTest(input);
+        stopwatch.Stop();
+
+        // Assert
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(100,
+            "operation must complete within performance threshold");
+        _logger.Information("Performance test passed: {Duration}ms", stopwatch.ElapsedMilliseconds);
+    }
+
+    public void Dispose()
+    {
+        // Cleanup resources
+        _logger.Information("Test fixture disposing");
+        _sut?.Dispose();
+    }
+
+    // Helper methods
+    private ValidInput CreateValidInput() { /* realistic test data */ }
+    private InvalidInput CreateInvalidInput() { /* test data for error scenarios */ }
+    private RealisticInput CreateRealisticInput() { /* production-like test data */ }
+}
+```
+
+**XUnit Test Checklist:**
+- [ ] Create test class in `[ComponentName].Tests/` project
+- [ ] Add [Trait("Category", "Unit|Integration|Performance")] attributes
+- [ ] Initialize Serilog via LoggerConfig in constructor (MANDATORY)
+- [ ] Write happy path test with FluentAssertions
+- [ ] Write validation/error handling test (MANDATORY)
+- [ ] Write edge case tests using [Theory] and [InlineData]
+- [ ] Write performance test if component is performance-critical
+- [ ] Add Serilog logging for all test execution and failures (MANDATORY)
+- [ ] Use Moq for dependency mocking with proper verification
+- [ ] Implement IDisposable for proper cleanup
+- [ ] Achieve >85% code coverage (will be validated in Subtask G)
+
+**PROGRESS UPDATE**:
+- [ ] "Created [X] [BDD scenarios | XUnit tests] for [component]"
+- [ ] "Using [Reqnroll BDD | XUnit] framework per testing-standards.domain.req.md"
+- [ ] "Target coverage: [100% scenarios | >85% code] with Serilog logging integration"
+- [ ] **LOG**: "Created [X] tests with [Y]% coverage target using [framework]"
 
 **SUBTASK F: Expert Validation** (if enabled)
 <!-- v5.0: Expert validation in Execution Block ensures implementation quality before comprehensive validation -->
@@ -1550,11 +1853,16 @@ ICP: [ICP-handle]
 **The AI should ALWAYS:**
 - Follow the exact sequence: Review Requirements → Update Registry → Implement → Test → Validate → Document → Update Registry → Pause
 - Reference domain.md and digital.md files for implementation details
+- **Reference testing-standards.domain.req.md for mandatory framework selection and coverage requirements**
+- **Select correct testing framework FIRST: BDD (Reqnroll) for business logic, XUnit for infrastructure**
+- **Implement comprehensive tests with >85% XUnit coverage OR 100% BDD scenario coverage - NOT OPTIONAL**
+- **Use Serilog logging via LoggerConfig for ALL test failures - no Console.WriteLine or alternatives**
 - Update capability-registry.md status at start and completion
 - Update feature statuses in requirement documents
 - Check both IDE and CLI build compatibility
 - Update CLAUDE.md when adding new projects/commands
 - Verify implementation matches business capability specifications
+- **Treat test failures as build failures - equally blocking and requiring immediate fix**
 - Generate helpful commit summaries
 
 ## **FINAL IMPLEMENTATION PHASE**
