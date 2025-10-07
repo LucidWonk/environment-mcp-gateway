@@ -1076,3 +1076,233 @@ When starting a new Claude Code session:
 - **Platform Compliance**: Never introduce alternatives to established Utility implementations
 - **Testing Standards**: Use Reqnroll for business logic, XUnit for infrastructure (NO Jest!)
 - **Namespace Alignment**: Maintain strict namespace-to-directory mapping
+
+---
+
+## **INTERACTIVE WORKFLOW ORCHESTRATOR**
+
+**Purpose**: The Context Engineering System supports natural, guided conversations between users and AI. This section provides principles for recognizing user intent and guiding them through appropriate workflows.
+
+### **🎯 Understanding User Intent**
+
+**Core Principle**: Understand what the user is trying to accomplish before jumping to solutions.
+
+**Common Intent Patterns**:
+- **New Ideas/Concepts**: User exploring something new with unclear boundaries → Conceptualization workflow
+- **Implementation**: User ready to build from existing specifications → Implementation workflow
+- **Documentation**: User wants to document existing code/systems → Documentation workflow
+- **Enhancement**: User wants to modify/extend existing capabilities → Enhancement workflow
+- **Setup/Infrastructure**: User needs environment/tool configuration → Setup workflow
+
+**Key Behaviors**:
+- If intent is unclear, ask what they're trying to accomplish
+- For new ideas: Listen and understand before generating anything
+- Guide toward appropriate workflow based on what they need
+
+---
+
+## **NEW IDEA CONCEPTUALIZATION WORKFLOW**
+
+**When to Use**: User is exploring a new idea, concept, or possibility with unclear boundaries
+**Output**: Concept document in `/Documentation/ContextEngineering/NewConcepts/` using `template.concept.req.md`
+
+**🛑 CRITICAL PRINCIPLE**: **Complete conceptualization before generating any documents or code**
+
+### **The Conceptualization Flow**
+
+**1. Listen and Understand**
+- Let the user share their idea in their own words
+- Encourage elaboration on aspects that seem important to them
+- Don't jump to solutions or documentation yet
+- Acknowledge and build understanding as they talk
+
+**2. Clarify What's Unclear**
+- Ask questions about gaps in your understanding (not formulaic categories)
+- Focus on what YOU don't understand about THEIR specific idea
+- Help them think through aspects they may not have considered
+- Questions should emerge naturally from what they've shared
+- Continue conversational exploration until you have solid comprehension
+
+**3. Synthesize and Suggest**
+- Reflect back your understanding of their concept
+- Offer thoughtful suggestions where you see opportunities or risks
+- Present trade-offs clearly - let them decide
+- Incorporate their counter-suggestions enthusiastically
+- This is collaborative refinement, not a checklist
+
+**4. Generate Concept Document with Approval**
+- **STOP before generating** - describe what you'll create and get approval
+- Use `template.concept.req.md` to capture the concept
+- Generate placeholder ID: `TEMP-[DOMAIN]-[NAME]-[4random]`
+- Do NOT register in capability registry during concept phase
+- Fill template with insights from your conversation
+
+**5. Guide Toward Next Steps**
+- Explain the codification pathway (specs) vs implementation pathway (code)
+- Let them choose: proceed to codification, refine concept, or pause
+- If they choose codification: create codification ICP and begin expert collaboration
+- If they choose implementation pathway: verify codification is complete first
+
+### **Key Principles for AI**
+
+**Conversation Quality**:
+- Natural dialogue, not scripted responses
+- Ask questions that emerge from what the user shared
+- Help them develop their thinking, not just capture it
+- Be genuinely curious about their vision
+
+**Approval Gates**:
+- 🛑 Before generating concept document: describe what you'll create, get approval
+- 🛑 Between codification and implementation: require explicit approval to proceed
+- 🛑 During implementation: stop after each step for approval
+
+**Documentation Discipline**:
+- No code generation during conceptualization
+- No documentation generation until you fully understand
+- Placeholder IDs only (TEMP-*) - no registry registration
+- Mark uncertainties clearly (domain boundaries, technical risks)
+
+---
+
+## **OTHER COMMON WORKFLOWS**
+
+### **Implementing from Existing Specifications**
+**When to Use**: User wants to build something that's already documented in domain.req.md or digital.req.md
+
+**Approach**:
+- Read the specification documents to understand what needs to be built
+- Verify specs are complete enough for implementation
+- If specs are incomplete: offer to create a codification ICP to complete them
+- If specs are ready: create implementation ICP and proceed with approval gates
+- Follow 9-subtask implementation process with testing and validation
+
+### **Documenting Existing Systems**
+**When to Use**: User wants to document existing code that lacks proper documentation
+
+**Approach**:
+- Analyze the existing code to understand what it does
+- Identify the correct domain placement
+- Choose appropriate template (domain.req.md or digital.req.md)
+- Document what currently exists (reverse engineering)
+- Get human review to verify documentation matches intent
+- Note: Document what IS, not what SHOULD BE - improvements are separate
+
+### **Enhancing Existing Features**
+**When to Use**: User wants to modify or extend something that's already implemented
+
+**Approach**:
+- Review current state: read domain/digital docs and .context files
+- Understand what they want to change and why
+- Assess scope: minor tweak vs major refactor
+- Small enhancements: direct implementation with testing
+- Major enhancements: may need concept → codification → implementation
+- Always update tests for any enhancement
+
+### **Infrastructure Setup**
+**When to Use**: User needs environment, tools, or infrastructure configured
+
+**Approach**:
+- Use MCP tools to check current environment state
+- Understand what needs to be set up and why
+- Create setup ICP using template.setup.icp.md
+- Validate each setup step before proceeding
+- Ensure nothing breaks as you configure
+
+---
+
+## **CONVERSATION PRINCIPLES**
+
+### **For AI Assistants**
+
+**Natural Conversation**:
+- Have genuine dialogue, not scripted exchanges
+- Ask questions that emerge from what the user shared
+- Help users develop their thinking through conversation
+- Be curious about their vision and goals
+
+**Discipline in Execution**:
+- 🛑 Don't generate documents/code until you fully understand
+- 🛑 Stop at approval gates - describe what you'll do, get permission
+- 🛑 Stop after implementation steps - wait for "continue"
+- Mark uncertainties clearly in all documentation
+- Use placeholder IDs (TEMP-*) during concept phase
+
+**Handling Complexity**:
+- When domain boundaries are unclear, that's what NewConcepts are for
+- Don't force premature classification
+- Propose validation approaches for uncertain areas
+- Trust your judgment on when to ask questions vs move forward
+
+### **For Users**
+
+**Sharing Ideas**:
+- Share your vision in your own words
+- It's okay to be uncertain - exploration is part of the process
+- "I don't know" is valid - we'll document assumptions to validate
+
+**Working Together**:
+- Conversations are iterative - add thoughts as they come
+- Modify AI suggestions to fit your vision
+- Ask questions if something is unclear
+- Use approval gates to stay in control ("not yet" is always okay)
+
+---
+
+## **WORKFLOW STATE RECOVERY**
+
+**When Context Window Rolls Over Mid-Workflow**:
+
+**Step 1 - Identify Where You Are**:
+- What workflow phase: conceptualization, codification, or implementation?
+- What artifacts exist: concept doc, ICP document?
+- If ICP exists: read state persistence block at top
+- What was the last user action?
+
+**Step 2 - Assess Confidence**:
+- HIGH: You understand where you are and what's next
+- MEDIUM: You have general idea but some uncertainty
+- LOW: You're not sure what's happening
+
+**Step 3 - Recovery Action**:
+- If HIGH: Summarize where you are and ask if ready to continue
+- If MEDIUM: Read this workflow section and relevant template, then re-assess
+- If LOW: Ask user to briefly remind you where you were and what they want next
+
+**Example Recovery**: "I see we were working on [X]. We've completed [A, B, C] and were about to [D]. Ready to continue, or would you like to recap first?"
+
+---
+
+## **EXAMPLE: NEW IDEA CONVERSATION FLOW**
+
+This example illustrates the conceptualization workflow in practice, showing principles rather than scripts to follow:
+
+**User shares idea**: "I have an idea for AI-powered trading signals that could help identify high-probability setups."
+
+**AI listens and invites elaboration**: Expresses interest, asks user to share more about the business problem, value, and who would benefit. Encourages them to share in their own words.
+
+**User elaborates**: Explains traders spend hours analyzing charts, vision for ML to detect patterns (bull flags, breakouts, support/resistance), delivered via notifications/dashboard, with confidence scores and risk/reward ratios.
+
+**AI asks clarifying questions** (emerging naturally from what user shared):
+- Data sources: existing feeds or new ones needed?
+- Real-time requirement vs batch processing acceptable?
+- ML training data: historical Lucidwonks data, public data, or both?
+- Integration: purely analytical or connect to trading execution?
+- Domain placement: feels like Analysis but touches Trading - user's perspective?
+
+**User provides clarity**: Existing feeds, start with 5-min batches (real-time later), train on both data sources, purely analytical for now, probably Analysis domain.
+
+**AI synthesizes understanding**: Reflects back the core concept, business value, technical scope, and domain placement. Then offers thoughtful suggestions based on the conversation:
+- Phased rollout (start simple, validate, then expand)
+- Backtesting framework (validate before real money)
+- Integration approach (leverage existing tools where beneficial)
+- User feedback loop (continuous ML improvement)
+
+**User refines**: Accepts some suggestions, modifies others, rejects one with rationale.
+
+**AI requests approval before generating**: Describes what will be created (concept document using template.concept.req.md, placeholder ID, location), what's included, and what's NOT happening yet (no code, no registry registration).
+
+**User approves**: "Yes, generate"
+
+**AI generates and presents next options**: Creates document, summarizes key sections, offers choices (review/refine, start codification, or pause).
+
+**Key Takeaway**: Natural conversation focused on understanding, not form-filling. Questions emerged from the specific idea. Suggestions were thoughtful and contextual. Approval gates kept user in control.
