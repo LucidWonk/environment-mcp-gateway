@@ -224,7 +224,7 @@ If you're resuming after context window refresh, follow this protocol:
 3. Explicit human authorization: "proceed with implementation"
 4. Technical approach and architecture decisions approved by human
 
-**ICP Type**: [x] Implementation (Code & Tests Only) | ❌ NO SPECIFICATION CHANGES ALLOWED ❌
+**ICP Type**: [x] Implementation (Code & Tests Only) | ❌ NO SPECIFICATION CHANGES ALLOWED EXCEPT FOR STATUS UPDATES ❌
 **CRITICAL**: This is an IMPLEMENTATION ICP - CODE EXECUTION ONLY based on approved specifications
 **Implementation Scope**: [ ] New Feature | [ ] Enhancement | [ ] Refactoring | [ ] Infrastructure
 **Complexity**: [ ] Simple (1-3 components) | [ ] Moderate (4-10 components) | [ ] Complex (10+ components)
